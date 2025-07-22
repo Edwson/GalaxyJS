@@ -12,8 +12,6 @@ Imagine you're building a website, and suddenly you think: *"You know what this 
 
 ### 🌟 Why GalaxyJS?
 
-- **40 Stunning Animations** - Because 20 was so last year
-- **Award-Worthy Quality** - These animations could win STOD, STOM, STOY on Awwwards.com
 - **Scientifically Accurate** - We consulted actual physics (and some sci-fi movies)
 - **Performance Optimized** - Smooth as a neutron star's surface
 - **Zero Dependencies** - Just pure cosmic energy
