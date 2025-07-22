@@ -346,11 +346,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **LinkedIn**: [Ed Chen](https://www.linkedin.com/in/ed-chen-saas/)
 - **GitHub**: [@Edwson](https://github.com/Edwson)
 
-## 🌟 Star History (Because We're Vain)
-
-[![Star History Chart](https://api.star-history.com/svg?repos=Edwson/GalaxyJS&type=Date)](https://star-history.com/#Edwson/GalaxyJS&Date)
-
----
 
 ## 🎉 Final Words
 
