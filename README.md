@@ -1,6 +1,6 @@
 # 🌌 GalaxyJS - The Universe in Your Browser
 
-Demo-(https://edwson.com/GalaxyJS/)
+Demo- https://edwson.com/GalaxyJS/
 
 > *"In space, no one can hear you scream... but they can definitely see your awesome animations!"* 🚀
 
