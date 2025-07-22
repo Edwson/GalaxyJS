@@ -1843,6 +1843,270 @@ galaxy.initCosmicInflation('.cosmic-inflation-animation', {
 galaxy.initMultiverse('.multiverse-animation', {
     universeCount: 3,
     bubbleSize: 40
+});`,
+'neutron-star': `// HTML Structure
+<div class="neutron-star-animation">
+    <div class="star-core"></div>
+    <div class="magnetic-field"></div>
+    <div class="pulsar-beams"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initNeutronStar('.neutron-star-animation', {
+    rotationSpeed: 0.02,
+    magneticField: true,
+    pulsarBeams: true
+});`,
+'quasar': `// HTML Structure
+<div class="quasar-animation">
+    <div class="accretion-disk-intense"></div>
+    <div class="jet-stream"></div>
+    <div class="energy-bursts"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initQuasar('.quasar-animation', {
+    accretionDiskSpeed: 0.03,
+    jetStreamIntensity: 0.8,
+    energyBurstRate: 0.1
+});`,
+'dark-energy': `// HTML Structure
+<div class="dark-energy-animation">
+    <div class="space-fabric"></div>
+    <div class="expansion-field"></div>
+    <div class="energy-particles"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initDarkEnergy('.dark-energy-animation', {
+    expansionRate: 0.005,
+    fieldStrength: 0.6,
+    particleCount: 20
+});`,
+'cosmic-microwave': `// HTML Structure
+<div class="cosmic-microwave-animation">
+    <div class="radiation-pattern"></div>
+    <div class="temperature-variations"></div>
+    <div class="background-noise"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initCosmicMicrowave('.cosmic-microwave-animation', {
+    patternSpeed: 0.001,
+    temperatureVariations: true,
+    noiseLevel: 0.1
+});`,
+'gravitational-lensing': `// HTML Structure
+<div class="gravitational-lensing-animation">
+    <div class="lens-mass"></div>
+    <div class="light-rays"></div>
+    <div class="distorted-image"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initGravitationalLensing('.gravitational-lensing-animation', {
+    lensMass: 0.8,
+    lightRayCount: 5,
+    distortionStrength: 0.5
+});`,
+'spacetime-curvature': `// HTML Structure
+<div class="spacetime-curvature-animation">
+    <div class="fabric-grid"></div>
+    <div class="mass-object"></div>
+    <div class="curvature-waves"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initSpacetimeCurvature('.spacetime-curvature-animation', {
+    massStrength: 0.6,
+    fabricGridSize: 20,
+    curvatureWaves: true
+});`,
+'quantum-entanglement': `// HTML Structure
+<div class="quantum-entanglement-animation">
+    <div class="particle-a"></div>
+    <div class="particle-b"></div>
+    <div class="entanglement-field"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initQuantumEntanglement('.quantum-entanglement-animation', {
+    entanglementStrength: 0.8,
+    particleSpinSpeed: 0.02,
+    fieldRadius: 30
+});`,
+'cosmic-ray-burst': `// HTML Structure
+<div class="cosmic-ray-burst-animation">
+    <div class="burst-source"></div>
+    <div class="ray-shower"></div>
+    <div class="energy-wave"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initCosmicRayBurst('.cosmic-ray-burst-animation', {
+    burstRate: 0.1,
+    rayCount: 8,
+    energyWaveSpeed: 0.02
+});`,
+'solar-flare': `// HTML Structure
+<div class="solar-flare-animation">
+    <div class="sun-surface"></div>
+    <div class="flare-eruption"></div>
+    <div class="plasma-arcs"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initSolarFlare('.solar-flare-animation', {
+    flareIntensity: 0.7,
+    plasmaArcCount: 4,
+    eruptionSpeed: 0.03
+});`,
+'asteroid-impact': `// HTML Structure
+<div class="asteroid-impact-animation">
+    <div class="asteroid-body"></div>
+    <div class="impact-crater"></div>
+    <div class="debris-field"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initAsteroidImpact('.asteroid-impact-animation', {
+    impactForce: 0.8,
+    debrisCount: 10,
+    craterSize: 0.6
+});`,
+'spiral-galaxy': `// HTML Structure
+<div class="spiral-galaxy-animation">
+    <div class="galaxy-core"></div>
+    <div class="spiral-arm arm-1"></div>
+    <div class="spiral-arm arm-2"></div>
+    <div class="spiral-arm arm-3"></div>
+    <div class="star-field"></div>
+    <div class="cosmic-dust-clouds"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initSpiralGalaxy('.spiral-galaxy-animation', {
+    spiralSpeed: 0.01
+});`,
+'cosmic-vortex': `// HTML Structure
+<div class="cosmic-vortex-animation">
+    <div class="vortex-core"></div>
+    <div class="energy-rings"></div>
+    <div class="particle-streams"></div>
+    <div class="space-distortion"></div>
+    <div class="quantum-foam"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initCosmicVortex('.cosmic-vortex-animation', {
+    vortexStrength: 0.5
+});`,
+'stellar-nursery': `// HTML Structure
+<div class="stellar-nursery-animation">
+    <div class="nebula-cloud"></div>
+    <div class="protostars"></div>
+    <div class="stellar-winds"></div>
+    <div class="accretion-disks"></div>
+    <div class="cosmic-rays"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initStellarNursery('.stellar-nursery-animation', {
+    starBirthRate: 0.01
+});`,
+'quantum-field': `// HTML Structure
+<div class="quantum-field-animation">
+    <div class="field-grid"></div>
+    <div class="virtual-particles"></div>
+    <div class="quantum-fluctuations"></div>
+    <div class="energy-waves"></div>
+    <div class="probability-clouds"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initQuantumField('.quantum-field-animation', {
+    fieldStrength: 0.5
+});`,
+'dark-matter-web': `// HTML Structure
+<div class="dark-matter-web-animation">
+    <div class="web-structure"></div>
+    <div class="matter-nodes"></div>
+    <div class="gravitational-lines"></div>
+    <div class="void-regions"></div>
+    <div class="cosmic-filaments"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initDarkMatterWeb('.dark-matter-web-animation', {
+    webStrength: 0.5
+});`,
+'neutron-star-collision': `// HTML Structure
+<div class="neutron-star-collision-animation">
+    <div class="star-a"></div>
+    <div class="star-b"></div>
+    <div class="collision-wave"></div>
+    <div class="gravitational-waves"></div>
+    <div class="kilonova-explosion"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initNeutronStarCollision('.neutron-star-collision-animation', {
+    collisionSpeed: 10
+});`,
+'cosmic-storm': `// HTML Structure
+<div class="cosmic-storm-animation">
+    <div class="storm-clouds"></div>
+    <div class="lightning-arcs"></div>
+    <div class="plasma-winds"></div>
+    <div class="energy-vortices"></div>
+    <div class="cosmic-rain"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initCosmicStorm('.cosmic-storm-animation', {
+    stormDuration: 10,
+    particleCount: 100
+});`,
+'interstellar-travel': `// HTML Structure
+<div class="interstellar-travel-animation">
+    <div class="starship"></div>
+    <div class="warp-field"></div>
+    <div class="star-trails"></div>
+    <div class="space-time-bubble"></div>
+    <div class="destination-star"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initInterstellarTravel('.interstellar-travel-animation', {
+    travelDuration: 10,
+    distance: 100
+});`,
+'black-hole-merger': `// HTML Structure
+<div class="black-hole-merger-animation">
+    <div class="black-hole-1"></div>
+    <div class="black-hole-2"></div>
+    <div class="merger-ring"></div>
+    <div class="gravitational-waves-intense"></div>
+    <div class="final-singularity"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initBlackHoleMerger('.black-hole-merger-animation', {
+    mergerSpeed: 10
+});`,
+'cosmic-symphony': `// HTML Structure
+<div class="cosmic-symphony-animation">
+    <div class="harmonic-waves"></div>
+    <div class="resonant-particles"></div>
+    <div class="cosmic-strings-vibrating"></div>
+    <div class="energy-chords"></div>
+    <div class="universal-harmony"></div>
+</div>
+
+// JavaScript Initialization
+galaxy.initCosmicSymphony('.cosmic-symphony-animation', {
+    symphonyDuration: 10,
+    noteCount: 10
 });`
         };
         
