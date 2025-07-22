@@ -2,8 +2,6 @@
 
 > *"In space, no one can hear you scream... but they can definitely see your awesome animations!"* 🚀
 
-Welcome to **GalaxyJS** - where we turn your boring web projects into cosmic masterpieces! This isn't just another animation library; it's a **40-animation powerhouse** that brings the entire universe to your fingertips. From humble pulsars to mind-bending quantum fields, we've got everything the cosmos has to offer.
-
 ![GalaxyJS Demo](https://img.shields.io/badge/GalaxyJS-40%20Cosmic%20Animations-000000?style=for-the-badge&logo=javascript)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Stars](https://img.shields.io/github/stars/Edwson/GalaxyJS?style=social)
