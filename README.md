@@ -1,8 +1,9 @@
 # 🌌 GalaxyJS - The Universe in Your Browser
 
+Demo-(https://edwson.com/GalaxyJS/)
+
 > *"In space, no one can hear you scream... but they can definitely see your awesome animations!"* 🚀
 
-![GalaxyJS](https://edwson.com/GalaxyJS/)
 ![GalaxyJS Demo](https://img.shields.io/badge/GalaxyJS-40%20Cosmic%20Animations-000000?style=for-the-badge&logo=javascript)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Stars](https://img.shields.io/github/stars/Edwson/GalaxyJS?style=social)
