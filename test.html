@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GalaxyJS Test Page</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/components.css">
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: sans-serif;
+            padding: 20px;
+        }
+        .test-container {
+            border: 1px solid #333;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-title {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        .test-case {
+            margin-bottom: 15px;
+        }
+        .animation-container {
+            width: 150px;
+            height: 150px;
+            border: 1px dashed #555;
+            position: relative;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #111;
+            border: 1px solid #444;
+        }
+        .pass {
+            color: #2ecc71;
+        }
+        .fail {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">GalaxyJS Test Page</h1>
+        <p>This page runs automated tests for the GalaxyJS library.</p>
+    </div>
+
+    <div class="test-container">
+        <h2 class="test-title">Test Animations</h2>
+        <div class="test-case">
+            <h3>Pulsar Animation</h3>
+            <div id="pulsar-container" class="animation-container pulsar-animation"></div>
+        </div>
+        <div class="test-case">
+            <h3>Black Hole Animation</h3>
+            <div id="blackhole-container" class="animation-container black-hole-animation"></div>
+        </div>
+    </div>
+
+    <div id="results">
+        <h2>Test Results</h2>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/particles.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const resultsContainer = document.getElementById('results');
+            let testsPassed = 0;
+            let testsFailed = 0;
+
+            function runTest(name, testFn) {
+                try {
+                    testFn();
+                    resultsContainer.innerHTML += `<p class="pass">PASS: ${name}</p>`;
+                    testsPassed++;
+                } catch (e) {
+                    resultsContainer.innerHTML += `<p class="fail">FAIL: ${name} - ${e.message}</p>`;
+                    console.error(`Test failed: ${name}`, e);
+                    testsFailed++;
+                }
+            }
+
+            runTest('GalaxyJS library should initialize globally', () => {
+                console.assert(window.galaxy, 'window.galaxy is not defined');
+            });
+
+            runTest('GalaxyJS should be an instance of GalaxyJS class', () => {
+                console.assert(window.galaxy instanceof GalaxyJS, 'window.galaxy is not an instance of GalaxyJS');
+            });
+
+            runTest('GalaxyAnimations should be initialized', () => {
+                console.assert(window.galaxy.animations, 'galaxy.animations is not defined');
+                console.assert(window.galaxy.animations instanceof GalaxyAnimations, 'galaxy.animations is not an instance of GalaxyAnimations');
+            });
+
+            runTest('Pulsar animation should be initialized', () => {
+                const pulsarContainer = document.getElementById('pulsar-container');
+                window.galaxy.animations.initPulsar(pulsarContainer, { frequency: 1, intensity: 0.5 });
+                console.assert(window.galaxy.animations.animationFrames.has(pulsarContainer), 'Pulsar animation not found in animationFrames');
+            });
+
+            runTest('Black hole animation should be initialized', () => {
+                const blackholeContainer = document.getElementById('blackhole-container');
+                window.galaxy.animations.initBlackHole(blackholeContainer, { rotationSpeed: 0.01, diskParticles: 20 });
+                console.assert(window.galaxy.animations.animationFrames.has(blackholeContainer), 'Black hole animation not found in animationFrames');
+            });
+
+            // Summary
+            resultsContainer.innerHTML += `
+                <hr>
+                <p><strong>Summary:</strong></p>
+                <p class="pass">Passed: ${testsPassed}</p>
+                <p class="fail">Failed: ${testsFailed}</p>
+            `;
+        });
+    </script>
+</body>
+</html>
