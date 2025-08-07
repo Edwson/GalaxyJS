@@ -2412,382 +2412,672 @@ galaxy.init${demoType.charAt(0).toUpperCase() + demoType.slice(1)}('.${demoType}
     }
     
     initWormholeAnimations() {
-        // Initialize wormhole animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="wormhole"] .wormhole-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initWormhole(element, { depth: 200, starCount: 20 });
-            });
+        try {
+            // Initialize wormhole animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="wormhole"] .wormhole-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initWormhole(element, {
+                        depth: 200,
+                        starCount: 20
+                    });
+                });
+                this.log(`Initialized ${elements.length} wormhole animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing wormhole animations:', error);
         }
     }
-    
+
     initSupernovaAnimations() {
-        // Initialize supernova animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="supernova"] .supernova-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initSupernova(element, { explosionForce: 100, particleCount: 30 });
-            });
+        try {
+            // Initialize supernova animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="supernova"] .supernova-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initSupernova(element, {
+                        explosionForce: 100,
+                        particleCount: 30
+                    });
+                });
+                this.log(`Initialized ${elements.length} supernova animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing supernova animations:', error);
         }
     }
-    
+
     initAsteroidAnimations() {
-        // Initialize asteroid animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="asteroids"] .asteroid-field');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initAsteroidField(element, { asteroidCount: 15, fieldSize: 200 });
-            });
+        try {
+            // Initialize asteroid animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="asteroids"] .asteroid-field');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initAsteroidField(element, {
+                        asteroidCount: 15,
+                        fieldSize: 200
+                    });
+                });
+                this.log(`Initialized ${elements.length} asteroid animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing asteroid animations:', error);
         }
     }
-    
+
     initCosmicRayAnimations() {
-        // Initialize cosmic ray animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="cosmic-ray"] .cosmic-ray-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initCosmicRay(element, { rayCount: 5, speed: 2 });
-            });
+        try {
+            // Initialize cosmic ray animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="cosmic-ray"] .cosmic-ray-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initCosmicRay(element, {
+                        rayCount: 5,
+                        speed: 2
+                    });
+                });
+                this.log(`Initialized ${elements.length} cosmic ray animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing cosmic ray animations:', error);
         }
     }
-    
+
     initDwarfPlanetAnimations() {
-        // Initialize dwarf planet animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="dwarf-planet"] .dwarf-planet-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initDwarfPlanet(element, { rotationSpeed: 0.01 });
-            });
+        try {
+            // Initialize dwarf planet animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="dwarf-planet"] .dwarf-planet-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initDwarfPlanet(element, {
+                        rotationSpeed: 0.01
+                    });
+                });
+                this.log(`Initialized ${elements.length} dwarf planet animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing dwarf planet animations:', error);
         }
     }
-    
+
     initNebulaAnimations() {
-        // Initialize nebula animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="nebula"] .nebula-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initNebula(element, { particleCount: 30, cloudSize: 80 });
-            });
+        try {
+            // Initialize nebula animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="nebula"] .nebula-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initNebula(element, {
+                        particleCount: 30,
+                        cloudSize: 80
+                    });
+                });
+                this.log(`Initialized ${elements.length} nebula animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing nebula animations:', error);
         }
     }
-    
+
     initBinaryStarAnimations() {
-        // Initialize binary star animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="binary-stars"] .binary-stars-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initBinaryStars(element, { orbitSpeed: 0.01, starSize: 12 });
-            });
+        try {
+            // Initialize binary star animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="binary-stars"] .binary-stars-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initBinaryStars(element, {
+                        orbitSpeed: 0.01,
+                        starSize: 12
+                    });
+                });
+                this.log(`Initialized ${elements.length} binary star animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing binary star animations:', error);
         }
     }
-    
+
     initCosmicDustAnimations() {
-        // Initialize cosmic dust animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="cosmic-dust"] .cosmic-dust-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initCosmicDust(element, { particleCount: 50, driftSpeed: 0.005 });
-            });
+        try {
+            // Initialize cosmic dust animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="cosmic-dust"] .cosmic-dust-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initCosmicDust(element, {
+                        particleCount: 50,
+                        driftSpeed: 0.005
+                    });
+                });
+                this.log(`Initialized ${elements.length} cosmic dust animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing cosmic dust animations:', error);
         }
     }
-    
+
     initTimeDilationAnimations() {
-        // Initialize time dilation animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="time-dilation"] .time-dilation-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initTimeDilation(element, { dilationFactor: 0.5, clockSpeed: 0.01 });
-            });
+        try {
+            // Initialize time dilation animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="time-dilation"] .time-dilation-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initTimeDilation(element, {
+                        dilationFactor: 0.5,
+                        clockSpeed: 0.01
+                    });
+                });
+                this.log(`Initialized ${elements.length} time dilation animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing time dilation animations:', error);
         }
     }
-    
+
     initQuantumTunnelingAnimations() {
-        // Initialize quantum tunneling animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="quantum-tunneling"] .quantum-tunneling-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initQuantumTunneling(element, { barrierHeight: 50, particleSpeed: 2 });
-            });
+        try {
+            // Initialize quantum tunneling animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="quantum-tunneling"] .quantum-tunneling-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initQuantumTunneling(element, {
+                        barrierHeight: 50,
+                        particleSpeed: 2
+                    });
+                });
+                this.log(`Initialized ${elements.length} quantum tunneling animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing quantum tunneling animations:', error);
         }
     }
-    
+
     initCMBAnimations() {
-        // Initialize CMB animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="cmb"] .cmb-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initCMB(element, { patternSize: 20, noiseLevel: 0.1 });
-            });
+        try {
+            // Initialize CMB animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="cmb"] .cmb-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initCMB(element, {
+                        patternSize: 20,
+                        noiseLevel: 0.1
+                    });
+                });
+                this.log(`Initialized ${elements.length} CMB animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing CMB animations:', error);
         }
     }
-    
+
     initGravitationalWaveAnimations() {
-        // Initialize gravitational wave animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="gravitational-waves"] .gravitational-waves-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initGravitationalWaves(element, { waveCount: 3, waveSpeed: 2 });
-            });
+        try {
+            // Initialize gravitational wave animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="gravitational-waves"] .gravitational-waves-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initGravitationalWaves(element, {
+                        waveCount: 3,
+                        waveSpeed: 2
+                    });
+                });
+                this.log(`Initialized ${elements.length} gravitational wave animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing gravitational wave animations:', error);
         }
     }
-    
+
     initDarkMatterAnimations() {
-        // Initialize dark matter animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="dark-matter"] .dark-matter-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initDarkMatter(element, { fieldStrength: 0.5, fieldRadius: 80 });
-            });
+        try {
+            // Initialize dark matter animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="dark-matter"] .dark-matter-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initDarkMatter(element, {
+                        fieldStrength: 0.5,
+                        fieldRadius: 80
+                    });
+                });
+                this.log(`Initialized ${elements.length} dark matter animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing dark matter animations:', error);
         }
     }
-    
+
     initSolarWindAnimations() {
-        // Initialize solar wind animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="solar-wind"] .solar-wind-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initSolarWind(element, { particleCount: 20, windSpeed: 3 });
-            });
+        try {
+            // Initialize solar wind animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="solar-wind"] .solar-wind-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initSolarWind(element, {
+                        particleCount: 20,
+                        windSpeed: 3
+                    });
+                });
+                this.log(`Initialized ${elements.length} solar wind animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing solar wind animations:', error);
         }
     }
-    
+
     initCosmicStringAnimations() {
-        // Initialize cosmic string animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="cosmic-strings"] .cosmic-strings-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initCosmicStrings(element, { stringCount: 3, vibrationSpeed: 0.02 });
-            });
+        try {
+            // Initialize cosmic string animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="cosmic-strings"] .cosmic-strings-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initCosmicStrings(element, {
+                        stringCount: 3,
+                        vibrationSpeed: 0.02
+                    });
+                });
+                this.log(`Initialized ${elements.length} cosmic string animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing cosmic string animations:', error);
         }
     }
-    
+
     initHawkingRadiationAnimations() {
-        // Initialize Hawking radiation animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="hawking-radiation"] .hawking-radiation-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initHawkingRadiation(element, { radiationRate: 5, particleEnergy: 2 });
-            });
+        try {
+            // Initialize Hawking radiation animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="hawking-radiation"] .hawking-radiation-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initHawkingRadiation(element, {
+                        radiationRate: 5,
+                        particleEnergy: 2
+                    });
+                });
+                this.log(`Initialized ${elements.length} Hawking radiation animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing Hawking radiation animations:', error);
         }
     }
-    
+
     initCosmicInflationAnimations() {
-        // Initialize cosmic inflation animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="cosmic-inflation"] .cosmic-inflation-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initCosmicInflation(element, { expansionRate: 0.1, fieldStrength: 0.8 });
-            });
+        try {
+            // Initialize cosmic inflation animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="cosmic-inflation"] .cosmic-inflation-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initCosmicInflation(element, {
+                        expansionRate: 0.1,
+                        fieldStrength: 0.8
+                    });
+                });
+                this.log(`Initialized ${elements.length} cosmic inflation animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing cosmic inflation animations:', error);
         }
     }
-    
+
     initMultiverseAnimations() {
-        // Initialize multiverse animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="multiverse"] .multiverse-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initMultiverse(element, { universeCount: 3, bubbleSize: 40 });
-            });
+        try {
+            // Initialize multiverse animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="multiverse"] .multiverse-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initMultiverse(element, {
+                        universeCount: 3,
+                        bubbleSize: 40
+                    });
+                });
+                this.log(`Initialized ${elements.length} multiverse animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing multiverse animations:', error);
         }
     }
 
     initNeutronStarAnimations() {
-        // Initialize neutron star animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="neutron-star"] .neutron-star-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initNeutronStar(element, { rotationSpeed: 0.005 });
-            });
+        try {
+            // Initialize neutron star animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="neutron-star"] .neutron-star-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initNeutronStar(element, {
+                        rotationSpeed: 0.005
+                    });
+                });
+                this.log(`Initialized ${elements.length} neutron star animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing neutron star animations:', error);
         }
     }
 
     initQuasarAnimations() {
-        // Initialize quasar animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="quasar"] .quasar-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initQuasar(element, { accretionRate: 0.01 });
-            });
+        try {
+            // Initialize quasar animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="quasar"] .quasar-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initQuasar(element, {
+                        accretionRate: 0.01
+                    });
+                });
+                this.log(`Initialized ${elements.length} quasar animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing quasar animations:', error);
         }
     }
 
     initDarkEnergyAnimations() {
-        // Initialize dark energy animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="dark-energy"] .dark-energy-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initDarkEnergy(element, { expansionRate: 0.005 });
-            });
+        try {
+            // Initialize dark energy animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="dark-energy"] .dark-energy-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initDarkEnergy(element, {
+                        expansionRate: 0.005
+                    });
+                });
+                this.log(`Initialized ${elements.length} dark energy animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing dark energy animations:', error);
         }
     }
 
     initCosmicMicrowaveAnimations() {
-        // Initialize cosmic microwave background animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="cmb"] .cmb-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initCMB(element, { patternSize: 20, noiseLevel: 0.1 });
-            });
+        try {
+            // Initialize cosmic microwave background animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="cosmic-microwave"] .cosmic-microwave-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initCosmicMicrowave(element, {
+                        patternSize: 20,
+                        noiseLevel: 0.1
+                    });
+                });
+                this.log(`Initialized ${elements.length} cosmic microwave background animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing cosmic microwave background animations:', error);
         }
     }
 
     initGravitationalLensingAnimations() {
-        // Initialize gravitational lensing animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="gravitational-lensing"] .gravitational-lensing-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initGravitationalLensing(element, { lensingStrength: 0.5 });
-            });
+        try {
+            // Initialize gravitational lensing animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="gravitational-lensing"] .gravitational-lensing-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initGravitationalLensing(element, {
+                        lensingStrength: 0.5
+                    });
+                });
+                this.log(`Initialized ${elements.length} gravitational lensing animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing gravitational lensing animations:', error);
         }
     }
 
     initSpacetimeCurvatureAnimations() {
-        // Initialize spacetime curvature animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="spacetime-curvature"] .spacetime-curvature-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initSpacetimeCurvature(element, { curvatureRadius: 100 });
-            });
+        try {
+            // Initialize spacetime curvature animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="spacetime-curvature"] .spacetime-curvature-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initSpacetimeCurvature(element, {
+                        curvatureRadius: 100
+                    });
+                });
+                this.log(`Initialized ${elements.length} spacetime curvature animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing spacetime curvature animations:', error);
         }
     }
 
     initQuantumEntanglementAnimations() {
-        // Initialize quantum entanglement animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="quantum-entanglement"] .quantum-entanglement-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initQuantumEntanglement(element, { entanglementStrength: 0.8 });
-            });
+        try {
+            // Initialize quantum entanglement animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="quantum-entanglement"] .quantum-entanglement-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initQuantumEntanglement(element, {
+                        entanglementStrength: 0.8
+                    });
+                });
+                this.log(`Initialized ${elements.length} quantum entanglement animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing quantum entanglement animations:', error);
         }
     }
 
     initCosmicRayBurstAnimations() {
-        // Initialize cosmic ray burst animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="cosmic-ray-burst"] .cosmic-ray-burst-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initCosmicRayBurst(element, { burstDuration: 2, particleCount: 50 });
-            });
+        try {
+            // Initialize cosmic ray burst animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="cosmic-ray-burst"] .cosmic-ray-burst-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initCosmicRayBurst(element, {
+                        burstDuration: 2,
+                        particleCount: 50
+                    });
+                });
+                this.log(`Initialized ${elements.length} cosmic ray burst animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing cosmic ray burst animations:', error);
         }
     }
 
     initSolarFlareAnimations() {
-        // Initialize solar flare animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="solar-flare"] .solar-flare-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initSolarFlare(element, { flareDuration: 1, particleCount: 10 });
-            });
+        try {
+            // Initialize solar flare animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="solar-flare"] .solar-flare-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initSolarFlare(element, {
+                        flareDuration: 1,
+                        particleCount: 10
+                    });
+                });
+                this.log(`Initialized ${elements.length} solar flare animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing solar flare animations:', error);
         }
     }
 
     initAsteroidImpactAnimations() {
-        // Initialize asteroid impact animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="asteroid-impact"] .asteroid-impact-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initAsteroidImpact(element, { impactSpeed: 10, particleCount: 100 });
-            });
+        try {
+            // Initialize asteroid impact animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="asteroid-impact"] .asteroid-impact-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initAsteroidImpact(element, {
+                        impactSpeed: 10,
+                        particleCount: 100
+                    });
+                });
+                this.log(`Initialized ${elements.length} asteroid impact animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing asteroid impact animations:', error);
         }
     }
 
     initSpiralGalaxyAnimations() {
-        // Initialize spiral galaxy animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="spiral-galaxy"] .spiral-galaxy-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initSpiralGalaxy(element, { spiralSpeed: 0.01 });
-            });
+        try {
+            // Initialize spiral galaxy animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="spiral-galaxy"] .spiral-galaxy-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initSpiralGalaxy(element, {
+                        spiralSpeed: 0.01
+                    });
+                });
+                this.log(`Initialized ${elements.length} spiral galaxy animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing spiral galaxy animations:', error);
         }
     }
 
     initCosmicVortexAnimations() {
-        // Initialize cosmic vortex animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="cosmic-vortex"] .cosmic-vortex-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initCosmicVortex(element, { vortexStrength: 0.5 });
-            });
+        try {
+            // Initialize cosmic vortex animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="cosmic-vortex"] .cosmic-vortex-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initCosmicVortex(element, {
+                        vortexStrength: 0.5
+                    });
+                });
+                this.log(`Initialized ${elements.length} cosmic vortex animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing cosmic vortex animations:', error);
         }
     }
 
     initStellarNurseryAnimations() {
-        // Initialize stellar nursery animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="stellar-nursery"] .stellar-nursery-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initStellarNursery(element, { starBirthRate: 0.01 });
-            });
+        try {
+            // Initialize stellar nursery animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="stellar-nursery"] .stellar-nursery-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initStellarNursery(element, {
+                        starBirthRate: 0.01
+                    });
+                });
+                this.log(`Initialized ${elements.length} stellar nursery animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing stellar nursery animations:', error);
         }
     }
 
     initQuantumFieldAnimations() {
-        // Initialize quantum field animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="quantum-field"] .quantum-field-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initQuantumField(element, { fieldStrength: 0.5 });
-            });
+        try {
+            // Initialize quantum field animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="quantum-field"] .quantum-field-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initQuantumField(element, {
+                        fieldStrength: 0.5
+                    });
+                });
+                this.log(`Initialized ${elements.length} quantum field animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing quantum field animations:', error);
         }
     }
 
     initDarkMatterWebAnimations() {
-        // Initialize dark matter web animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="dark-matter-web"] .dark-matter-web-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initDarkMatterWeb(element, { webStrength: 0.5 });
-            });
+        try {
+            // Initialize dark matter web animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="dark-matter-web"] .dark-matter-web-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initDarkMatterWeb(element, {
+                        webStrength: 0.5
+                    });
+                });
+                this.log(`Initialized ${elements.length} dark matter web animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing dark matter web animations:', error);
         }
     }
 
     initNeutronStarCollisionAnimations() {
-        // Initialize neutron star collision animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="neutron-star-collision"] .neutron-star-collision-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initNeutronStarCollision(element, { collisionSpeed: 10 });
-            });
+        try {
+            // Initialize neutron star collision animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="neutron-star-collision"] .neutron-star-collision-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initNeutronStarCollision(element, {
+                        collisionSpeed: 10
+                    });
+                });
+                this.log(`Initialized ${elements.length} neutron star collision animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing neutron star collision animations:', error);
         }
     }
 
     initCosmicStormAnimations() {
-        // Initialize cosmic storm animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="cosmic-storm"] .cosmic-storm-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initCosmicStorm(element, { stormDuration: 10, particleCount: 100 });
-            });
+        try {
+            // Initialize cosmic storm animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="cosmic-storm"] .cosmic-storm-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initCosmicStorm(element, {
+                        stormDuration: 10,
+                        particleCount: 100
+                    });
+                });
+                this.log(`Initialized ${elements.length} cosmic storm animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing cosmic storm animations:', error);
         }
     }
 
     initInterstellarTravelAnimations() {
-        // Initialize interstellar travel animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="interstellar-travel"] .interstellar-travel-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initInterstellarTravel(element, { travelDuration: 10, distance: 100 });
-            });
+        try {
+            // Initialize interstellar travel animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="interstellar-travel"] .interstellar-travel-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initInterstellarTravel(element, {
+                        travelDuration: 10,
+                        distance: 100
+                    });
+                });
+                this.log(`Initialized ${elements.length} interstellar travel animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing interstellar travel animations:', error);
         }
     }
 
     initBlackHoleMergerAnimations() {
-        // Initialize black hole merger animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="black-hole-merger"] .black-hole-merger-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initBlackHoleMerger(element, { mergerSpeed: 10 });
-            });
+        try {
+            // Initialize black hole merger animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="black-hole-merger"] .black-hole-merger-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initBlackHoleMerger(element, {
+                        mergerSpeed: 10
+                    });
+                });
+                this.log(`Initialized ${elements.length} black hole merger animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing black hole merger animations:', error);
         }
     }
 
     initCosmicSymphonyAnimations() {
-        // Initialize cosmic symphony animations for demo cards
-        const elements = document.querySelectorAll('[data-demo="cosmic-symphony"] .cosmic-symphony-animation');
-        if (elements.length > 0 && this.animations) {
-            elements.forEach(element => {
-                this.animations.initCosmicSymphony(element, { symphonyDuration: 10, noteCount: 10 });
-            });
+        try {
+            // Initialize cosmic symphony animations for demo cards
+            const elements = document.querySelectorAll('[data-demo="cosmic-symphony"] .cosmic-symphony-animation');
+            if (elements.length > 0 && this.animations) {
+                elements.forEach(element => {
+                    this.animations.initCosmicSymphony(element, {
+                        symphonyDuration: 10,
+                        noteCount: 10
+                    });
+                });
+                this.log(`Initialized ${elements.length} cosmic symphony animations`);
+            }
+        } catch (error) {
+            console.error('Error initializing cosmic symphony animations:', error);
         }
     }
 }
