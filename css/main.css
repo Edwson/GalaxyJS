@@ -733,27 +733,18 @@ body {
         flex-direction: column;
         text-align: center;
         gap: var(--space-2xl);
-        padding-top: 100px;
     }
     
     .hero-title {
-        font-size: var(--font-size-5xl);
-    }
-
-    .hero-subtitle {
-        font-size: var(--font-size-lg);
+        font-size: var(--font-size-4xl);
     }
     
     .nav-menu {
         display: none;
     }
-
-    .nav-container {
-        justify-content: center;
-    }
     
     .demos-grid {
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: 1fr;
     }
     
     .interactive-container {
@@ -763,77 +754,36 @@ body {
     .docs-content {
         grid-template-columns: 1fr;
     }
-
-    .docs-sidebar {
-        margin-bottom: var(--space-xl);
-    }
     
     .footer-content {
         grid-template-columns: 1fr;
         text-align: center;
     }
-
-    .social-links {
-        justify-content: center;
-    }
 }
 
 @media (max-width: 480px) {
     .hero-title {
-        font-size: var(--font-size-4xl);
+        font-size: var(--font-size-3xl);
     }
     
     .hero-buttons {
         flex-direction: column;
-        align-items: center;
-    }
-
-    .btn-primary, .btn-secondary {
-        width: 100%;
-        max-width: 300px;
     }
     
-    .galaxy-system {
-        width: 250px;
-        height: 250px;
-    }
-
-    .demos-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .docs-main {
-        padding: var(--space-lg);
-    }
-}
-
-@media (max-width: 375px) {
-    .hero-title {
-        font-size: var(--font-size-3xl);
-    }
-
-    .hero-subtitle {
-        font-size: var(--font-size-md);
-    }
-
     .galaxy-system {
         width: 200px;
         height: 200px;
     }
+} 
 
-    .section-title {
-        font-size: var(--font-size-3xl);
-    }
-
-    .demo-card {
-        padding: var(--space-md);
-    }
-
-    .docs-main {
-        padding: var(--space-md);
-    }
-
-    .footer-content {
-        gap: var(--space-lg);
-    }
+@media (max-width: 768px) {
+  .hero-section {
+    padding-top: calc(var(--space-3xl) + 3.5rem); /* Extra space for nav + gap */
+  }
 }
+
+@media (max-width: 480px) {
+  .hero-section {
+    padding-top: calc(var(--space-3xl) + 2.5rem); /* Slightly less for mobile */
+  }
+} 

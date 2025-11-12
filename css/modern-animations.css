@@ -1,0 +1,374 @@
+/**
+ * Modern Animations CSS
+ * Enhanced animations with Web Animations API support and accessibility
+ */
+
+:root {
+    --animation-duration-multiplier: 1;
+    --animation-easing: cubic-bezier(0.4, 0, 0.2, 1);
+    --animation-easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --glow-intensity: 20px;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    :root {
+        --animation-duration-multiplier: 0.01;
+    }
+}
+
+/* Modern Pulsar Wave Animation */
+@keyframes pulsar-wave {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(3);
+        opacity: 0;
+    }
+}
+
+/* Black Hole Spiral Animation */
+@keyframes blackhole-spiral {
+    0% {
+        transform: translate(var(--start-x, 0), var(--start-y, 0)) scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(0, 0) scale(0.8) rotate(180deg);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(0) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Wormhole Expansion */
+@keyframes wormhole-expand {
+    0% {
+        transform: translate(-50%, -50%) scale(0.1);
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(3);
+        opacity: 0;
+    }
+}
+
+/* Supernova Burst */
+@keyframes supernova-burst {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    20% {
+        transform: translate(
+            calc(-50% + cos(var(--angle, 0)) * 100px),
+            calc(-50% + sin(var(--angle, 0)) * 100px)
+        ) scale(1.2);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(
+            calc(-50% + cos(var(--angle, 0)) * 200px),
+            calc(-50% + sin(var(--angle, 0)) * 200px)
+        ) scale(0);
+        opacity: 0;
+    }
+}
+
+/* Asteroid Fall Animation */
+@keyframes asteroid-fall {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-20%, 120vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Cosmic Ray Flash */
+@keyframes cosmic-ray-flash {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scaleY(0.5);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(20px) scaleY(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(40px) scaleY(0.5);
+    }
+}
+
+/* Nebula Drift Animation */
+@keyframes nebula-drift {
+    0% {
+        transform: translate(0, 0) scale(0.8);
+        opacity: 0;
+    }
+    20% {
+        opacity: 0.6;
+    }
+    80% {
+        opacity: 0.6;
+    }
+    100% {
+        transform: translate(
+            calc((random() - 0.5) * 50px),
+            calc((random() - 0.5) * 50px)
+        ) scale(1.2);
+        opacity: 0;
+    }
+}
+
+/* Binary Star Orbits */
+@keyframes binary-orbit-1 {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg) translateX(40px);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg) translateX(40px);
+    }
+}
+
+@keyframes binary-orbit-2 {
+    0% {
+        transform: translate(-50%, -50%) rotate(180deg) translateX(40px);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(540deg) translateX(40px);
+    }
+}
+
+/* Quantum Tunnel Animation */
+@keyframes quantum-tunnel {
+    0% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+    30% {
+        opacity: 0.3;
+    }
+    70% {
+        opacity: 0.3;
+    }
+    100% {
+        transform: translateX(300px) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Particle Glow Effect */
+@keyframes particle-glow {
+    0%, 100% {
+        filter: drop-shadow(0 0 2px currentColor);
+    }
+    50% {
+        filter: drop-shadow(0 0 var(--glow-intensity) currentColor);
+    }
+}
+
+/* Smooth Fade In */
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Smooth Fade Out */
+@keyframes fade-out {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+/* Scale Pulse */
+@keyframes scale-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Rotate Continuous */
+@keyframes rotate-continuous {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Shimmer Effect */
+@keyframes shimmer {
+    0% {
+        background-position: -200% center;
+    }
+    100% {
+        background-position: 200% center;
+    }
+}
+
+/* Bounce In */
+@keyframes bounce-in {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Slide In from Right */
+@keyframes slide-in-right {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Slide In from Left */
+@keyframes slide-in-left {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Enhanced Demo Card Hover */
+.demo-card {
+    transition: transform calc(300ms * var(--animation-duration-multiplier)) var(--animation-easing),
+                box-shadow calc(300ms * var(--animation-duration-multiplier)) var(--animation-easing);
+}
+
+.demo-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(255, 255, 255, 0.2);
+}
+
+.demo-card:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 4px;
+}
+
+/* Accessibility: Skip Link */
+.skip-link:focus {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+}
+
+/* Performance: GPU Acceleration Hints */
+.gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+/* Smooth Transitions */
+.smooth-transition {
+    transition: all calc(200ms * var(--animation-duration-multiplier)) var(--animation-easing);
+}
+
+/* Glow Animation Utility Classes */
+.glow-white {
+    animation: particle-glow calc(2s * var(--animation-duration-multiplier)) ease-in-out infinite;
+    --glow-intensity: 20px;
+}
+
+.glow-blue {
+    animation: particle-glow calc(2s * var(--animation-duration-multiplier)) ease-in-out infinite;
+    --glow-intensity: 20px;
+    color: rgba(100, 150, 255, 1);
+}
+
+.glow-purple {
+    animation: particle-glow calc(2s * var(--animation-duration-multiplier)) ease-in-out infinite;
+    --glow-intensity: 20px;
+    color: rgba(200, 100, 255, 1);
+}
+
+/* Loading Animation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-spinner {
+    animation: spin calc(1s * var(--animation-duration-multiplier)) linear infinite;
+}
+
+/* Utility: Pause on Reduced Motion */
+.reduced-motion * {
+    animation-play-state: paused !important;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .demo-card {
+        border: 2px solid currentColor;
+    }
+
+    .demo-card:focus {
+        outline-width: 3px;
+    }
+}
+
+/* Dark Mode Support (if needed) */
+@media (prefers-color-scheme: light) {
+    :root {
+        /* Adjust colors for light mode if needed */
+    }
+}

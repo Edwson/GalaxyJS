@@ -146,46 +146,41 @@ class GalaxyAnimations {
     
     animatePulsar(animation) {
         if (!animation.isActive) return;
-
+        
         const { element, config, waves } = animation;
         const time = Date.now();
-
-        // Create wave elements if they don't exist
-        if (!element.wavesInitialized) {
-            waves.forEach(() => {
-                const waveEl = document.createElement('div');
-                waveEl.className = 'pulsar-wave';
-                element.appendChild(waveEl);
-            });
-            element.wavesInitialized = true;
-        }
-
-        const waveElements = element.querySelectorAll('.pulsar-wave');
+        
+        // Remove old waves before drawing new ones
+        const oldWaves = element.querySelectorAll('.pulsar-wave');
+        oldWaves.forEach(wave => wave.remove());
+        
         waves.forEach((wave, index) => {
             const elapsed = time - wave.delay;
             const progress = (elapsed % (1000 / config.frequency)) / (1000 / config.frequency);
-
+            
             wave.radius = progress * 100;
             wave.opacity = 1 - progress;
-
-            const waveEl = waveElements[index];
-            if (waveEl) {
-                waveEl.style.cssText = `
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    width: ${wave.radius * 2}px;
-                    height: ${wave.radius * 2}px;
-                    border: 1px solid ${config.color};
-                    border-radius: 50%;
-                    transform: translate(-50%, -50%);
-                    opacity: ${wave.opacity * config.intensity};
-                    pointer-events: none;
-                    transition: none;
-                `;
-            }
+            
+            // Create wave element
+            const waveEl = document.createElement('div');
+            waveEl.className = 'pulsar-wave';
+            waveEl.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: ${wave.radius * 2}px;
+                height: ${wave.radius * 2}px;
+                border: 1px solid ${config.color};
+                border-radius: 50%;
+                transform: translate(-50%, -50%);
+                opacity: ${wave.opacity * config.intensity};
+                pointer-events: none;
+                transition: none;
+            `;
+            
+            element.appendChild(waveEl);
         });
-
+        
         requestAnimationFrame(() => this.animatePulsar(animation));
     }
     
@@ -232,43 +227,45 @@ class GalaxyAnimations {
     
     animateBlackHole(animation) {
         if (!animation.isActive) return;
-
+        
         const { element, config, particles } = animation;
-
-        // Create particle elements if they don't exist
-        if (!element.particlesInitialized) {
-            particles.forEach(() => {
-                const particleEl = document.createElement('div');
-                particleEl.className = 'accretion-particle';
-                element.appendChild(particleEl);
-            });
-            element.particlesInitialized = true;
+        
+        // Clean up old particles periodically
+        const now = Date.now();
+        if (now - animation.lastCleanup > 100) {
+            const oldParticles = element.querySelectorAll('.accretion-particle');
+            oldParticles.forEach(particle => particle.remove());
+            animation.lastCleanup = now;
         }
-
-        const particleElements = element.querySelectorAll('.accretion-particle');
-        particles.forEach((particle, index) => {
+        
+        // Update particle positions
+        particles.forEach(particle => {
             particle.angle += particle.speed;
             particle.x = Math.cos(particle.angle) * particle.radius;
             particle.y = Math.sin(particle.angle) * particle.radius;
-
-            const particleEl = particleElements[index];
-            if (particleEl) {
-                particleEl.style.cssText = `
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    width: 2px;
-                    height: 2px;
-                    background: #ffffff;
-                    border-radius: 50%;
-                    transform: translate(calc(-50% + ${particle.x}px), calc(-50% + ${particle.y}px));
-                    pointer-events: none;
-                    box-shadow: 0 0 4px #ffffff;
-                    z-index: 1;
-                `;
-            }
         });
-
+        
+        // Create particle elements
+        particles.forEach(particle => {
+            const particleEl = document.createElement('div');
+            particleEl.className = 'accretion-particle';
+            particleEl.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 2px;
+                height: 2px;
+                background: #ffffff;
+                border-radius: 50%;
+                transform: translate(calc(-50% + ${particle.x}px), calc(-50% + ${particle.y}px));
+                pointer-events: none;
+                box-shadow: 0 0 4px #ffffff;
+                z-index: 1;
+            `;
+            
+            element.appendChild(particleEl);
+        });
+        
         requestAnimationFrame(() => this.animateBlackHole(animation));
     }
     
@@ -307,50 +304,51 @@ class GalaxyAnimations {
     
     animateWormhole(animation) {
         if (!animation.isActive) return;
-
+        
         const { element, config, stars } = animation;
-
-        if (!element.starsInitialized) {
-            stars.forEach(() => {
-                const starEl = document.createElement('div');
-                starEl.className = 'wormhole-star';
-                element.appendChild(starEl);
-            });
-            element.starsInitialized = true;
-        }
-
-        const starElements = element.querySelectorAll('.wormhole-star');
-        stars.forEach((star, index) => {
+        
+        // Update star positions
+        stars.forEach(star => {
             star.z -= config.tunnelSpeed;
             if (star.z < 1) {
                 star.z = config.depth;
                 star.x = (Math.random() - 0.5) * 100;
                 star.y = (Math.random() - 0.5) * 100;
             }
-
+            
+            // Calculate 3D position
             const scale = 1 / star.z;
             const x = star.x * scale;
             const y = star.y * scale;
             const size = star.size * scale;
-
-            const starEl = starElements[index];
-            if (starEl) {
-                starEl.style.cssText = `
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    width: ${size}px;
-                    height: ${size}px;
-                    background: #ffffff;
-                    border-radius: 50%;
-                    transform: translate(calc(-50% + ${x}px), calc(-50% + ${y}px));
-                    pointer-events: none;
-                    box-shadow: 0 0 ${size * 2}px #ffffff;
-                    opacity: ${scale};
-                `;
-            }
+            
+            // Create star element
+            const starEl = document.createElement('div');
+            starEl.className = 'wormhole-star';
+            starEl.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: ${size}px;
+                height: ${size}px;
+                background: #ffffff;
+                border-radius: 50%;
+                transform: translate(calc(-50% + ${x}px), calc(-50% + ${y}px));
+                pointer-events: none;
+                box-shadow: 0 0 ${size * 2}px #ffffff;
+                opacity: ${scale};
+            `;
+            
+            element.appendChild(starEl);
+            
+            // Remove star after frame
+            setTimeout(() => {
+                if (starEl.parentNode) {
+                    starEl.remove();
+                }
+            }, 50);
         });
-
+        
         requestAnimationFrame(() => this.animateWormhole(animation));
     }
     
@@ -394,34 +392,25 @@ class GalaxyAnimations {
     
     animateSupernova(animation) {
         if (!animation.isActive) return;
-
+        
         const { element, config, particles, startTime } = animation;
         const elapsed = Date.now() - startTime;
         const progress = elapsed / config.duration;
-
+        
         if (progress >= 1) {
             animation.isActive = false;
-            // Optionally remove elements here
             return;
         }
-
-        if (!element.particlesInitialized) {
-            particles.forEach(() => {
-                const particleEl = document.createElement('div');
-                particleEl.className = 'supernova-particle';
-                element.appendChild(particleEl);
-            });
-            element.particlesInitialized = true;
-        }
-
-        const particleElements = element.querySelectorAll('.supernova-particle');
-        particles.forEach((particle, index) => {
+        
+        // Update particles
+        particles.forEach(particle => {
             particle.x += particle.vx * 0.1;
             particle.y += particle.vy * 0.1;
             particle.life -= particle.decay;
-
-            const particleEl = particleElements[index];
-            if (particle.life > 0 && particleEl) {
+            
+            if (particle.life > 0) {
+                const particleEl = document.createElement('div');
+                particleEl.className = 'supernova-particle';
                 particleEl.style.cssText = `
                     position: absolute;
                     top: 50%;
@@ -435,11 +424,17 @@ class GalaxyAnimations {
                     box-shadow: 0 0 8px #ffffff;
                     opacity: ${particle.life};
                 `;
-            } else if (particleEl) {
-                particleEl.style.opacity = '0';
+                
+                element.appendChild(particleEl);
+                
+                setTimeout(() => {
+                    if (particleEl.parentNode) {
+                        particleEl.remove();
+                    }
+                }, 50);
             }
         });
-
+        
         requestAnimationFrame(() => this.animateSupernova(animation));
     }
     
@@ -479,38 +474,35 @@ class GalaxyAnimations {
     
     animateAsteroidField(animation) {
         if (!animation.isActive) return;
-
+        
         const { element, config, asteroids } = animation;
-
-        if (!element.asteroidsInitialized) {
-            asteroids.forEach(() => {
-                const asteroidEl = document.createElement('div');
-                asteroidEl.className = 'asteroid';
-                element.appendChild(asteroidEl);
-            });
-            element.asteroidsInitialized = true;
-        }
-
-        const asteroidElements = element.querySelectorAll('.asteroid');
-        asteroids.forEach((asteroid, index) => {
+        
+        asteroids.forEach(asteroid => {
             asteroid.rotation += asteroid.rotationSpeed;
-
-            const asteroidEl = asteroidElements[index];
-            if (asteroidEl) {
-                asteroidEl.style.cssText = `
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    width: ${asteroid.size}px;
-                    height: ${asteroid.size}px;
-                    background: #666666;
-                    border-radius: 50%;
-                    transform: translate(calc(-50% + ${asteroid.x}px), calc(-50% + ${asteroid.y}px)) rotate(${asteroid.rotation}rad);
-                    pointer-events: none;
-                `;
-            }
+            
+            const asteroidEl = document.createElement('div');
+            asteroidEl.className = 'asteroid';
+            asteroidEl.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: ${asteroid.size}px;
+                height: ${asteroid.size}px;
+                background: #666666;
+                border-radius: 50%;
+                transform: translate(calc(-50% + ${asteroid.x}px), calc(-50% + ${asteroid.y}px)) rotate(${asteroid.rotation}rad);
+                pointer-events: none;
+            `;
+            
+            element.appendChild(asteroidEl);
+            
+            setTimeout(() => {
+                if (asteroidEl.parentNode) {
+                    asteroidEl.remove();
+                }
+            }, 50);
         });
-
+        
         requestAnimationFrame(() => this.animateAsteroidField(animation));
     }
     
@@ -549,20 +541,10 @@ class GalaxyAnimations {
     
     animateCosmicRay(animation) {
         if (!animation.isActive) return;
-
+        
         const { element, config, rays } = animation;
-
-        if (!element.raysInitialized) {
-            rays.forEach(() => {
-                const rayEl = document.createElement('div');
-                rayEl.className = 'cosmic-ray';
-                element.appendChild(rayEl);
-            });
-            element.raysInitialized = true;
-        }
-
-        const rayElements = element.querySelectorAll('.cosmic-ray');
-        rays.forEach((ray, index) => {
+        
+        rays.forEach(ray => {
             ray.progress += ray.speed * 0.01;
             if (ray.progress > 1) {
                 ray.progress = 0;
@@ -570,23 +552,30 @@ class GalaxyAnimations {
                 ray.y = (Math.random() - 0.5) * 100;
                 ray.angle = Math.random() * Math.PI * 2;
             }
-
-            const rayEl = rayElements[index];
-            if (rayEl) {
-                rayEl.style.cssText = `
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    width: 2px;
-                    height: ${config.length}px;
-                    background: linear-gradient(to bottom, #ffffff, transparent);
-                    transform: translate(calc(-50% + ${ray.x}px), calc(-50% + ${ray.y}px)) rotate(${ray.angle}rad);
-                    pointer-events: none;
-                    opacity: ${1 - ray.progress};
-                `;
-            }
+            
+            const rayEl = document.createElement('div');
+            rayEl.className = 'cosmic-ray';
+            rayEl.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 2px;
+                height: ${config.length}px;
+                background: linear-gradient(to bottom, #ffffff, transparent);
+                transform: translate(calc(-50% + ${ray.x}px), calc(-50% + ${ray.y}px)) rotate(${ray.angle}rad);
+                pointer-events: none;
+                opacity: ${1 - ray.progress};
+            `;
+            
+            element.appendChild(rayEl);
+            
+            setTimeout(() => {
+                if (rayEl.parentNode) {
+                    rayEl.remove();
+                }
+            }, 50);
         });
-
+        
         requestAnimationFrame(() => this.animateCosmicRay(animation));
     }
     
@@ -630,61 +619,62 @@ class GalaxyAnimations {
     
     animateParticleSystem(system) {
         if (!system.isActive) return;
-
+        
         const { container, config, particles } = system;
-
-        if (!container.particlesInitialized) {
-            particles.forEach(() => {
-                const particleEl = document.createElement('div');
-                particleEl.className = 'particle';
-                container.appendChild(particleEl);
-            });
-            container.particlesInitialized = true;
-        }
-
-        const particleElements = container.querySelectorAll('.particle');
-        particles.forEach((particle, index) => {
+        
+        particles.forEach(particle => {
+            // Apply physics
             particle.vy += config.gravity;
             particle.vx *= config.friction;
             particle.vy *= config.friction;
-
+            
             particle.x += particle.vx;
             particle.y += particle.vy;
-
+            
+            // Bounce off walls
             if (particle.x < 0 || particle.x > container.offsetWidth) {
                 particle.vx *= -config.bounce;
                 particle.x = Math.max(0, Math.min(container.offsetWidth, particle.x));
             }
-
+            
             if (particle.y < 0 || particle.y > container.offsetHeight) {
                 particle.vy *= -config.bounce;
                 particle.y = Math.max(0, Math.min(container.offsetHeight, particle.y));
             }
-
+            
+            // Update life
             particle.life -= particle.decay;
             if (particle.life <= 0) {
                 particle.life = 1;
                 particle.x = Math.random() * container.offsetWidth;
                 particle.y = Math.random() * container.offsetHeight;
             }
-
-            const particleEl = particleElements[index];
-            if (particleEl) {
-                particleEl.style.cssText = `
-                    position: absolute;
-                    top: ${particle.y}px;
-                    left: ${particle.x}px;
-                    width: ${particle.size}px;
-                    height: ${particle.size}px;
-                    background: #ffffff;
-                    border-radius: 50%;
-                    pointer-events: none;
-                    opacity: ${particle.life};
-                    box-shadow: 0 0 ${particle.size * 2}px #ffffff;
-                `;
-            }
+            
+            // Create particle element
+            const particleEl = document.createElement('div');
+            particleEl.className = 'particle';
+            particleEl.style.cssText = `
+                position: absolute;
+                top: ${particle.y}px;
+                left: ${particle.x}px;
+                width: ${particle.size}px;
+                height: ${particle.size}px;
+                background: #ffffff;
+                border-radius: 50%;
+                pointer-events: none;
+                opacity: ${particle.life};
+                box-shadow: 0 0 ${particle.size * 2}px #ffffff;
+            `;
+            
+            container.appendChild(particleEl);
+            
+            setTimeout(() => {
+                if (particleEl.parentNode) {
+                    particleEl.remove();
+                }
+            }, 50);
         });
-
+        
         requestAnimationFrame(() => this.animateParticleSystem(system));
     }
     
@@ -725,25 +715,15 @@ class GalaxyAnimations {
     
     animateMouseTrail(trail) {
         if (!trail.isActive) return;
-
+        
         const { container, config, points } = trail;
-
-        // Create trail particle elements if they don't exist
-        if (!container.trailInitialized) {
-            for (let i = 0; i < config.trailLength; i++) {
-                const trailEl = document.createElement('div');
-                trailEl.className = 'trail-particle';
-                container.appendChild(trailEl);
-            }
-            container.trailInitialized = true;
-        }
-
-        const trailElements = container.querySelectorAll('.trail-particle');
+        
         points.forEach((point, index) => {
             point.life *= config.fadeSpeed;
-
-            const trailEl = trailElements[index];
-            if (point.life > 0.01 && trailEl) {
+            
+            if (point.life > 0.01) {
+                const trailEl = document.createElement('div');
+                trailEl.className = 'trail-particle';
                 trailEl.style.cssText = `
                     position: absolute;
                     top: ${point.y}px;
@@ -756,11 +736,17 @@ class GalaxyAnimations {
                     opacity: ${point.life};
                     box-shadow: 0 0 ${config.particleSize * 2}px #ffffff;
                 `;
-            } else if (trailEl) {
-                trailEl.style.opacity = '0';
+                
+                container.appendChild(trailEl);
+                
+                setTimeout(() => {
+                    if (trailEl.parentNode) {
+                        trailEl.remove();
+                    }
+                }, 50);
             }
         });
-
+        
         requestAnimationFrame(() => this.animateMouseTrail(trail));
     }
     
@@ -799,28 +785,19 @@ class GalaxyAnimations {
     
     animateGravitySimulation(simulation) {
         if (!simulation.isActive) return;
-
+        
         const { container, config, bodies } = simulation;
-
-        if (!container.bodiesInitialized) {
-            bodies.forEach(() => {
-                const bodyEl = document.createElement('div');
-                bodyEl.className = 'gravity-body';
-                container.appendChild(bodyEl);
-            });
-            container.bodiesInitialized = true;
-        }
-
-        const bodyElements = container.querySelectorAll('.gravity-body');
+        
+        // Calculate gravitational forces
         bodies.forEach((body, i) => {
             let fx = 0, fy = 0;
-
+            
             bodies.forEach((other, j) => {
                 if (i !== j) {
                     const dx = other.x - body.x;
                     const dy = other.y - body.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
-
+                    
                     if (distance > 0) {
                         const force = (config.gravity * body.mass * other.mass) / (distance * distance);
                         fx += (dx / distance) * force;
@@ -828,39 +805,50 @@ class GalaxyAnimations {
                     }
                 }
             });
-
+            
+            // Apply forces
             body.vx += fx / body.mass * 0.1;
             body.vy += fy / body.mass * 0.1;
-
+            
+            // Update position
             body.x += body.vx;
             body.y += body.vy;
-
+            
+            // Bounce off walls
             if (body.x < 0 || body.x > container.offsetWidth) {
                 body.vx *= -0.8;
                 body.x = Math.max(0, Math.min(container.offsetWidth, body.x));
             }
-
+            
             if (body.y < 0 || body.y > container.offsetHeight) {
                 body.vy *= -0.8;
                 body.y = Math.max(0, Math.min(container.offsetHeight, body.y));
             }
-
-            const bodyEl = bodyElements[i];
-            if (bodyEl) {
-                bodyEl.style.cssText = `
-                    position: absolute;
-                    top: ${body.y}px;
-                    left: ${body.x}px;
-                    width: ${body.size}px;
-                    height: ${body.size}px;
-                    background: #ffffff;
-                    border-radius: 50%;
-                    pointer-events: none;
-                    box-shadow: 0 0 ${body.size}px #ffffff;
-                `;
-            }
+            
+            // Create body element
+            const bodyEl = document.createElement('div');
+            bodyEl.className = 'gravity-body';
+            bodyEl.style.cssText = `
+                position: absolute;
+                top: ${body.y}px;
+                left: ${body.x}px;
+                width: ${body.size}px;
+                height: ${body.size}px;
+                background: #ffffff;
+                border-radius: 50%;
+                pointer-events: none;
+                box-shadow: 0 0 ${body.size}px #ffffff;
+            `;
+            
+            container.appendChild(bodyEl);
+            
+            setTimeout(() => {
+                if (bodyEl.parentNode) {
+                    bodyEl.remove();
+                }
+            }, 50);
         });
-
+        
         requestAnimationFrame(() => this.animateGravitySimulation(simulation));
     }
     

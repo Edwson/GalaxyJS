@@ -1,8 +1,8 @@
 {
   "name": "galaxyjs",
-  "version": "1.0.0",
-  "description": "A sophisticated open-source CSS/JS animation library featuring 20+ stunning space-themed animations",
-  "main": "js/main.js",
+  "version": "2.0.0",
+  "description": "Modern cosmic animation library with 40+ space-themed animations, advanced performance optimization, and full accessibility support",
+  "main": "js/galaxy-enhanced.js",
   "scripts": {
     "dev": "live-server --port=3000 --open=/",
     "build": "echo 'Build complete'",
@@ -32,7 +32,13 @@
     "universe",
     "cosmos",
     "scientific",
-    "interactive"
+    "interactive",
+    "web-animations-api",
+    "performance",
+    "accessibility",
+    "object-pooling",
+    "canvas-optimization",
+    "adaptive-quality"
   ],
   "author": {
     "name": "GalaxyJS Team",

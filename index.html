@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/modern-animations.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/iconfont/tabler-icons.min.css">
 </head>
 <body>
@@ -892,8 +893,127 @@ galaxy.animations.initBlackHole('.blackhole-element', {
     bubbleSize: 40,          // Bubble size (px)
     expansionSpeed: 0.01     // Expansion speed
 });</code></pre>
+
+                    <h4>Neutron Star</h4>
+                    <pre><code>galaxy.animations.initNeutronStar(element, {
+    pulseRate: 0.02,         // Pulse rate
+    brightness: 0.9,         // Star brightness
+    color: '#CCE0FF'         // Star color
+});</code></pre>
+
+                    <h4>Quasar</h4>
+                    <pre><code>galaxy.animations.initQuasar(element, {
+    coreSize: 15,            // Core size (px)
+    jetLength: 60,           // Jet length (px)
+    jetSpeed: 2,             // Jet animation speed
+    brightness: 1.0          // Core brightness
+});</code></pre>
+
+                    <h4>Spiral Galaxy</h4>
+                    <pre><code>galaxy.animations.initSpiralGalaxy(element, {
+    numArms: 4,              // Number of spiral arms
+    numStars: 200,           // Number of stars
+    rotationSpeed: 0.01,     // Rotation speed
+    spiralTightness: 0.25    // How tight the spiral is
+});</code></pre>
+
+                    <h4>Cosmic Vortex</h4>
+                    <pre><code>galaxy.animations.initCosmicVortex(element, {
+    particleCount: 20,       // Number of particles
+    vortexSpeed: 0.05,       // Rotation speed
+    radius: 35,              // Vortex radius
+    color: '#C864FF'         // Particle color
+});</code></pre>
+
+                    <h4>Stellar Nursery</h4>
+                    <pre><code>galaxy.animations.initStellarNursery(element, {
+    cloudCount: 5,           // Number of gas clouds
+    formingStars: true,      // Show forming stars
+    cloudSize: 40,           // Cloud size (px)
+    color: 'hsl(280, 60%, 50%)' // Cloud color
+});</code></pre>
+
+                    <h4>Quantum Field</h4>
+                    <pre><code>galaxy.animations.initQuantumField(element, {
+    gridSize: 5,             // Grid size (5x5)
+    fluctuationSpeed: 0.05,  // Fluctuation speed
+    intensity: 0.8,          // Field intensity
+    color: '#9664FF'         // Field color
+});</code></pre>
+
+                    <h4>Dark Matter Web</h4>
+                    <pre><code>galaxy.animations.initDarkMatterWeb(element, {
+    nodeCount: 8,            // Number of nodes
+    connections: 2,          // Connections per node
+    webRadius: 35,           // Web radius (%)
+    color: '#643296'         // Web color
+});</code></pre>
+
+                    <h4>Neutron Star Collision</h4>
+                    <pre><code>galaxy.animations.initNeutronStarCollision(element, {
+    collisionSpeed: 0.5,     // Approach speed
+    explosionSize: 60,       // Explosion radius
+    particleCount: 16,       // Debris particles
+    cycleTime: 5000          // Time per cycle (ms)
+});</code></pre>
+
+                    <h4>Cosmic Storm</h4>
+                    <pre><code>galaxy.animations.initCosmicStorm(element, {
+    lightningFrequency: 1500, // Lightning interval (ms)
+    particleCount: 15,        // Storm particles
+    stormIntensity: 0.8,      // Storm intensity
+    color: '#C8C8FF'          // Lightning color
+});</code></pre>
+
+                    <h4>Interstellar Travel</h4>
+                    <pre><code>galaxy.animations.initInterstellarTravel(element, {
+    starCount: 20,           // Number of star trails
+    speed: 3,                // Travel speed
+    trailLength: 30,         // Star trail length
+    color: '#FFFFFF'         // Star trail color
+});</code></pre>
+
+                    <h4>Black Hole Merger</h4>
+                    <pre><code>galaxy.animations.initBlackHoleMerger(element, {
+    approachSpeed: 0.2,      // Orbital decay speed
+    waveCount: 3,            // Gravitational waves
+    mergeRadius: 0,          // Merge distance
+    cycleTime: 6000          // Time per cycle (ms)
+});</code></pre>
+
+                    <h4>Cosmic Symphony</h4>
+                    <pre><code>galaxy.animations.initCosmicSymphony(element, {
+    barCount: 12,            // Number of sound bars
+    waveSpeed: 0.1,          // Wave animation speed
+    amplitude: 30,           // Bar height amplitude
+    gradient: true           // Use gradient colors
+});</code></pre>
+
+                    <h4>Solar Flare</h4>
+                    <pre><code>galaxy.animations.initSolarFlare(element, {
+    flareInterval: 1500,     // Time between flares (ms)
+    flareLength: 60,         // Flare length (px)
+    flareWidth: 4,           // Flare width (px)
+    color: '#FFC832'         // Flare color
+});</code></pre>
+
+                    <h4>Binary Stars</h4>
+                    <pre><code>galaxy.animations.initBinaryStars(element, {
+    orbitRadius: 35,         // Orbit radius
+    orbitSpeed: 0.03,        // Orbital speed
+    star1Color: '#FFC864',   // Primary star color
+    star2Color: '#96C8FF'    // Secondary star color
+});</code></pre>
+
+                    <h4>Dwarf Planet</h4>
+                    <pre><code>galaxy.animations.initDwarfPlanet(element, {
+    planetSize: 12,          // Planet size (px)
+    orbitRadius: 40,         // Orbit radius
+    orbitSpeed: 0.02,        // Orbital speed
+    color: '#C89664'         // Planet color
+});</code></pre>
                 </div>
-                
+
                 <div id="configuration" class="doc-section">
                     <h3>Configuration</h3>
                     <p>Global configuration options:</p>
@@ -1015,8 +1135,24 @@ document.addEventListener('galaxyjs:demo-click', (e) => {
     </footer>
 
     <!-- Scripts -->
+    <!-- New Modern Modules -->
+    <script src="js/particle-pool.js"></script>
+    <script src="js/performance-monitor.js"></script>
+    <script src="js/animation-engine.js"></script>
+    <script src="js/advanced-animations.js"></script>
+    <script src="js/animation-factory.js"></script>
+    <script src="js/accessibility.js"></script>
+    <script src="js/canvas-optimizer.js"></script>
+
+    <!-- Original Scripts -->
     <script src="js/main.js"></script>
     <script src="js/animations.js"></script>
     <script src="js/particles.js"></script>
+
+    <!-- Integration Script -->
+    <script src="js/galaxy-enhanced.js"></script>
+
+    <!-- Complete Animation Implementations - Makes ALL 40+ animations display properly -->
+    <script src="js/complete-animations.js"></script>
 </body>
 </html>
