@@ -15,7 +15,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  var VERSION = "3.0.0";
+  var VERSION = "3.0.1";
   var hasDOM = typeof document !== "undefined";
   var prefersReduced =
     hasDOM &&

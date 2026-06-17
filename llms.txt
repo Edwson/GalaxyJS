@@ -6,8 +6,8 @@
 
 ## Install
 ```
-<link rel="stylesheet" href="https://unpkg.com/galaxyjs@3/galaxy.css">
-<script src="https://unpkg.com/galaxyjs@3/galaxy.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/galaxyjs@3/galaxy.min.css">
+<script src="https://unpkg.com/galaxyjs@3/galaxy.min.js"></script>
 ```
 npm: `npm install galaxyjs` → `import Galaxy from "galaxyjs"; import "galaxyjs/galaxy.css";`
 

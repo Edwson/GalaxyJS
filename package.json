@@ -1,12 +1,12 @@
 {
   "name": "galaxyjs",
-  "version": "3.0.0",
-  "description": "GalaxyJS v3 'Nova' — a zero-dependency cosmic animation & UI component library. One unified API (Galaxy.create), 13 canvas animations, themeable UI components, full accessibility & reduced-motion support.",
+  "version": "3.0.1",
+  "description": "GalaxyJS v3 'Nova' \u2014 a zero-dependency cosmic animation & UI component library. One unified API (Galaxy.create), 43 canvas animations, themeable UI components, full accessibility & reduced-motion support.",
   "main": "galaxy.js",
   "module": "galaxy.js",
   "types": "galaxy.d.ts",
-  "unpkg": "galaxy.js",
-  "jsdelivr": "galaxy.js",
+  "unpkg": "galaxy.min.js",
+  "jsdelivr": "galaxy.min.js",
   "style": "galaxy.css",
   "sideEffects": [
     "galaxy.js",
@@ -26,9 +26,15 @@
     "start": "live-server --port=3000 --open=index.html",
     "dev": "live-server --port=3000 --open=index.html",
     "manifest": "node mcp/build-manifest.cjs",
+    "build:min": "node build.mjs",
     "mcp": "node mcp/server.mjs",
-    "lint": "eslint galaxy.js",
-    "format": "prettier --write '**/*.{js,css,html,md}'"
+    "lint": "eslint .",
+    "format": "prettier --write '**/*.{js,css,html,md}'",
+    "test": "node test.mjs",
+    "test:mcp": "node test-mcp.mjs",
+    "test:all": "npm test && npm run test:mcp",
+    "validate": "npm run manifest && npm run lint && npm run build:min && npm run test:all",
+    "prepublishOnly": "npm run manifest && npm run build:min && npm test"
   },
   "bin": {
     "galaxyjs-mcp": "mcp/server.mjs"
@@ -83,9 +89,13 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "eslint": "^8.0.0",
+    "@eslint/js": "^9.39.4",
+    "csso": "^5.0.5",
+    "eslint": "^9.39.4",
+    "globals": "^17.6.0",
     "live-server": "^1.2.2",
     "prettier": "^2.8.0",
+    "terser": "^5.48.0",
     "typescript": "^5.4.0"
   },
   "engines": {
@@ -99,7 +109,9 @@
   ],
   "files": [
     "galaxy.js",
+    "galaxy.min.js",
     "galaxy.css",
+    "galaxy.min.css",
     "galaxy.d.ts",
     "galaxy.manifest.json",
     "llms.txt",
@@ -107,72 +119,18 @@
     "mcp/",
     "docs/",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
-  "directories": {
-    "css": "css",
-    "js": "js",
-    "examples": "examples"
-  },
   "publishConfig": {
     "access": "public"
   },
-  "contributors": [
-    {
-      "name": "GalaxyJS Team",
-      "email": "team@galaxyjs.dev"
-    }
-  ],
-  "bundledDependencies": [],
-  "os": [
-    "darwin",
-    "linux",
-    "win32"
-  ],
-  "cpu": [
-    "x64",
-    "arm64"
-  ],
   "private": false,
-  "workspaces": [],
-  "config": {
-    "port": 3000
-  },
-  "eslintConfig": {
-    "env": {
-      "browser": true,
-      "es2021": true
-    },
-    "extends": "eslint:recommended",
-    "parserOptions": {
-      "ecmaVersion": "latest",
-      "sourceType": "module"
-    },
-    "rules": {
-      "indent": [
-        "error",
-        2
-      ],
-      "linebreak-style": [
-        "error",
-        "unix"
-      ],
-      "quotes": [
-        "error",
-        "single"
-      ],
-      "semi": [
-        "error",
-        "always"
-      ]
-    }
-  },
   "prettier": {
     "semi": true,
     "trailingComma": "es5",
     "singleQuote": true,
     "printWidth": 80,
     "tabWidth": 2
-  },
-  "bundleDependencies": []
+  }
 }

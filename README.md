@@ -4,8 +4,9 @@
 
 A zero-dependency cosmic **animation** + **UI component** library. Beautiful
 canvas backdrops, a themeable UI kit, and a single unified API — no build step,
-no framework, ~14&nbsp;kb.
+no framework, ~15&nbsp;kB gzipped.
 
+[![CI](https://github.com/Edwson/GalaxyJS/actions/workflows/ci.yml/badge.svg)](https://github.com/Edwson/GalaxyJS/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 ![Zero dependencies](https://img.shields.io/badge/dependencies-0-7c5cff)
 ![Version](https://img.shields.io/badge/version-3.0-22d3ee)
@@ -50,8 +51,8 @@ Or go fully declarative — no JS needed:
 ### CDN
 
 ```html
-<link rel="stylesheet" href="https://unpkg.com/galaxyjs@3/galaxy.css" />
-<script src="https://unpkg.com/galaxyjs@3/galaxy.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/galaxyjs@3/galaxy.min.css" />
+<script src="https://unpkg.com/galaxyjs@3/galaxy.min.js"></script>
 ```
 
 ### npm

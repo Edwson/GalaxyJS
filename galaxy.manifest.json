@@ -1,6 +1,6 @@
 {
   "name": "galaxyjs",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "title": "GalaxyJS",
   "description": "Zero-dependency cosmic animation & UI component library with one unified API.",
   "homepage": "https://github.com/Edwson/GalaxyJS",
@@ -10,11 +10,11 @@
   },
   "license": "MIT",
   "cdn": {
-    "js": "https://unpkg.com/galaxyjs@3/galaxy.js",
-    "css": "https://unpkg.com/galaxyjs@3/galaxy.css"
+    "js": "https://unpkg.com/galaxyjs@3/galaxy.min.js",
+    "css": "https://unpkg.com/galaxyjs@3/galaxy.min.css"
   },
   "install": {
-    "script": "<link rel=\"stylesheet\" href=\"https://unpkg.com/galaxyjs@3/galaxy.css\">\n<script src=\"https://unpkg.com/galaxyjs@3/galaxy.js\"></script>",
+    "script": "<link rel=\"stylesheet\" href=\"https://unpkg.com/galaxyjs@3/galaxy.min.css\">\n<script src=\"https://unpkg.com/galaxyjs@3/galaxy.min.js\"></script>",
     "npm": "npm install galaxyjs   //  import Galaxy from \"galaxyjs\"; import \"galaxyjs/galaxy.css\";"
   },
   "api": {
