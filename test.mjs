@@ -27,7 +27,7 @@ console.log('runtime');
 ok(typeof Galaxy.version === 'string', 'Galaxy.version is a string (' + Galaxy.version + ')');
 ok(typeof Galaxy.create === 'function' && typeof Galaxy.list === 'function' && typeof Galaxy.defaults === 'function', 'public API present (create / list / defaults)');
 const runtimeNames = Galaxy.list();
-ok(runtimeNames.length === 43, 'runtime lists 43 animations (got ' + runtimeNames.length + ')');
+ok(runtimeNames.length === 60, 'runtime lists 60 animations (got ' + runtimeNames.length + ')');
 
 console.log('version agreement');
 ok(Galaxy.version === manifest.version, 'manifest version matches runtime');
@@ -41,11 +41,10 @@ ok(manifest.animations.every((a) => a.name && a.desc && a.options), 'every manif
 ok(manifest.components.length === 13 && manifest.components.every((c) => c.name && c.desc && c.usage), '13 components, each with name + desc + usage');
 
 console.log('counts agree across files');
-const n = (s, re) => (s.match(re) || []).length;
-ok(/43 canvas animations/.test(pkg.description), 'package.json description says 43 canvas animations');
+ok(/60 canvas animations/.test(pkg.description), 'package.json description says 60 canvas animations');
 const dtsCount = (dts.match(/AnimationType\s*=([\s\S]*?);/)[1].match(/"[a-zA-Z]+"/g) || []).length;
-ok(dtsCount === 43, 'galaxy.d.ts declares 43 AnimationType members (got ' + dtsCount + ')');
-ok(/43 (canvas )?animations/.test(read('llms.txt')), 'llms.txt says 43 animations');
+ok(dtsCount === 60, 'galaxy.d.ts declares 60 AnimationType members (got ' + dtsCount + ')');
+ok(/60 (canvas )?animations/.test(read('llms.txt')), 'llms.txt says 60 animations');
 
 console.log('cdn points at the minified bundles');
 ok(/galaxy\.min\.js/.test(manifest.cdn.js) && /galaxy\.min\.css/.test(manifest.cdn.css), 'manifest cdn references galaxy.min.* ');

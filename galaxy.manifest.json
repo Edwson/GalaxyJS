@@ -1,6 +1,6 @@
 {
   "name": "galaxyjs",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "title": "GalaxyJS",
   "description": "Zero-dependency cosmic animation & UI component library with one unified API.",
   "homepage": "https://github.com/Edwson/GalaxyJS",
@@ -678,6 +678,250 @@
           "#f472b6"
         ],
         "background": "#05060f"
+      }
+    },
+    {
+      "name": "supernova",
+      "desc": "A star charges, collapses, then erupts in a shockwave",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#fff1c4",
+          "#ff9d5c",
+          "#7c5cff",
+          "#22d3ee"
+        ],
+        "background": "#04040c",
+        "particles": 150
+      }
+    },
+    {
+      "name": "quasar",
+      "desc": "Black-hole core with edge-on accretion disk + twin jets",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff",
+          "#eef3ff"
+        ],
+        "background": "#04040c",
+        "particles": 170
+      }
+    },
+    {
+      "name": "starcluster",
+      "desc": "A dense globular cluster rotating in 3D with depth",
+      "options": {
+        "speed": 1,
+        "count": 280,
+        "colors": [
+          "#ffffff",
+          "#bcd4ff",
+          "#fff1c4",
+          "#ffd6a5"
+        ],
+        "background": "#04040c"
+      }
+    },
+    {
+      "name": "cosmicWeb",
+      "desc": "Large-scale filaments linking glowing nodes",
+      "options": {
+        "speed": 1,
+        "nodes": 34,
+        "colors": [
+          "#7c5cff",
+          "#22d3ee",
+          "#eef3ff"
+        ],
+        "background": "#05060f",
+        "linkDist": 0.26
+      }
+    },
+    {
+      "name": "eclipse",
+      "desc": "Dark disk ringed by a living corona + diamond-ring flash",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#fff1c4",
+          "#ffd166",
+          "#ff9d5c"
+        ],
+        "background": "#03030a",
+        "radius": 0.2
+      }
+    },
+    {
+      "name": "corona",
+      "desc": "A roiling star with granulation and arcing prominences",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#ffd166",
+          "#ff7b00",
+          "#fff1c4"
+        ],
+        "background": "#0a0400",
+        "radius": 0.26,
+        "particles": 90
+      }
+    },
+    {
+      "name": "galaxyMerge",
+      "desc": "Two galactic cores orbiting with tidal star streams",
+      "options": {
+        "speed": 1,
+        "stars": 480,
+        "colors": [
+          "#9bd0ff",
+          "#ffd6a5",
+          "#f472b6",
+          "#ffffff"
+        ],
+        "background": "#04040c"
+      }
+    },
+    {
+      "name": "lattice",
+      "desc": "A rotating crystalline icosahedron, glowing edges",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff",
+          "#eef3ff"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "moire",
+      "desc": "Two drifting ring sets interfering into shimmer",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff"
+        ],
+        "background": "#05060f",
+        "rings": 40
+      }
+    },
+    {
+      "name": "starburst",
+      "desc": "A breathing lens flare with chromatic spikes",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#fff1c4",
+          "#22d3ee",
+          "#f472b6"
+        ],
+        "background": "#04040c",
+        "spikes": 12
+      }
+    },
+    {
+      "name": "pillars",
+      "desc": "Towering nebular gas columns with embedded glints",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#7c5cff",
+          "#22d3ee",
+          "#f472b6",
+          "#fff1c4"
+        ],
+        "background": "#05040f",
+        "columns": 3
+      }
+    },
+    {
+      "name": "ionstorm",
+      "desc": "Electric plasma arcs leaping from a core to the rim",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#7c5cff",
+          "#22d3ee",
+          "#a8d8ff"
+        ],
+        "background": "#04040c",
+        "bolts": 7
+      }
+    },
+    {
+      "name": "stardust",
+      "desc": "Ultra-fine luminous dust on a parallax current",
+      "options": {
+        "speed": 1,
+        "count": 320,
+        "colors": [
+          "#eef3ff",
+          "#bcd4ff",
+          "#c9b8ff",
+          "#fff1c4"
+        ],
+        "background": "#05060f",
+        "angle": 0.45
+      }
+    },
+    {
+      "name": "orrery",
+      "desc": "Tilted concentric rings turning like an armillary",
+      "options": {
+        "speed": 1,
+        "rings": 5,
+        "colors": [
+          "#c9a959",
+          "#22d3ee",
+          "#7c5cff",
+          "#eef3ff"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "oscilloscope",
+      "desc": "Morphing Lissajous curves on a phosphor screen",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#7cffb0"
+        ],
+        "background": "#03060a"
+      }
+    },
+    {
+      "name": "bokeh",
+      "desc": "Defocused additive light discs drifting through depth",
+      "options": {
+        "speed": 1,
+        "count": 26,
+        "colors": [
+          "#7c5cff",
+          "#22d3ee",
+          "#f472b6",
+          "#ffd6a5"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "magnetosphere",
+      "desc": "Dipole field lines with pole-to-pole particle streams",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff",
+          "#a8d8ff"
+        ],
+        "background": "#04040c",
+        "lines": 7
       }
     }
   ],

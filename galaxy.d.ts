@@ -1,4 +1,4 @@
-// Type definitions for GalaxyJS v3.0 "Nova"
+// Type definitions for GalaxyJS v3.1 "Nova"
 // A zero-dependency cosmic animation + UI component library.
 // Project: https://github.com/Edwson/GalaxyJS
 
@@ -48,7 +48,24 @@ export type AnimationType =
   | "radar"
   | "embers"
   | "typewriter"
-  | "spirograph";
+  | "spirograph"
+  | "supernova"
+  | "quasar"
+  | "starcluster"
+  | "cosmicWeb"
+  | "eclipse"
+  | "corona"
+  | "galaxyMerge"
+  | "lattice"
+  | "moire"
+  | "starburst"
+  | "pillars"
+  | "ionstorm"
+  | "stardust"
+  | "orrery"
+  | "oscilloscope"
+  | "bokeh"
+  | "magnetosphere";
 
 /** A CSS selector string or an existing element. */
 export type Target = string | HTMLElement;

@@ -4,12 +4,12 @@
 
 A zero-dependency cosmic **animation** + **UI component** library. Beautiful
 canvas backdrops, a themeable UI kit, and a single unified API — no build step,
-no framework, ~15&nbsp;kB gzipped.
+no framework, ~20&nbsp;kB gzipped.
 
 [![CI](https://github.com/Edwson/GalaxyJS/actions/workflows/ci.yml/badge.svg)](https://github.com/Edwson/GalaxyJS/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 ![Zero dependencies](https://img.shields.io/badge/dependencies-0-7c5cff)
-![Version](https://img.shields.io/badge/version-3.0-22d3ee)
+![Version](https://img.shields.io/badge/version-3.1-22d3ee)
 
 > Live demo: https://edwson.com/GalaxyJS/ · Open [`index.html`](index.html) locally for the interactive playground.
 
@@ -18,7 +18,7 @@ no framework, ~15&nbsp;kB gzipped.
 ## ✨ What's new in v3 "Nova"
 
 - **One unified API** — `Galaxy.create(type, target, options)` for every animation.
-- **43 canvas animations** — starfield, warp, black hole, nebula, spiral galaxy, meteors, constellation, particle field, aurora, wormhole, orbits, pulsar, mesh gradient, fireflies, matrix rain, plasma, fireworks, snow, waves, DNA helix, lightning, ripples, comets, confetti, bubbles, fog, synthwave grid, rain, vortex, sparkle, neon tunnel, swarm, ribbons, flow field, dotted globe, heartbeat, equalizer, clock, light rays, radar, embers, typewriter, spirograph.
+- **60 canvas animations** — starfield, warp, black hole, nebula, spiral galaxy, meteors, constellation, particle field, aurora, wormhole, orbits, pulsar, mesh gradient, fireflies, matrix rain, plasma, fireworks, snow, waves, DNA helix, lightning, ripples, comets, confetti, bubbles, fog, synthwave grid, rain, vortex, sparkle, neon tunnel, swarm, ribbons, flow field, dotted globe, heartbeat, equalizer, clock, light rays, radar, embers, typewriter, spirograph, **and 17 new in v3.1** — supernova, quasar, star cluster, cosmic web, eclipse, solar corona, galaxy merge, crystal lattice, moiré, starburst, nebula pillars, ion storm, stardust, orrery, oscilloscope, bokeh, magnetosphere.
 - **A real UI kit** — buttons, cards, modals, toasts, tooltips, tabs, accordions, dropdowns, inputs, switches, progress, spinners — all driven by design tokens.
 - **Theming** — light/dark out of the box, fully tokenized via CSS variables and `Galaxy.theme()`.
 - **Accessible & efficient** — respects `prefers-reduced-motion`, one shared rAF loop for the whole page, auto-pause off-screen, HiDPI-aware.
@@ -76,7 +76,7 @@ bg.update({ speed: 0.6 }); // live-tweak
 bg.pause();                // pause / resume / destroy
 ```
 
-| `starfield` · `warp` · `blackHole` · `nebula` · `spiral` · `meteors` · `constellation` · `particles` · `aurora` · `wormhole` · `orbits` · `pulsar` · `gradient` · `fireflies` · `matrix` · `plasma` · `fireworks` · `snow` · `waves` · `dna` · `lightning` · `ripples` · `comets` · `confetti` · `bubbles` · `fog` · `grid` · `rain` · `vortex` · `sparkle` · `tunnel` · `swarm` · `ribbons` · `flowfield` · `globe` · `heartbeat` · `equalizer` · `clock` · `rays` · `radar` · `embers` · `typewriter` · `spirograph` |
+| `starfield` · `warp` · `blackHole` · `nebula` · `spiral` · `meteors` · `constellation` · `particles` · `aurora` · `wormhole` · `orbits` · `pulsar` · `gradient` · `fireflies` · `matrix` · `plasma` · `fireworks` · `snow` · `waves` · `dna` · `lightning` · `ripples` · `comets` · `confetti` · `bubbles` · `fog` · `grid` · `rain` · `vortex` · `sparkle` · `tunnel` · `swarm` · `ribbons` · `flowfield` · `globe` · `heartbeat` · `equalizer` · `clock` · `rays` · `radar` · `embers` · `typewriter` · `spirograph` · `supernova` · `quasar` · `starcluster` · `cosmicWeb` · `eclipse` · `corona` · `galaxyMerge` · `lattice` · `moire` · `starburst` · `pillars` · `ionstorm` · `stardust` · `orrery` · `oscilloscope` · `bokeh` · `magnetosphere` |
 | --- |
 
 Every instance returns a controller with `start / stop / pause / resume /

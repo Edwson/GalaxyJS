@@ -31,7 +31,7 @@ server.registerTool(
   "galaxy_list",
   {
     title: "List GalaxyJS animations & components",
-    description: "List all 43 animations and 13 components (with one-line descriptions). Optionally filter by keyword or restrict to one kind.",
+    description: "List all 60 animations and 13 components (with one-line descriptions). Optionally filter by keyword or restrict to one kind.",
     inputSchema: {
       kind: z.enum(["all", "animations", "components"]).optional().describe("Restrict results. Default: all."),
       query: z.string().optional().describe("Case-insensitive keyword filter, e.g. 'star', 'rain', 'modal'."),

@@ -1,4 +1,4 @@
-/*! GalaxyJS v3.0 "Nova" — galaxy.js
+/*! GalaxyJS v3.1 "Nova" — galaxy.js
  *  A zero-dependency cosmic animation + UI component library.
  *  Unified API:  Galaxy.create(type, target, options)
  *  UMD: works as <script>, CommonJS, and (interop) ES import.
@@ -15,7 +15,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  var VERSION = "3.0.1";
+  var VERSION = "3.1.0";
   var hasDOM = typeof document !== "undefined";
   var prefersReduced =
     hasDOM &&
@@ -1689,6 +1689,566 @@
             prev = p;
             if (theta > morph * TAU()) reset();
           }
+        },
+      };
+    },
+  });
+
+  // 44. Supernova — a star charges, collapses, then erupts in a shockwave + ejecta
+  registerAnimation("supernova", {
+    defaults: { speed: 1, colors: ["#fff1c4", "#ff9d5c", "#7c5cff", "#22d3ee"], background: "#04040c", particles: 150 },
+    setup: function (h) {
+      var cx, cy, pal, parts, phase, timer, shock, core;
+      function build() {
+        cx = h.width / 2; cy = h.height / 2;
+        pal = paletteOf(h.opts, ["#fff1c4", "#ff9d5c", "#7c5cff"]);
+        parts = []; phase = "charge"; timer = 0; shock = 0; core = 0.25;
+      }
+      function burst() {
+        parts = []; var n = h.opts.particles, reach = Math.min(h.width, h.height);
+        for (var i = 0; i < n; i++) parts.push({ a: rand(0, TAU()), v: rand(0.4, 1) * reach, r: rand(0.6, 4), life: rand(0.7, 1), col: pal[(Math.random() * pal.length) | 0] });
+      }
+      build();
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          fade(h, 0.16); var c = h.ctx; c.globalCompositeOperation = "lighter";
+          var d = dt * h.opts.speed;
+          if (phase === "charge") {
+            core = Math.min(1.7, core + d * 0.7); timer += d;
+            var pr = Math.min(h.width, h.height) * 0.045 * core;
+            var flick = 0.7 + 0.3 * Math.sin(t * 22) * (core / 1.7);
+            var g = c.createRadialGradient(cx, cy, 0, cx, cy, pr * 6);
+            g.addColorStop(0, rgba(pal[0], 0.9 * flick));
+            g.addColorStop(0.4, rgba(pal[0], 0.22));
+            g.addColorStop(1, "rgba(0,0,0,0)");
+            c.fillStyle = g; c.beginPath(); c.arc(cx, cy, pr * 6, 0, TAU()); c.fill();
+            if (timer > 2.3) { phase = "burst"; shock = 0; burst(); }
+          } else {
+            shock += d * 0.85; var maxR = Math.hypot(cx, cy) * 1.05;
+            var alpha = clamp(1 - shock, 0, 1);
+            c.strokeStyle = rgba(pal[1] || pal[0], alpha * 0.7);
+            c.lineWidth = lerp(9, 1, shock);
+            c.beginPath(); c.arc(cx, cy, shock * maxR * 0.92, 0, TAU()); c.stroke();
+            for (var i = 0; i < parts.length; i++) {
+              var p = parts[i], pr2 = shock * p.v;
+              var x = cx + Math.cos(p.a) * pr2, y = cy + Math.sin(p.a) * pr2;
+              c.fillStyle = rgba(p.col, alpha * p.life);
+              c.beginPath(); c.arc(x, y, p.r * (1 - shock * 0.45) + 0.5, 0, TAU()); c.fill();
+            }
+            if (shock > 1.05) { phase = "charge"; timer = 0; core = 0.25; }
+          }
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 45. Quasar — a black-hole core with an edge-on accretion disk + twin relativistic jets
+  registerAnimation("quasar", {
+    defaults: { speed: 1, colors: ["#22d3ee", "#7c5cff", "#eef3ff"], background: "#04040c", particles: 170 },
+    setup: function (h) {
+      var cx, cy, R, pal, jet, disk;
+      function build() {
+        cx = h.width / 2; cy = h.height / 2; R = Math.min(h.width, h.height) * 0.06;
+        pal = paletteOf(h.opts, ["#22d3ee", "#7c5cff", "#eef3ff"]);
+        jet = []; for (var i = 0; i < h.opts.particles; i++) jet.push({ p: Math.random(), dir: Math.random() < 0.5 ? -1 : 1, off: rand(-1, 1), v: rand(0.5, 1.2), col: pal[(Math.random() * pal.length) | 0] });
+        disk = []; for (var k = 0; k < 100; k++) disk.push({ a: rand(0, TAU()), r: rand(R * 1.2, R * 3), col: pal[(Math.random() * pal.length) | 0] });
+      }
+      build();
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          fade(h, 0.2); var c = h.ctx; c.globalCompositeOperation = "lighter";
+          var d = dt * h.opts.speed, jlen = Math.min(cy, h.height * 0.5);
+          for (var k = 0; k < disk.length; k++) {
+            var s = disk[k]; s.a += d * (1.8 / (s.r / R)) * 0.4;
+            var x = cx + Math.cos(s.a) * s.r, y = cy + Math.sin(s.a) * s.r * 0.3, dp = 0.4 + 0.6 * Math.sin(s.a);
+            c.fillStyle = rgba(s.col, 0.3 + dp * 0.5); c.beginPath(); c.arc(x, y, 1.3 + dp, 0, TAU()); c.fill();
+          }
+          for (var i = 0; i < jet.length; i++) {
+            var p = jet[i]; p.p += d * p.v * 0.4; if (p.p > 1) p.p -= 1;
+            var y2 = cy + p.dir * p.p * jlen, spread = p.p * R * 2.2, x2 = cx + p.off * spread, a = (1 - p.p) * 0.8;
+            c.fillStyle = rgba(p.col, a); c.beginPath(); c.arc(x2, y2, lerp(2.2, 0.4, p.p), 0, TAU()); c.fill();
+          }
+          var g = c.createRadialGradient(cx, cy, 0, cx, cy, R * 3);
+          g.addColorStop(0, rgba(pal[2] || pal[0], 0.95)); g.addColorStop(0.5, rgba(pal[0], 0.3)); g.addColorStop(1, "rgba(0,0,0,0)");
+          c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R * 3, 0, TAU()); c.fill();
+          c.globalCompositeOperation = "source-over";
+          c.fillStyle = "#000"; c.beginPath(); c.arc(cx, cy, R * 0.8, 0, TAU()); c.fill();
+        },
+      };
+    },
+  });
+
+  // 46. Star cluster — a dense globular cluster rotating in 3D with depth
+  registerAnimation("starcluster", {
+    defaults: { speed: 1, count: 280, colors: ["#ffffff", "#bcd4ff", "#fff1c4", "#ffd6a5"], background: "#04040c" },
+    setup: function (h) {
+      var pts, cx, cy, rad, pal, ry;
+      function build() {
+        cx = h.width / 2; cy = h.height / 2; rad = Math.min(h.width, h.height) * 0.34;
+        pal = paletteOf(h.opts, ["#ffffff", "#bcd4ff"]); ry = 0; pts = [];
+        var n = h.opts.count;
+        for (var i = 0; i < n; i++) {
+          var u = Math.random(), v = Math.random(), theta = u * TAU(), phi = Math.acos(2 * v - 1), rr = Math.cbrt(Math.random());
+          pts.push({ x: rr * Math.sin(phi) * Math.cos(theta), y: rr * Math.cos(phi), z: rr * Math.sin(phi) * Math.sin(theta), s: rand(0.5, 1.8), col: pal[(Math.random() * pal.length) | 0] });
+        }
+      }
+      build();
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          clearBG(h); var c = h.ctx; ry += dt * h.opts.speed * 0.25; c.globalCompositeOperation = "lighter";
+          var cos = Math.cos(ry), sin = Math.sin(ry);
+          for (var i = 0; i < pts.length; i++) {
+            var p = pts[i], x = p.x * cos - p.z * sin, z = p.x * sin + p.z * cos, depth = (z + 1) / 2;
+            c.fillStyle = rgba(p.col, 0.18 + depth * 0.72);
+            c.beginPath(); c.arc(cx + x * rad, cy + p.y * rad, p.s * (0.5 + depth), 0, TAU()); c.fill();
+          }
+          var g = c.createRadialGradient(cx, cy, 0, cx, cy, rad * 1.1);
+          g.addColorStop(0, rgba(pal[0], 0.12)); g.addColorStop(1, "rgba(0,0,0,0)");
+          c.fillStyle = g; c.fillRect(0, 0, h.width, h.height);
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 47. Cosmic web — large-scale filaments linking glowing nodes (non-interactive)
+  registerAnimation("cosmicWeb", {
+    defaults: { speed: 1, nodes: 34, colors: ["#7c5cff", "#22d3ee", "#eef3ff"], background: "#05060f", linkDist: 0.26 },
+    setup: function (h) {
+      var nodes, pal, maxD;
+      function build() {
+        pal = paletteOf(h.opts, ["#7c5cff", "#22d3ee"]);
+        maxD = h.opts.linkDist * Math.hypot(h.width, h.height); nodes = [];
+        for (var i = 0; i < h.opts.nodes; i++) nodes.push({ x: Math.random() * h.width, y: Math.random() * h.height, vx: rand(-1, 1), vy: rand(-1, 1), m: rand(0.6, 1.8), col: pal[(Math.random() * pal.length) | 0] });
+      }
+      build();
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          clearBG(h); var c = h.ctx, d = dt * h.opts.speed * 8;
+          for (var i = 0; i < nodes.length; i++) { var p = nodes[i]; p.x += p.vx * d; p.y += p.vy * d; if (p.x < 0 || p.x > h.width) p.vx *= -1; if (p.y < 0 || p.y > h.height) p.vy *= -1; }
+          c.globalCompositeOperation = "lighter";
+          for (var a = 0; a < nodes.length; a++) for (var b = a + 1; b < nodes.length; b++) {
+            var n1 = nodes[a], n2 = nodes[b], dist = Math.hypot(n1.x - n2.x, n1.y - n2.y);
+            if (dist < maxD) { var al = 1 - dist / maxD; c.strokeStyle = rgba(mixRgb(n1.col, n2.col, 0.5), al * al * 0.5); c.lineWidth = al * 1.4; c.beginPath(); c.moveTo(n1.x, n1.y); c.lineTo(n2.x, n2.y); c.stroke(); }
+          }
+          for (var k = 0; k < nodes.length; k++) {
+            var q = nodes[k], pr = q.m * 3, g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, pr * 4);
+            g.addColorStop(0, rgba(q.col, 0.8)); g.addColorStop(1, "rgba(0,0,0,0)");
+            c.fillStyle = g; c.beginPath(); c.arc(q.x, q.y, pr * 4, 0, TAU()); c.fill();
+          }
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 48. Eclipse — a dark disk ringed by a living corona, with a rotating diamond-ring flash
+  registerAnimation("eclipse", {
+    defaults: { speed: 1, colors: ["#fff1c4", "#ffd166", "#ff9d5c"], background: "#03030a", radius: 0.2 },
+    setup: function (h) {
+      var cx, cy, R, pal, prom;
+      function build() {
+        cx = h.width / 2; cy = h.height / 2; R = Math.min(h.width, h.height) * h.opts.radius; pal = paletteOf(h.opts, ["#fff1c4", "#ffd166"]);
+        prom = []; for (var i = 0; i < 64; i++) prom.push({ a: rand(0, TAU()), len: rand(0.1, 0.55), w: rand(0.01, 0.04), ph: rand(0, TAU()) });
+      }
+      build();
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          clearBG(h); var c = h.ctx; c.globalCompositeOperation = "lighter";
+          var g = c.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 3.2);
+          g.addColorStop(0, rgba(pal[0], 0.5)); g.addColorStop(0.3, rgba(pal[1] || pal[0], 0.16)); g.addColorStop(1, "rgba(0,0,0,0)");
+          c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R * 3.2, 0, TAU()); c.fill();
+          for (var i = 0; i < prom.length; i++) {
+            var p = prom[i], fl = 0.6 + 0.4 * Math.sin(t * 1.4 * h.opts.speed + p.ph);
+            var x1 = cx + Math.cos(p.a) * R, y1 = cy + Math.sin(p.a) * R, r2 = R * (1 + p.len * fl), x2 = cx + Math.cos(p.a) * r2, y2 = cy + Math.sin(p.a) * r2;
+            c.strokeStyle = rgba(pal[0], 0.18 * fl); c.lineWidth = R * p.w; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+          }
+          c.globalCompositeOperation = "source-over";
+          c.fillStyle = rgba(hexToRgb(h.opts.background), 1); c.beginPath(); c.arc(cx, cy, R, 0, TAU()); c.fill();
+          c.globalCompositeOperation = "lighter";
+          c.strokeStyle = rgba(pal[0], 0.85); c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, R * 1.02, 0, TAU()); c.stroke();
+          var da = t * 0.5 * h.opts.speed, dx = cx + Math.cos(da) * R * 1.02, dy = cy + Math.sin(da) * R * 1.02;
+          var dg = c.createRadialGradient(dx, dy, 0, dx, dy, R * 0.5); dg.addColorStop(0, rgba(pal[0], 1)); dg.addColorStop(1, "rgba(0,0,0,0)");
+          c.fillStyle = dg; c.beginPath(); c.arc(dx, dy, R * 0.5, 0, TAU()); c.fill();
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 49. Corona — a roiling star with granulated surface and arcing prominences
+  registerAnimation("corona", {
+    defaults: { speed: 1, colors: ["#ffd166", "#ff7b00", "#fff1c4"], background: "#0a0400", radius: 0.26, particles: 90 },
+    setup: function (h) {
+      var cx, cy, R, pal, cells, flares;
+      function build() {
+        cx = h.width / 2; cy = h.height / 2; R = Math.min(h.width, h.height) * h.opts.radius; pal = paletteOf(h.opts, ["#ffd166", "#ff7b00"]);
+        cells = []; for (var i = 0; i < h.opts.particles; i++) cells.push({ a: rand(0, TAU()), r: rand(0, R * 0.92), ph: rand(0, TAU()), s: rand(0.04, 0.12) * R, col: pal[(Math.random() * pal.length) | 0] });
+        flares = []; for (var k = 0; k < 5; k++) flares.push({ a: rand(0, TAU()), ph: rand(0, TAU()), span: rand(0.3, 0.8), hgt: rand(0.4, 1) });
+      }
+      build();
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          clearBG(h); var c = h.ctx; c.globalCompositeOperation = "lighter";
+          var g = c.createRadialGradient(cx, cy, 0, cx, cy, R * 2.4);
+          g.addColorStop(0, rgba(pal[0], 0.55)); g.addColorStop(0.35, rgba(pal[1] || pal[0], 0.22)); g.addColorStop(1, "rgba(0,0,0,0)");
+          c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R * 2.4, 0, TAU()); c.fill();
+          for (var i = 0; i < cells.length; i++) {
+            var s = cells[i], fl = 0.5 + 0.5 * Math.sin(t * 2 * h.opts.speed + s.ph);
+            c.fillStyle = rgba(s.col, 0.25 * fl); c.beginPath(); c.arc(cx + Math.cos(s.a) * s.r, cy + Math.sin(s.a) * s.r, s.s * (0.6 + fl * 0.6), 0, TAU()); c.fill();
+          }
+          for (var k = 0; k < flares.length; k++) {
+            var f = flares[k]; f.a += dt * h.opts.speed * 0.1;
+            var amp = f.hgt * (0.6 + 0.4 * Math.sin(t * 0.8 + f.ph)), a0 = f.a - f.span / 2, a1 = f.a + f.span / 2;
+            var x0 = cx + Math.cos(a0) * R, y0 = cy + Math.sin(a0) * R, x1 = cx + Math.cos(a1) * R, y1 = cy + Math.sin(a1) * R;
+            var mx = cx + Math.cos(f.a) * R * (1 + amp), my = cy + Math.sin(f.a) * R * (1 + amp);
+            c.strokeStyle = rgba(pal[0], 0.4 * amp); c.lineWidth = 2.5; c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo(mx, my, x1, y1); c.stroke();
+          }
+          var cg = c.createRadialGradient(cx, cy, R * 0.2, cx, cy, R);
+          cg.addColorStop(0, rgba(pal[0], 0.95)); cg.addColorStop(1, rgba(pal[1] || pal[0], 0));
+          c.fillStyle = cg; c.beginPath(); c.arc(cx, cy, R, 0, TAU()); c.fill();
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 50. Galaxy merge — two galactic cores orbiting, trailing tidal star streams
+  registerAnimation("galaxyMerge", {
+    defaults: { speed: 1, stars: 480, colors: ["#9bd0ff", "#ffd6a5", "#f472b6", "#ffffff"], background: "#04040c" },
+    setup: function (h) {
+      var cx, cy, sep, pal, stars, ang;
+      function build() {
+        cx = h.width / 2; cy = h.height / 2; sep = Math.min(h.width, h.height) * 0.22; pal = paletteOf(h.opts, ["#9bd0ff", "#ffd6a5"]); ang = 0; stars = [];
+        for (var i = 0; i < h.opts.stars; i++) { var rr = Math.pow(Math.random(), 0.6); stars.push({ core: Math.random() < 0.5 ? 0 : 1, r: rr, a: rand(0, TAU()), spin: rand(0.3, 1.1), arm: rr * 6, col: pal[(Math.random() * pal.length) | 0], s: rand(0.4, 1.4) }); }
+      }
+      build();
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          fade(h, 0.18); var c = h.ctx; ang += dt * h.opts.speed * 0.3; c.globalCompositeOperation = "lighter";
+          var pulse = 0.7 + 0.3 * Math.sin(ang * 0.5), maxR = Math.min(h.width, h.height) * 0.3;
+          var s1x = cx + Math.cos(ang) * sep * pulse, s1y = cy + Math.sin(ang) * sep * 0.5 * pulse;
+          var s2x = cx - Math.cos(ang) * sep * pulse, s2y = cy - Math.sin(ang) * sep * 0.5 * pulse;
+          for (var i = 0; i < stars.length; i++) {
+            var p = stars[i], ccx = p.core ? s2x : s1x, ccy = p.core ? s2y : s1y, aa = p.a + p.spin * ang + p.arm, rr = p.r * maxR;
+            c.fillStyle = rgba(p.col, 0.3 + (1 - p.r) * 0.5); c.beginPath(); c.arc(ccx + Math.cos(aa) * rr, ccy + Math.sin(aa) * rr * 0.7, p.s, 0, TAU()); c.fill();
+          }
+          [[s1x, s1y], [s2x, s2y]].forEach(function (s) { var g = c.createRadialGradient(s[0], s[1], 0, s[0], s[1], maxR * 0.5); g.addColorStop(0, rgba(pal[0], 0.4)); g.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = g; c.beginPath(); c.arc(s[0], s[1], maxR * 0.5, 0, TAU()); c.fill(); });
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 51. Lattice — a rotating crystalline icosahedron with glowing vertices + edges
+  registerAnimation("lattice", {
+    defaults: { speed: 1, colors: ["#22d3ee", "#7c5cff", "#eef3ff"], background: "#05060f" },
+    setup: function (h) {
+      var cx, cy, scale, pal, rx, ry, V, E, P1 = (1 + Math.sqrt(5)) / 2;
+      function build() {
+        cx = h.width / 2; cy = h.height / 2; scale = Math.min(h.width, h.height) * 0.3; pal = paletteOf(h.opts, ["#22d3ee", "#7c5cff"]); rx = 0; ry = 0;
+        var raw = [[-1, P1, 0], [1, P1, 0], [-1, -P1, 0], [1, -P1, 0], [0, -1, P1], [0, 1, P1], [0, -1, -P1], [0, 1, -P1], [P1, 0, -1], [P1, 0, 1], [-P1, 0, -1], [-P1, 0, 1]];
+        var norm = Math.hypot(1, P1); V = raw.map(function (v) { return [v[0] / norm, v[1] / norm, v[2] / norm]; });
+        E = [[0, 11], [0, 5], [0, 1], [0, 7], [0, 10], [1, 5], [5, 11], [11, 10], [10, 7], [7, 1], [3, 9], [3, 4], [3, 2], [3, 6], [3, 8], [4, 9], [9, 8], [8, 6], [6, 2], [2, 4], [5, 9], [11, 4], [10, 2], [7, 6], [1, 8], [5, 4], [11, 2], [10, 6], [7, 8], [1, 9]];
+      }
+      build();
+      function rot(p) {
+        var c1 = Math.cos(ry), s1 = Math.sin(ry), x1 = p[0] * c1 - p[2] * s1, z1 = p[0] * s1 + p[2] * c1;
+        var c2 = Math.cos(rx), s2 = Math.sin(rx), y1 = p[1] * c2 - z1 * s2, z2 = p[1] * s2 + z1 * c2, pp = 2 / (2.6 - z2);
+        return { x: cx + x1 * scale * pp, y: cy + y1 * scale * pp, z: z2 };
+      }
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          clearBG(h); var c = h.ctx; rx += dt * h.opts.speed * 0.18; ry += dt * h.opts.speed * 0.28; c.globalCompositeOperation = "lighter";
+          var Q = V.map(rot);
+          for (var i = 0; i < E.length; i++) {
+            var a = Q[E[i][0]], b = Q[E[i][1]], dep = (a.z + b.z) / 2, al = 0.25 + (dep + 1) / 2 * 0.6;
+            c.strokeStyle = rgba(mixRgb(pal[0], pal[1] || pal[0], (dep + 1) / 2), al); c.lineWidth = 0.8 + al; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke();
+          }
+          for (var k = 0; k < Q.length; k++) {
+            var q = Q[k], al2 = 0.4 + (q.z + 1) / 2 * 0.6, g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, 8);
+            g.addColorStop(0, rgba(pal[2] || pal[0], al2)); g.addColorStop(1, "rgba(0,0,0,0)");
+            c.fillStyle = g; c.beginPath(); c.arc(q.x, q.y, 8, 0, TAU()); c.fill();
+          }
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 52. Moiré — two drifting sets of concentric rings interfering into shimmer
+  registerAnimation("moire", {
+    defaults: { speed: 1, colors: ["#22d3ee", "#7c5cff"], background: "#05060f", rings: 40 },
+    setup: function (h) {
+      var pal;
+      function build() { pal = paletteOf(h.opts, ["#22d3ee", "#7c5cff"]); }
+      build();
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          clearBG(h); var c = h.ctx; c.globalCompositeOperation = "lighter";
+          var amp = Math.min(h.width, h.height) * 0.13, off = Math.cos(t * 0.4 * h.opts.speed) * amp;
+          var gap = Math.min(h.width, h.height) / h.opts.rings, maxR = Math.hypot(h.width, h.height);
+          var c1x = h.width / 2 - off, c1y = h.height / 2 + off * 0.4, c2x = h.width / 2 + off, c2y = h.height / 2 - off * 0.4;
+          c.lineWidth = 1; c.strokeStyle = rgba(pal[0], 0.22);
+          for (var r = gap; r < maxR; r += gap) { c.beginPath(); c.arc(c1x, c1y, r, 0, TAU()); c.stroke(); }
+          c.strokeStyle = rgba(pal[1] || pal[0], 0.22);
+          for (var q = gap; q < maxR; q += gap) { c.beginPath(); c.arc(c2x, c2y, q, 0, TAU()); c.stroke(); }
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 53. Starburst — a breathing lens flare with chromatic spikes + ghost discs
+  registerAnimation("starburst", {
+    defaults: { speed: 1, colors: ["#fff1c4", "#22d3ee", "#f472b6"], background: "#04040c", spikes: 12 },
+    setup: function (h) {
+      var cx, cy, pal, rays;
+      function build() { cx = h.width / 2; cy = h.height / 2; pal = paletteOf(h.opts, ["#fff1c4", "#22d3ee"]); rays = []; var n = h.opts.spikes; for (var i = 0; i < n; i++) rays.push({ a: (i / n) * TAU(), len: rand(0.5, 1), ph: rand(0, TAU()) }); }
+      build();
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          clearBG(h); var c = h.ctx; c.globalCompositeOperation = "lighter";
+          var breathe = 0.7 + 0.3 * Math.sin(t * 0.8 * h.opts.speed), base = Math.min(h.width, h.height) * 0.5;
+          var g = c.createRadialGradient(cx, cy, 0, cx, cy, base * 0.9 * breathe);
+          g.addColorStop(0, rgba(pal[0], 0.6)); g.addColorStop(0.2, rgba(pal[0], 0.18)); g.addColorStop(1, "rgba(0,0,0,0)");
+          c.fillStyle = g; c.beginPath(); c.arc(cx, cy, base * 0.9, 0, TAU()); c.fill();
+          for (var i = 0; i < rays.length; i++) {
+            var r = rays[i], fl = 0.5 + 0.5 * Math.sin(t * 1.2 + r.ph), len = base * r.len * breathe * (0.6 + fl * 0.6);
+            var x = cx + Math.cos(r.a) * len, y = cy + Math.sin(r.a) * len, grd = c.createLinearGradient(cx, cy, x, y), col = pal[i % pal.length];
+            grd.addColorStop(0, rgba(col, 0.5 * fl)); grd.addColorStop(1, "rgba(0,0,0,0)");
+            c.strokeStyle = grd; c.lineWidth = 2; c.beginPath(); c.moveTo(cx, cy); c.lineTo(x, y); c.stroke();
+          }
+          var ax = Math.cos(t * 0.2), ay = Math.sin(t * 0.2);
+          for (var k = -3; k <= 3; k++) {
+            if (!k) continue; var gx = cx + ax * base * 0.4 * k, gy = cy + ay * base * 0.4 * k, col2 = pal[(k + 3) % pal.length], rad = base * 0.08 * (4 - Math.abs(k));
+            var gg = c.createRadialGradient(gx, gy, 0, gx, gy, rad); gg.addColorStop(0, rgba(col2, 0.18)); gg.addColorStop(1, "rgba(0,0,0,0)");
+            c.fillStyle = gg; c.beginPath(); c.arc(gx, gy, rad, 0, TAU()); c.fill();
+          }
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 54. Pillars — towering nebular gas columns with embedded star glints
+  registerAnimation("pillars", {
+    defaults: { speed: 1, colors: ["#7c5cff", "#22d3ee", "#f472b6", "#fff1c4"], background: "#05040f", columns: 3 },
+    setup: function (h) {
+      var cols, pal, glints;
+      function build() {
+        pal = paletteOf(h.opts, ["#7c5cff", "#22d3ee"]); cols = []; var n = h.opts.columns;
+        for (var i = 0; i < n; i++) {
+          var cxx = (i + 0.5) / n * h.width + rand(-h.width * 0.06, h.width * 0.06), blobs = [], top = rand(0.15, 0.4) * h.height, w = rand(0.06, 0.12) * h.width;
+          for (var y = top; y < h.height; y += w * 0.5) blobs.push({ x: cxx + Math.sin(y * 0.02 + i) * w * 0.6, y: y, r: w * rand(0.7, 1.2) });
+          cols.push({ blobs: blobs, col: pal[i % pal.length] });
+        }
+        glints = []; for (var k = 0; k < 42; k++) glints.push({ x: Math.random() * h.width, y: Math.random() * h.height, ph: rand(0, TAU()), col: pal[(Math.random() * pal.length) | 0] });
+      }
+      build();
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          clearBG(h); var c = h.ctx; c.globalCompositeOperation = "lighter";
+          for (var k = 0; k < glints.length; k++) { var s = glints[k], fl = 0.4 + 0.6 * Math.abs(Math.sin(t * 1.5 * h.opts.speed + s.ph)); c.fillStyle = rgba(s.col, 0.5 * fl); c.beginPath(); c.arc(s.x, s.y, 0.8 + fl, 0, TAU()); c.fill(); }
+          for (var i = 0; i < cols.length; i++) {
+            var col = cols[i];
+            for (var b = 0; b < col.blobs.length; b++) {
+              var bl = col.blobs[b], x = bl.x + Math.sin(t * 0.4 * h.opts.speed + bl.y * 0.01) * bl.r * 0.12;
+              var g = c.createRadialGradient(x, bl.y, 0, x, bl.y, bl.r);
+              g.addColorStop(0, rgba(col.col, 0.28)); g.addColorStop(0.7, rgba(col.col, 0.08)); g.addColorStop(1, "rgba(0,0,0,0)");
+              c.fillStyle = g; c.beginPath(); c.arc(x, bl.y, bl.r, 0, TAU()); c.fill();
+            }
+          }
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 55. Ion storm — electric plasma arcs leaping from a core to the rim
+  registerAnimation("ionstorm", {
+    defaults: { speed: 1, colors: ["#7c5cff", "#22d3ee", "#a8d8ff"], background: "#04040c", bolts: 7 },
+    setup: function (h) {
+      var cx, cy, R, pal, bolts;
+      function build() { cx = h.width / 2; cy = h.height / 2; R = Math.min(h.width, h.height) * 0.42; pal = paletteOf(h.opts, ["#7c5cff", "#22d3ee"]); bolts = []; for (var i = 0; i < h.opts.bolts; i++) bolts.push({ a: rand(0, TAU()), seed: Math.random(), tnext: rand(0, 1.2), col: pal[(Math.random() * pal.length) | 0] }); }
+      build();
+      function drawBolt(c, a, jit, col, alpha) {
+        var segs = 14; c.strokeStyle = rgba(col, alpha); c.lineWidth = 1.4; c.beginPath(); c.moveTo(cx, cy);
+        for (var s = 1; s <= segs; s++) {
+          var f = s / segs, rr = R * f, hash = (Math.sin(s * 12.9 + jit) * 43758.5) % 1, perp = (hash - 0.5) * R * 0.25 * (1 - f) * (0.5 + f);
+          c.lineTo(cx + Math.cos(a) * rr - Math.sin(a) * perp, cy + Math.sin(a) * rr + Math.cos(a) * perp);
+        }
+        c.stroke();
+      }
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          fade(h, 0.3); var c = h.ctx; c.globalCompositeOperation = "lighter";
+          var g = c.createRadialGradient(cx, cy, 0, cx, cy, R * 0.18); g.addColorStop(0, rgba(pal[0], 0.9)); g.addColorStop(1, "rgba(0,0,0,0)");
+          c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R * 0.18, 0, TAU()); c.fill();
+          for (var i = 0; i < bolts.length; i++) {
+            var b = bolts[i]; b.tnext -= dt * h.opts.speed; if (b.tnext <= 0) { b.a = rand(0, TAU()); b.seed = Math.random(); b.tnext = rand(0.15, 0.6); }
+            drawBolt(c, b.a + Math.sin(t * 3 + i) * 0.05, b.seed * 100, b.col, clamp(b.tnext * 2, 0.1, 0.9));
+          }
+          c.strokeStyle = rgba(pal[1] || pal[0], 0.2); c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, R, 0, TAU()); c.stroke();
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 56. Stardust — ultra-fine luminous dust drifting on a parallax current
+  registerAnimation("stardust", {
+    defaults: { speed: 1, count: 320, colors: ["#eef3ff", "#bcd4ff", "#c9b8ff", "#fff1c4"], background: "#05060f", angle: 0.45 },
+    setup: function (h) {
+      var dust, pal, dirx, diry;
+      function build() {
+        pal = paletteOf(h.opts, ["#eef3ff", "#bcd4ff"]); dirx = Math.cos(h.opts.angle); diry = Math.sin(h.opts.angle);
+        dust = []; var area = h.width * h.height, n = Math.max(80, Math.round(h.opts.count * area / (1280 * 720)));
+        for (var i = 0; i < n; i++) dust.push({ x: Math.random() * h.width, y: Math.random() * h.height, z: Math.random(), r: rand(0.3, 1.3), ph: rand(0, TAU()), col: pal[(Math.random() * pal.length) | 0] });
+      }
+      build();
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          clearBG(h); var c = h.ctx; c.globalCompositeOperation = "lighter"; var sp = dt * h.opts.speed * 22;
+          for (var i = 0; i < dust.length; i++) {
+            var d = dust[i], v = (0.2 + d.z * 1.2) * sp; d.x += dirx * v; d.y += diry * v;
+            if (d.x > h.width + 2) d.x = -2; if (d.x < -2) d.x = h.width + 2; if (d.y > h.height + 2) d.y = -2; if (d.y < -2) d.y = h.height + 2;
+            var tw = 0.4 + 0.6 * Math.sin(t * 1.5 + d.ph);
+            c.fillStyle = rgba(d.col, (0.1 + d.z * 0.5) * tw); c.beginPath(); c.arc(d.x, d.y, d.r * (0.5 + d.z), 0, TAU()); c.fill();
+          }
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 57. Orrery — tilted concentric rings turning like an armillary instrument
+  registerAnimation("orrery", {
+    defaults: { speed: 1, rings: 5, colors: ["#c9a959", "#22d3ee", "#7c5cff", "#eef3ff"], background: "#05060f" },
+    setup: function (h) {
+      var cx, cy, R, pal, rings;
+      function build() {
+        cx = h.width / 2; cy = h.height / 2; R = Math.min(h.width, h.height) * 0.42; pal = paletteOf(h.opts, ["#c9a959", "#22d3ee"]); rings = []; var n = h.opts.rings;
+        for (var i = 0; i < n; i++) rings.push({ r: R * (0.3 + 0.7 * (i + 1) / n), squash: rand(0.2, 0.5), tilt: rand(0, Math.PI), spin: rand(0.2, 0.7) * (Math.random() < 0.5 ? 1 : -1), pa: rand(0, TAU()), col: pal[i % pal.length] });
+      }
+      build();
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          clearBG(h); var c = h.ctx; c.globalCompositeOperation = "lighter";
+          var g = c.createRadialGradient(cx, cy, 0, cx, cy, R * 0.2); g.addColorStop(0, rgba(pal[0], 0.9)); g.addColorStop(1, "rgba(0,0,0,0)");
+          c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R * 0.2, 0, TAU()); c.fill();
+          for (var i = 0; i < rings.length; i++) {
+            var r = rings[i]; c.save(); c.translate(cx, cy); c.rotate(r.tilt);
+            c.strokeStyle = rgba(r.col, 0.4); c.lineWidth = 1.2; c.beginPath(); c.ellipse(0, 0, r.r, r.r * r.squash, 0, 0, TAU()); c.stroke();
+            var pa = r.pa + t * r.spin * h.opts.speed, bx = Math.cos(pa) * r.r, by = Math.sin(pa) * r.r * r.squash;
+            var bg = c.createRadialGradient(bx, by, 0, bx, by, 7); bg.addColorStop(0, rgba(r.col, 1)); bg.addColorStop(1, "rgba(0,0,0,0)");
+            c.fillStyle = bg; c.beginPath(); c.arc(bx, by, 7, 0, TAU()); c.fill(); c.restore();
+          }
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 58. Oscilloscope — morphing Lissajous curves on a phosphor screen
+  registerAnimation("oscilloscope", {
+    defaults: { speed: 1, colors: ["#22d3ee", "#7cffb0"], background: "#03060a" },
+    setup: function (h) {
+      var cx, cy, ax, ay, pal, phase;
+      function build() { cx = h.width / 2; cy = h.height / 2; ax = h.width * 0.36; ay = h.height * 0.36; pal = paletteOf(h.opts, ["#22d3ee", "#7cffb0"]); phase = 0; }
+      build();
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          fade(h, 0.08); var c = h.ctx; c.globalCompositeOperation = "lighter"; phase += dt * 0.2 * h.opts.speed;
+          var faN = 2 + Math.sin(t * 0.05) * 1.5, fbN = 3 + Math.cos(t * 0.037) * 1.5, col = mixRgb(pal[0], pal[1] || pal[0], 0.5 + 0.5 * Math.sin(t * 0.3));
+          c.strokeStyle = rgba(col, 0.9); c.lineWidth = 1.6; c.beginPath();
+          var N = 240;
+          for (var i = 0; i <= N; i++) { var th = (i / N) * TAU(), x = cx + Math.sin(faN * th + phase) * ax, y = cy + Math.sin(fbN * th) * ay; if (i === 0) c.moveTo(x, y); else c.lineTo(x, y); }
+          c.stroke();
+          var hth = (t * 1.5 * h.opts.speed) % TAU(), hx = cx + Math.sin(faN * hth + phase) * ax, hy = cy + Math.sin(fbN * hth) * ay;
+          var g = c.createRadialGradient(hx, hy, 0, hx, hy, 10); g.addColorStop(0, rgba(pal[1] || pal[0], 1)); g.addColorStop(1, "rgba(0,0,0,0)");
+          c.fillStyle = g; c.beginPath(); c.arc(hx, hy, 10, 0, TAU()); c.fill();
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 59. Bokeh — defocused additive light discs drifting through depth of field
+  registerAnimation("bokeh", {
+    defaults: { speed: 1, count: 26, colors: ["#7c5cff", "#22d3ee", "#f472b6", "#ffd6a5"], background: "#05060f" },
+    setup: function (h) {
+      var orbs, pal;
+      function build() {
+        pal = paletteOf(h.opts, ["#7c5cff", "#22d3ee"]); orbs = []; var area = h.width * h.height, n = Math.max(10, Math.round(h.opts.count * area / (1280 * 720)));
+        for (var i = 0; i < n; i++) orbs.push({ x: Math.random() * h.width, y: Math.random() * h.height, z: Math.random(), r: rand(0.04, 0.16) * Math.min(h.width, h.height), vy: rand(0.1, 0.5), ph: rand(0, TAU()), col: pal[(Math.random() * pal.length) | 0] });
+      }
+      build();
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          clearBG(h); var c = h.ctx; c.globalCompositeOperation = "lighter";
+          for (var i = 0; i < orbs.length; i++) {
+            var o = orbs[i]; o.y -= o.vy * (0.4 + o.z) * dt * h.opts.speed * 30; o.x += Math.sin(t * 0.3 + o.ph) * 0.3;
+            if (o.y < -o.r) { o.y = h.height + o.r; o.x = Math.random() * h.width; }
+            var rr = o.r * (0.5 + o.z), soft = 0.4 + o.z * 0.4, fl = 0.6 + 0.4 * Math.sin(t * 0.8 + o.ph);
+            var g = c.createRadialGradient(o.x, o.y, 0, o.x, o.y, rr);
+            g.addColorStop(0, rgba(o.col, (0.08 + o.z * 0.18) * fl)); g.addColorStop(soft, rgba(o.col, (0.04 + o.z * 0.1) * fl)); g.addColorStop(1, "rgba(0,0,0,0)");
+            c.fillStyle = g; c.beginPath(); c.arc(o.x, o.y, rr, 0, TAU()); c.fill();
+            if (o.z > 0.7) { c.strokeStyle = rgba(o.col, 0.12 * fl); c.lineWidth = 1; c.beginPath(); c.arc(o.x, o.y, rr * 0.9, 0, TAU()); c.stroke(); }
+          }
+          c.globalCompositeOperation = "source-over";
+        },
+      };
+    },
+  });
+
+  // 60. Magnetosphere — dipole field lines with particles streaming pole to pole
+  registerAnimation("magnetosphere", {
+    defaults: { speed: 1, colors: ["#22d3ee", "#7c5cff", "#a8d8ff"], background: "#04040c", lines: 7 },
+    setup: function (h) {
+      var cx, cy, R, pal, parts;
+      function build() {
+        cx = h.width / 2; cy = h.height / 2; R = Math.min(h.width, h.height) * 0.12; pal = paletteOf(h.opts, ["#22d3ee", "#7c5cff"]);
+        parts = []; for (var i = 0; i < 72; i++) parts.push({ shell: 1 + (Math.random() * h.opts.lines | 0), p: Math.random(), side: Math.random() < 0.5 ? 1 : -1, v: rand(0.3, 0.8), col: pal[(Math.random() * pal.length) | 0] });
+      }
+      build();
+      function fieldPt(L, u, side) { var ang = u * Math.PI, rr = R * L * Math.sin(ang) * Math.sin(ang); return { x: cx + side * rr * Math.sin(ang), y: cy - rr * Math.cos(ang) }; }
+      return {
+        resize: build,
+        draw: function (t, dt) {
+          clearBG(h); var c = h.ctx; c.globalCompositeOperation = "lighter";
+          var g = c.createRadialGradient(cx, cy, 0, cx, cy, R * 1.4); g.addColorStop(0, rgba(pal[0], 0.5)); g.addColorStop(0.6, rgba(pal[1] || pal[0], 0.18)); g.addColorStop(1, "rgba(0,0,0,0)");
+          c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R * 1.4, 0, TAU()); c.fill();
+          c.fillStyle = "#0a0e18"; c.beginPath(); c.arc(cx, cy, R, 0, TAU()); c.fill();
+          var L0 = h.opts.lines;
+          for (var side = -1; side <= 1; side += 2) for (var l = 1; l <= L0; l++) {
+            var L = 1.4 + l * 0.7; c.strokeStyle = rgba(pal[1] || pal[0], 0.12 + 0.04 * l); c.lineWidth = 1; c.beginPath();
+            for (var s = 0; s <= 40; s++) { var pt = fieldPt(L, s / 40, side); if (s === 0) c.moveTo(pt.x, pt.y); else c.lineTo(pt.x, pt.y); }
+            c.stroke();
+          }
+          for (var i = 0; i < parts.length; i++) {
+            var q = parts[i]; q.p += dt * h.opts.speed * q.v * 0.25; if (q.p > 1) q.p -= 1;
+            var pt2 = fieldPt(1.4 + q.shell * 0.7, q.p, q.side);
+            c.fillStyle = rgba(q.col, 0.7 * (0.4 + 0.6 * Math.sin(q.p * Math.PI))); c.beginPath(); c.arc(pt2.x, pt2.y, 1.6, 0, TAU()); c.fill();
+          }
+          c.globalCompositeOperation = "source-over";
         },
       };
     },

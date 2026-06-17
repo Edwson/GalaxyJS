@@ -34,10 +34,10 @@ try {
 
   console.log('tool calls');
   const qs = sc(await client.callTool({ name: 'galaxy_quickstart', arguments: {} }));
-  ok(qs.counts && qs.counts.animations === 43 && qs.counts.components === 13, 'galaxy_quickstart reports 43 animations + 13 components');
+  ok(qs.counts && qs.counts.animations === 60 && qs.counts.components === 13, 'galaxy_quickstart reports 60 animations + 13 components');
 
   const list = sc(await client.callTool({ name: 'galaxy_list', arguments: {} }));
-  ok(list.animations.length === 43 && list.components.length === 13, 'galaxy_list returns 43 animations + 13 components');
+  ok(list.animations.length === 60 && list.components.length === 13, 'galaxy_list returns 60 animations + 13 components');
   const filtered = sc(await client.callTool({ name: 'galaxy_list', arguments: { kind: 'animations', query: 'star' } }));
   ok(filtered.animations.length >= 1 && !filtered.components, 'galaxy_list filters by kind + query');
 

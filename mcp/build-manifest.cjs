@@ -51,6 +51,23 @@ const ANIM_DESC = {
   embers: "Rising fire sparks",
   typewriter: "Typing text effect (set `text`)",
   spirograph: "Evolving hypotrochoid curves",
+  supernova: "A star charges, collapses, then erupts in a shockwave",
+  quasar: "Black-hole core with edge-on accretion disk + twin jets",
+  starcluster: "A dense globular cluster rotating in 3D with depth",
+  cosmicWeb: "Large-scale filaments linking glowing nodes",
+  eclipse: "Dark disk ringed by a living corona + diamond-ring flash",
+  corona: "A roiling star with granulation and arcing prominences",
+  galaxyMerge: "Two galactic cores orbiting with tidal star streams",
+  lattice: "A rotating crystalline icosahedron, glowing edges",
+  moire: "Two drifting ring sets interfering into shimmer",
+  starburst: "A breathing lens flare with chromatic spikes",
+  pillars: "Towering nebular gas columns with embedded glints",
+  ionstorm: "Electric plasma arcs leaping from a core to the rim",
+  stardust: "Ultra-fine luminous dust on a parallax current",
+  orrery: "Tilted concentric rings turning like an armillary",
+  oscilloscope: "Morphing Lissajous curves on a phosphor screen",
+  bokeh: "Defocused additive light discs drifting through depth",
+  magnetosphere: "Dipole field lines with pole-to-pole particle streams",
 };
 
 const COMPONENTS = [

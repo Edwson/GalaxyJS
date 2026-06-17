@@ -1,7 +1,7 @@
 # GalaxyJS
 
 > Zero-dependency cosmic animation & UI component library with one unified API.
-> 43 canvas animations + a themeable UI kit. No build step, ~works from a single
+> 60 canvas animations + a themeable UI kit. No build step, ~works from a single
 > <script> tag. Source of truth: /galaxy.manifest.json.
 
 ## Install
@@ -19,8 +19,8 @@ Declarative (auto-initialized): `<div data-galaxy="warp" data-galaxy-speed="1.5"
 Returns an instance: `{ start, stop, pause, resume, update(opts), destroy }`.
 Common options for ALL animations: `speed` (number), `colors` (hex[]), `background` (hex), `autoplay` (bool). `interactive: true` makes constellation, particles, fireflies, swarm and ripples follow the pointer.
 
-## Animations (43)
-starfield, warp, blackHole, nebula, spiral, meteors, constellation, particles, aurora, wormhole, orbits, pulsar, gradient, fireflies, matrix, plasma, fireworks, snow, waves, dna, lightning, ripples, comets, confetti, bubbles, fog, grid, rain, vortex, sparkle, tunnel, swarm, ribbons, flowfield, globe, heartbeat, equalizer, clock, rays, radar, embers, typewriter, spirograph
+## Animations (60)
+starfield, warp, blackHole, nebula, spiral, meteors, constellation, particles, aurora, wormhole, orbits, pulsar, gradient, fireflies, matrix, plasma, fireworks, snow, waves, dna, lightning, ripples, comets, confetti, bubbles, fog, grid, rain, vortex, sparkle, tunnel, swarm, ribbons, flowfield, globe, heartbeat, equalizer, clock, rays, radar, embers, typewriter, spirograph, supernova, quasar, starcluster, cosmicWeb, eclipse, corona, galaxyMerge, lattice, moire, starburst, pillars, ionstorm, stardust, orrery, oscilloscope, bokeh, magnetosphere
 
 ## UI components
 JS: `Galaxy.toast(msg, { type })`, `Galaxy.modal({ title, body, actions })`, `await Galaxy.confirm(msg)`, `Galaxy.drawer({ title, html, side })`

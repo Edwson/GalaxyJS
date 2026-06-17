@@ -1,7 +1,7 @@
 {
   "name": "galaxyjs",
-  "version": "3.0.1",
-  "description": "GalaxyJS v3 'Nova' \u2014 a zero-dependency cosmic animation & UI component library. One unified API (Galaxy.create), 43 canvas animations, themeable UI components, full accessibility & reduced-motion support.",
+  "version": "3.1.0",
+  "description": "GalaxyJS v3 'Nova' \u2014 a zero-dependency cosmic animation & UI component library. One unified API (Galaxy.create), 60 canvas animations, themeable UI components, full accessibility & reduced-motion support.",
   "main": "galaxy.js",
   "module": "galaxy.js",
   "types": "galaxy.d.ts",
