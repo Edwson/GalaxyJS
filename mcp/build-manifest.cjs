@@ -92,11 +92,11 @@ const manifest = {
   author: { name: "Ed Chen", url: "https://www.edwson.com" },
   license: "MIT",
   cdn: {
-    js: "https://unpkg.com/galaxyjs@3/galaxy.js",
-    css: "https://unpkg.com/galaxyjs@3/galaxy.css",
+    js: "https://unpkg.com/galaxyjs@3/galaxy.min.js",
+    css: "https://unpkg.com/galaxyjs@3/galaxy.min.css",
   },
   install: {
-    script: '<link rel="stylesheet" href="https://unpkg.com/galaxyjs@3/galaxy.css">\n<script src="https://unpkg.com/galaxyjs@3/galaxy.js"></script>',
+    script: '<link rel="stylesheet" href="https://unpkg.com/galaxyjs@3/galaxy.min.css">\n<script src="https://unpkg.com/galaxyjs@3/galaxy.min.js"></script>',
     npm: 'npm install galaxyjs   //  import Galaxy from "galaxyjs"; import "galaxyjs/galaxy.css";',
   },
   api: {
