@@ -1,0 +1,32 @@
+# Dependencies — never commit these; they regenerate from package.json
+node_modules/
+.pnp/
+.pnp.js
+
+# Lockfile debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build / cache output
+dist/
+build/
+.cache/
+.vite/
+*.tsbuildinfo
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Logs
+*.log
