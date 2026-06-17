@@ -1,16 +1,37 @@
 {
   "name": "galaxyjs",
-  "version": "2.0.0",
-  "description": "Modern cosmic animation library with 40+ space-themed animations, advanced performance optimization, and full accessibility support",
-  "main": "js/galaxy-enhanced.js",
+  "version": "3.0.0",
+  "description": "GalaxyJS v3 'Nova' — a zero-dependency cosmic animation & UI component library. One unified API (Galaxy.create), 13 canvas animations, themeable UI components, full accessibility & reduced-motion support.",
+  "main": "galaxy.js",
+  "module": "galaxy.js",
+  "types": "galaxy.d.ts",
+  "unpkg": "galaxy.js",
+  "jsdelivr": "galaxy.js",
+  "style": "galaxy.css",
+  "sideEffects": [
+    "galaxy.js",
+    "*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./galaxy.d.ts",
+      "import": "./galaxy.js",
+      "require": "./galaxy.js",
+      "default": "./galaxy.js"
+    },
+    "./css": "./galaxy.css",
+    "./galaxy.css": "./galaxy.css"
+  },
   "scripts": {
-    "dev": "live-server --port=3000 --open=/",
-    "build": "echo 'Build complete'",
-    "test": "echo 'No tests specified'",
-    "lint": "eslint js/*.js",
-    "format": "prettier --write '**/*.{js,css,html,md}'",
-    "serve": "python3 -m http.server 8000",
-    "start": "npm run dev"
+    "start": "live-server --port=3000 --open=index.html",
+    "dev": "live-server --port=3000 --open=index.html",
+    "manifest": "node mcp/build-manifest.cjs",
+    "mcp": "node mcp/server.mjs",
+    "lint": "eslint galaxy.js",
+    "format": "prettier --write '**/*.{js,css,html,md}'"
+  },
+  "bin": {
+    "galaxyjs-mcp": "mcp/server.mjs"
   },
   "keywords": [
     "animation",
@@ -41,31 +62,35 @@
     "adaptive-quality"
   ],
   "author": {
-    "name": "GalaxyJS Team",
-    "email": "team@galaxyjs.dev",
-    "url": "https://galaxyjs.dev"
+    "name": "Ed Chen",
+    "url": "https://www.edwson.com"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/galaxyjs.git"
+    "url": "https://github.com/Edwson/GalaxyJS.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/galaxyjs/issues"
+    "url": "https://github.com/Edwson/GalaxyJS/issues"
   },
-  "homepage": "https://galaxyjs.dev",
+  "homepage": "https://github.com/Edwson/GalaxyJS",
   "funding": {
     "type": "github",
-    "url": "https://github.com/sponsors/yourusername"
+    "url": "https://github.com/sponsors/Edwson"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "eslint": "^8.0.0",
+    "live-server": "^1.2.2",
     "prettier": "^2.8.0",
-    "live-server": "^1.2.2"
+    "typescript": "^5.4.0"
   },
   "engines": {
-    "node": ">=14.0.0",
-    "npm": ">=6.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "browserslist": [
     "> 1%",
@@ -73,9 +98,14 @@
     "not dead"
   ],
   "files": [
-    "css/",
-    "js/",
+    "galaxy.js",
+    "galaxy.css",
+    "galaxy.d.ts",
+    "galaxy.manifest.json",
+    "llms.txt",
     "index.html",
+    "mcp/",
+    "docs/",
     "README.md",
     "LICENSE"
   ],
@@ -93,9 +123,6 @@
       "email": "team@galaxyjs.dev"
     }
   ],
-  "dependencies": {},
-  "peerDependencies": {},
-  "optionalDependencies": {},
   "bundledDependencies": [],
   "os": [
     "darwin",
@@ -122,10 +149,22 @@
       "sourceType": "module"
     },
     "rules": {
-      "indent": ["error", 2],
-      "linebreak-style": ["error", "unix"],
-      "quotes": ["error", "single"],
-      "semi": ["error", "always"]
+      "indent": [
+        "error",
+        2
+      ],
+      "linebreak-style": [
+        "error",
+        "unix"
+      ],
+      "quotes": [
+        "error",
+        "single"
+      ],
+      "semi": [
+        "error",
+        "always"
+      ]
     }
   },
   "prettier": {
@@ -134,5 +173,6 @@
     "singleQuote": true,
     "printWidth": 80,
     "tabWidth": 2
-  }
-} 
+  },
+  "bundleDependencies": []
+}

@@ -1,0 +1,764 @@
+{
+  "name": "galaxyjs",
+  "version": "3.0.0",
+  "title": "GalaxyJS",
+  "description": "Zero-dependency cosmic animation & UI component library with one unified API.",
+  "homepage": "https://github.com/Edwson/GalaxyJS",
+  "author": {
+    "name": "Ed Chen",
+    "url": "https://www.edwson.com"
+  },
+  "license": "MIT",
+  "cdn": {
+    "js": "https://unpkg.com/galaxyjs@3/galaxy.js",
+    "css": "https://unpkg.com/galaxyjs@3/galaxy.css"
+  },
+  "install": {
+    "script": "<link rel=\"stylesheet\" href=\"https://unpkg.com/galaxyjs@3/galaxy.css\">\n<script src=\"https://unpkg.com/galaxyjs@3/galaxy.js\"></script>",
+    "npm": "npm install galaxyjs   //  import Galaxy from \"galaxyjs\"; import \"galaxyjs/galaxy.css\";"
+  },
+  "api": {
+    "create": "Galaxy.create(type, target, options) -> instance{ start, stop, pause, resume, update, destroy }",
+    "register": "Galaxy.register(name, { defaults, setup })",
+    "theme": "Galaxy.theme(\"dark\"|\"light\"|{ accent, bg, ... })",
+    "toggleTheme": "Galaxy.toggleTheme()",
+    "autoInit": "Galaxy.autoInit(scope?) — runs automatically; also wires data-* components",
+    "declarative": "<div data-galaxy=\"nebula\" data-galaxy-speed=\"1.5\"></div>"
+  },
+  "oneLiner": "Galaxy.create('nebula', '#hero')",
+  "notes": [
+    "Every option also accepts: speed (number), colors (hex[]), background (hex), autoplay (bool).",
+    "interactive:true makes constellation/particles/fireflies/swarm/ripples follow the pointer.",
+    "Respects prefers-reduced-motion (renders one static frame). One shared rAF loop; auto-pauses off-screen."
+  ],
+  "cssClasses": [
+    "gx-btn (--primary --accent --ghost --subtle --danger --sm --lg --block --icon; is-loading; gx-btn-group)",
+    "gx-card (--interactive --glow --spotlight)",
+    "gx-alert (--success --warning --danger --info)",
+    "gx-banner",
+    "gx-badge",
+    "gx-chip (gx-chip__close)",
+    "gx-avatar (--status --busy --offline)",
+    "gx-avatar-group",
+    "gx-table (--striped)",
+    "gx-steps",
+    "gx-pagination",
+    "gx-breadcrumb",
+    "gx-kbd",
+    "gx-divider",
+    "gx-progress",
+    "gx-ring (set --gx-value)",
+    "gx-spinner",
+    "gx-skeleton",
+    "gx-input",
+    "gx-textarea",
+    "gx-select",
+    "gx-input-group",
+    "gx-switch",
+    "gx-check",
+    "gx-radio-c",
+    "gx-range"
+  ],
+  "animations": [
+    {
+      "name": "starfield",
+      "desc": "Drifting parallax stars with twinkle",
+      "options": {
+        "count": 160,
+        "speed": 1,
+        "colors": [
+          "#ffffff",
+          "#bcd4ff",
+          "#fff1c4"
+        ],
+        "background": "#05060f",
+        "trail": false
+      }
+    },
+    {
+      "name": "warp",
+      "desc": "Hyperspace streaks from the center",
+      "options": {
+        "count": 220,
+        "speed": 1,
+        "colors": [
+          "#ffffff",
+          "#9bd0ff",
+          "#c9b8ff"
+        ],
+        "background": "#03040d",
+        "trail": true
+      }
+    },
+    {
+      "name": "blackHole",
+      "desc": "Accretion disk with gravitational-lensing glow",
+      "options": {
+        "radius": 0.18,
+        "speed": 1,
+        "colors": [
+          "#ff7b00",
+          "#ffd166",
+          "#7c5cff"
+        ],
+        "background": "#04040c",
+        "particles": 220
+      }
+    },
+    {
+      "name": "nebula",
+      "desc": "Drifting layered gas clouds",
+      "options": {
+        "count": 7,
+        "speed": 1,
+        "colors": [
+          "#7c5cff",
+          "#22d3ee",
+          "#f472b6",
+          "#3b82f6"
+        ],
+        "background": "#05060f",
+        "blur": 60
+      }
+    },
+    {
+      "name": "spiral",
+      "desc": "Rotating logarithmic galaxy arms",
+      "options": {
+        "stars": 600,
+        "arms": 3,
+        "speed": 1,
+        "colors": [
+          "#ffffff",
+          "#9bd0ff",
+          "#c9b8ff",
+          "#ffd6a5"
+        ],
+        "background": "#04040c"
+      }
+    },
+    {
+      "name": "meteors",
+      "desc": "Diagonal shooting stars",
+      "options": {
+        "count": 18,
+        "speed": 1,
+        "angle": 28,
+        "colors": [
+          "#ffffff",
+          "#a5c8ff"
+        ],
+        "background": "#05060f",
+        "stars": true
+      }
+    },
+    {
+      "name": "constellation",
+      "desc": "Connected node network, reacts to the pointer",
+      "options": {
+        "count": 90,
+        "speed": 1,
+        "link": 130,
+        "colors": [
+          "#7c5cff",
+          "#22d3ee"
+        ],
+        "background": "#05060f",
+        "interactive": true
+      }
+    },
+    {
+      "name": "particles",
+      "desc": "Cursor repel / attract particle field",
+      "options": {
+        "count": 120,
+        "speed": 1,
+        "colors": [
+          "#ffffff",
+          "#7c5cff",
+          "#22d3ee"
+        ],
+        "background": "#05060f",
+        "interactive": true,
+        "mode": "repel"
+      }
+    },
+    {
+      "name": "aurora",
+      "desc": "Flowing ribbons of light",
+      "options": {
+        "bands": 4,
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff",
+          "#34d399",
+          "#f472b6"
+        ],
+        "background": "#04060f"
+      }
+    },
+    {
+      "name": "wormhole",
+      "desc": "Receding tunnel of rings",
+      "options": {
+        "rings": 26,
+        "speed": 1,
+        "colors": [
+          "#7c5cff",
+          "#22d3ee",
+          "#f472b6"
+        ],
+        "background": "#03030b"
+      }
+    },
+    {
+      "name": "orbits",
+      "desc": "Planets circling a star",
+      "options": {
+        "bodies": 6,
+        "speed": 1,
+        "colors": [
+          "#ffd166",
+          "#7c5cff",
+          "#22d3ee",
+          "#f472b6",
+          "#34d399"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "pulsar",
+      "desc": "Rhythmic expanding rings",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff"
+        ],
+        "background": "#04040c",
+        "waves": 4
+      }
+    },
+    {
+      "name": "gradient",
+      "desc": "Animated mesh-gradient backdrop",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#7c5cff",
+          "#22d3ee",
+          "#f472b6",
+          "#05060f"
+        ]
+      }
+    },
+    {
+      "name": "fireflies",
+      "desc": "Wandering glow that breathes (interactive)",
+      "options": {
+        "count": 60,
+        "speed": 1,
+        "colors": [
+          "#fff7ae",
+          "#aef5c4",
+          "#a8d8ff"
+        ],
+        "background": "#04060a",
+        "interactive": true
+      }
+    },
+    {
+      "name": "matrix",
+      "desc": "Falling digital rain",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#34d399"
+        ],
+        "background": "#020509",
+        "font": 16,
+        "glyphs": "01"
+      }
+    },
+    {
+      "name": "plasma",
+      "desc": "Smooth flowing color field",
+      "options": {
+        "speed": 1,
+        "scale": 1,
+        "colors": [
+          "#7c5cff",
+          "#22d3ee",
+          "#f472b6"
+        ]
+      }
+    },
+    {
+      "name": "fireworks",
+      "desc": "Launching shells that burst",
+      "options": {
+        "rate": 1,
+        "speed": 1,
+        "colors": [
+          "#fbbf24",
+          "#fb7185",
+          "#7c5cff",
+          "#22d3ee",
+          "#34d399"
+        ],
+        "background": "#04040c",
+        "gravity": 0.12
+      }
+    },
+    {
+      "name": "snow",
+      "desc": "Drifting snowfall with wind",
+      "options": {
+        "count": 200,
+        "speed": 1,
+        "wind": 0.4,
+        "colors": [
+          "#ffffff",
+          "#dbeafe"
+        ],
+        "background": "#0a0f1f"
+      }
+    },
+    {
+      "name": "waves",
+      "desc": "Layered ocean of sine waves",
+      "options": {
+        "layers": 4,
+        "speed": 1,
+        "amplitude": 26,
+        "colors": [
+          "#0ea5e9",
+          "#22d3ee",
+          "#7c5cff",
+          "#1e3a8a"
+        ],
+        "background": "#040814"
+      }
+    },
+    {
+      "name": "dna",
+      "desc": "Rotating double helix",
+      "options": {
+        "speed": 1,
+        "points": 36,
+        "colors": [
+          "#22d3ee",
+          "#f472b6",
+          "#7c5cff"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "lightning",
+      "desc": "Branching bolts that flash",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#a5b4fc",
+          "#e0e7ff",
+          "#7c5cff"
+        ],
+        "background": "#04040c"
+      }
+    },
+    {
+      "name": "ripples",
+      "desc": "Expanding concentric rings (interactive)",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff"
+        ],
+        "background": "#04060f",
+        "interactive": true
+      }
+    },
+    {
+      "name": "comets",
+      "desc": "Glowing comets with trailing tails",
+      "options": {
+        "count": 4,
+        "speed": 1,
+        "colors": [
+          "#ffffff",
+          "#a5c8ff",
+          "#c9b8ff",
+          "#ffd6a5"
+        ],
+        "background": "#04050d",
+        "stars": true
+      }
+    },
+    {
+      "name": "confetti",
+      "desc": "Celebratory falling paper",
+      "options": {
+        "rate": 1,
+        "speed": 1,
+        "gravity": 0.08,
+        "colors": [
+          "#fbbf24",
+          "#fb7185",
+          "#7c5cff",
+          "#22d3ee",
+          "#34d399"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "bubbles",
+      "desc": "Gentle rising bubbles",
+      "options": {
+        "count": 42,
+        "speed": 1,
+        "colors": [
+          "#a8e6ff",
+          "#7c5cff",
+          "#34d399"
+        ],
+        "background": "#04121e"
+      }
+    },
+    {
+      "name": "fog",
+      "desc": "Drifting layered mist",
+      "options": {
+        "layers": 7,
+        "speed": 1,
+        "colors": [
+          "#9fb3c8",
+          "#5b6b82",
+          "#c8d4e0"
+        ],
+        "background": "#0a0e16"
+      }
+    },
+    {
+      "name": "grid",
+      "desc": "Synthwave perspective floor",
+      "options": {
+        "speed": 1,
+        "lines": 16,
+        "colors": [
+          "#f472b6",
+          "#7c5cff"
+        ],
+        "background": "#0a0114"
+      }
+    },
+    {
+      "name": "rain",
+      "desc": "Angled rainfall",
+      "options": {
+        "count": 300,
+        "speed": 1,
+        "angle": 14,
+        "colors": [
+          "#9bd0ff",
+          "#cfe4ff"
+        ],
+        "background": "#070b14"
+      }
+    },
+    {
+      "name": "vortex",
+      "desc": "Particles spiralling into the core",
+      "options": {
+        "count": 240,
+        "speed": 1,
+        "colors": [
+          "#7c5cff",
+          "#22d3ee",
+          "#f472b6"
+        ],
+        "background": "#04040c"
+      }
+    },
+    {
+      "name": "sparkle",
+      "desc": "Twinkling glints",
+      "options": {
+        "count": 54,
+        "speed": 1,
+        "colors": [
+          "#ffffff",
+          "#fff1c4",
+          "#a8d8ff"
+        ],
+        "background": "#04050d"
+      }
+    },
+    {
+      "name": "tunnel",
+      "desc": "Neon polygon tunnel",
+      "options": {
+        "rings": 20,
+        "sides": 6,
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#f472b6",
+          "#7c5cff"
+        ],
+        "background": "#03030b"
+      }
+    },
+    {
+      "name": "swarm",
+      "desc": "Flocking boids, reacts to the pointer",
+      "options": {
+        "count": 64,
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff"
+        ],
+        "background": "#05060f",
+        "interactive": true
+      }
+    },
+    {
+      "name": "ribbons",
+      "desc": "Flowing silk ribbons",
+      "options": {
+        "count": 5,
+        "speed": 1,
+        "colors": [
+          "#7c5cff",
+          "#22d3ee",
+          "#f472b6"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "flowfield",
+      "desc": "Particles following a flow field",
+      "options": {
+        "count": 600,
+        "speed": 1,
+        "scale": 1,
+        "colors": [
+          "#7c5cff",
+          "#22d3ee",
+          "#f472b6"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "globe",
+      "desc": "Rotating dotted sphere",
+      "options": {
+        "count": 320,
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "heartbeat",
+      "desc": "ECG monitor sweep",
+      "options": {
+        "speed": 1,
+        "bpm": 1,
+        "colors": [
+          "#34d399"
+        ],
+        "background": "#02100a"
+      }
+    },
+    {
+      "name": "equalizer",
+      "desc": "Audio frequency bars",
+      "options": {
+        "bars": 32,
+        "speed": 1,
+        "colors": [
+          "#7c5cff",
+          "#22d3ee",
+          "#34d399"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "clock",
+      "desc": "Luminous analog clock (real time)",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff",
+          "#f472b6"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "rays",
+      "desc": "Rotating volumetric light rays",
+      "options": {
+        "count": 14,
+        "speed": 1,
+        "colors": [
+          "#ffd166",
+          "#f472b6",
+          "#7c5cff"
+        ],
+        "background": "#070317"
+      }
+    },
+    {
+      "name": "radar",
+      "desc": "Sweeping radar with blips",
+      "options": {
+        "speed": 1,
+        "blips": 7,
+        "colors": [
+          "#34d399",
+          "#22d3ee"
+        ],
+        "background": "#02110c"
+      }
+    },
+    {
+      "name": "embers",
+      "desc": "Rising fire sparks",
+      "options": {
+        "count": 120,
+        "speed": 1,
+        "colors": [
+          "#fbbf24",
+          "#fb7185",
+          "#f59e0b"
+        ],
+        "background": "#0a0402"
+      }
+    },
+    {
+      "name": "typewriter",
+      "desc": "Typing text effect (set `text`)",
+      "options": {
+        "speed": 1,
+        "text": [
+          "Hello, universe",
+          "Build with GalaxyJS",
+          "One line of code"
+        ],
+        "colors": [
+          "#eef1ff",
+          "#7c5cff"
+        ],
+        "background": "#05060f",
+        "font": 0
+      }
+    },
+    {
+      "name": "spirograph",
+      "desc": "Evolving hypotrochoid curves",
+      "options": {
+        "speed": 1,
+        "colors": [
+          "#7c5cff",
+          "#22d3ee",
+          "#f472b6"
+        ],
+        "background": "#05060f"
+      }
+    }
+  ],
+  "components": [
+    {
+      "name": "toast",
+      "kind": "js",
+      "usage": "Galaxy.toast(message, { type, duration, position })",
+      "desc": "Transient notification. type: success|warning|danger|info."
+    },
+    {
+      "name": "modal",
+      "kind": "js",
+      "usage": "Galaxy.modal({ title, body, actions })",
+      "desc": "Dialog with optional action buttons. Returns { close }."
+    },
+    {
+      "name": "confirm",
+      "kind": "js",
+      "usage": "await Galaxy.confirm(message, { okLabel, cancelLabel })",
+      "desc": "Confirm dialog. Resolves to a boolean."
+    },
+    {
+      "name": "drawer",
+      "kind": "js",
+      "usage": "Galaxy.drawer({ title, html, side, actions })",
+      "desc": "Slide-in panel. side: right|left|top|bottom."
+    },
+    {
+      "name": "tooltip",
+      "kind": "attr",
+      "usage": "<button data-gx-tooltip=\"text\" data-gx-tooltip-pos=\"top\">",
+      "desc": "Hover/focus tooltip."
+    },
+    {
+      "name": "tabs",
+      "kind": "attr",
+      "usage": "<div data-gx-tabs>… .gx-tab / .gx-tab-panel …</div>",
+      "desc": "Animated tab group."
+    },
+    {
+      "name": "accordion",
+      "kind": "attr",
+      "usage": "<div class=\"gx-accordion\" data-gx-accordion>…</div>",
+      "desc": "Collapsible panels. Add =\"multi\" to allow many open."
+    },
+    {
+      "name": "dropdown",
+      "kind": "attr",
+      "usage": "<div class=\"gx-dropdown\" data-gx-dropdown>…</div>",
+      "desc": "Menu with outside-click close."
+    },
+    {
+      "name": "segmented",
+      "kind": "attr",
+      "usage": "<div data-gx-segmented>… .gx-segmented__option …</div>",
+      "desc": "Segmented control. Fires gx:change."
+    },
+    {
+      "name": "popover",
+      "kind": "attr",
+      "usage": "<button data-gx-popover data-gx-popover-target=\"#pop\">",
+      "desc": "Click-triggered rich popover (.gx-popover)."
+    },
+    {
+      "name": "rating",
+      "kind": "attr",
+      "usage": "<span class=\"gx-rating\" data-gx-rating=\"5\" data-gx-value=\"3\"></span>",
+      "desc": "Interactive star rating. Fires gx:change."
+    },
+    {
+      "name": "copy",
+      "kind": "attr",
+      "usage": "<button data-gx-copy=\"text to copy\">Copy</button>",
+      "desc": "Copy text (or data-gx-copy-target) to the clipboard."
+    },
+    {
+      "name": "reveal",
+      "kind": "attr",
+      "usage": "<div class=\"gx-reveal\" data-gx-reveal-delay=\"120\">",
+      "desc": "Fade/slide in on scroll."
+    }
+  ]
+}

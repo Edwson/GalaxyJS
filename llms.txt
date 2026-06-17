@@ -1,0 +1,38 @@
+# GalaxyJS
+
+> Zero-dependency cosmic animation & UI component library with one unified API.
+> 43 canvas animations + a themeable UI kit. No build step, ~works from a single
+> <script> tag. Source of truth: /galaxy.manifest.json.
+
+## Install
+```
+<link rel="stylesheet" href="https://unpkg.com/galaxyjs@3/galaxy.css">
+<script src="https://unpkg.com/galaxyjs@3/galaxy.js"></script>
+```
+npm: `npm install galaxyjs` → `import Galaxy from "galaxyjs"; import "galaxyjs/galaxy.css";`
+
+## Use in one line
+```
+Galaxy.create('nebula', '#hero', { speed: 1.2, colors: ['#7c5cff', '#22d3ee'] })
+```
+Declarative (auto-initialized): `<div data-galaxy="warp" data-galaxy-speed="1.5"></div>`
+Returns an instance: `{ start, stop, pause, resume, update(opts), destroy }`.
+Common options for ALL animations: `speed` (number), `colors` (hex[]), `background` (hex), `autoplay` (bool). `interactive: true` makes constellation, particles, fireflies, swarm and ripples follow the pointer.
+
+## Animations (43)
+starfield, warp, blackHole, nebula, spiral, meteors, constellation, particles, aurora, wormhole, orbits, pulsar, gradient, fireflies, matrix, plasma, fireworks, snow, waves, dna, lightning, ripples, comets, confetti, bubbles, fog, grid, rain, vortex, sparkle, tunnel, swarm, ribbons, flowfield, globe, heartbeat, equalizer, clock, rays, radar, embers, typewriter, spirograph
+
+## UI components
+JS: `Galaxy.toast(msg, { type })`, `Galaxy.modal({ title, body, actions })`, `await Galaxy.confirm(msg)`, `Galaxy.drawer({ title, html, side })`
+Declarative (wired by `Galaxy.autoInit()`, which runs on load): `data-gx-tooltip`, `data-gx-tabs`, `data-gx-accordion`, `data-gx-dropdown`, `data-gx-segmented`, `data-gx-popover`, `data-gx-rating`, `data-gx-copy`, `.gx-reveal`
+CSS classes: gx-btn, gx-card, gx-alert, gx-banner, gx-badge, gx-chip, gx-table, gx-steps, gx-pagination, gx-breadcrumb, gx-progress, gx-ring, gx-spinner, gx-skeleton, gx-input/textarea/select, gx-switch, gx-check, gx-radio-c, gx-range, gx-avatar, gx-kbd, gx-divider
+
+## Theming
+`Galaxy.theme('dark' | 'light' | { accent: '#...' })` · `Galaxy.toggleTheme()`
+
+## Machine-readable & MCP
+- Full API as compact JSON: [/galaxy.manifest.json](galaxy.manifest.json)
+- API reference: [/docs/API.md](docs/API.md)
+- MCP server: `npx -y galaxyjs-mcp` — tools: `galaxy_quickstart`, `galaxy_list`, `galaxy_get`, `galaxy_snippet`
+
+Notes: respects `prefers-reduced-motion` (renders one static frame); a single shared requestAnimationFrame loop; surfaces auto-pause off-screen; HiDPI-aware. MIT © Ed Chen (https://www.edwson.com).

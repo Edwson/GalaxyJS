@@ -1,1158 +1,592 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-galaxy-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GalaxyJS - Cosmic Animation Library</title>
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/animations.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/modern-animations.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/iconfont/tabler-icons.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GalaxyJS v3 — Interactive Showcase</title>
+  <meta name="description" content="GalaxyJS — a zero-dependency cosmic animation & UI component library. Live playground." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="galaxy.css" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: var(--gx-font); background: var(--gx-bg); color: var(--gx-text); }
+    a { color: inherit; text-decoration: none; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+    /* Top nav */
+    header.nav {
+      position: sticky; top: 0; z-index: var(--gx-z-sticky);
+      backdrop-filter: blur(14px);
+      background: color-mix(in srgb, var(--gx-bg) 78%, transparent);
+      border-bottom: 1px solid var(--gx-border);
+    }
+    .nav__inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.1rem; }
+    .brand .dot { width: 22px; height: 22px; border-radius: 50%; background: conic-gradient(from 0deg, var(--gx-accent-2), var(--gx-accent), var(--gx-accent-3), var(--gx-accent-2)); box-shadow: var(--gx-glow); }
+    .nav__links { display: flex; gap: 4px; align-items: center; }
+    .nav__links a { padding: 8px 14px; border-radius: 999px; text-decoration: none; color: var(--gx-text-soft); font-size: .9rem; font-weight: 600; }
+    .nav__links a:hover { background: var(--gx-surface-2); color: var(--gx-text); }
+
+    /* Hero */
+    .hero { position: relative; min-height: 78vh; display: grid; place-items: center; overflow: hidden; text-align: center; }
+    #hero-bg { position: absolute; inset: 0; }
+    .hero__content { position: relative; z-index: 2; padding: 80px 0; }
+    .hero h1 { font-size: clamp(2.6rem, 7vw, 4.6rem); line-height: 1.02; margin: 0 0 18px; font-weight: 800; letter-spacing: -0.02em; }
+    .hero p.lead { font-size: clamp(1rem, 2.4vw, 1.3rem); color: var(--gx-text-soft); max-width: 640px; margin: 0 auto 28px; line-height: 1.6; }
+    .hero .gx-row { justify-content: center; }
+    .pill-row { margin-top: 28px; gap: 8px; flex-wrap: wrap; }
+
+    section { padding: 80px 0; }
+    .section-head { text-align: center; max-width: 680px; margin: 0 auto 48px; }
+    .section-head h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 0 0 12px; font-weight: 800; letter-spacing: -0.01em; }
+    .section-head p { color: var(--gx-text-soft); font-size: 1.05rem; line-height: 1.6; margin: 0; }
+    .eyebrow { display: inline-block; font-size: .8rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--gx-accent); margin-bottom: 12px; }
+
+    /* Animation gallery */
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+    .demo-card { padding: 0; overflow: hidden; cursor: pointer; }
+    .demo-card .surface { height: 170px; }
+    .demo-card .meta { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+    .demo-card .meta h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+    .demo-card .meta span { font-size: .75rem; color: var(--gx-text-muted); font-family: var(--gx-font-mono); }
+
+    /* Playground */
+    .play { display: grid; grid-template-columns: 1.6fr 1fr; gap: 22px; align-items: stretch; }
+    @media (max-width: 880px) { .play { grid-template-columns: 1fr; } .nav__links a:not(.cta) { display: none; } }
+    #play-stage { height: 420px; border-radius: var(--gx-radius-lg); }
+    .panel { display: flex; flex-direction: column; gap: 16px; }
+    .control { display: flex; flex-direction: column; gap: 6px; }
+    .control label { font-size: .8rem; font-weight: 600; color: var(--gx-text-soft); display: flex; justify-content: space-between; }
+    .control label b { color: var(--gx-accent); font-family: var(--gx-font-mono); font-weight: 600; }
+    input[type="range"] { width: 100%; accent-color: var(--gx-accent); }
+    select.gx-select { cursor: pointer; }
+    pre.code { margin: 0; padding: 16px; background: #070912; border: 1px solid var(--gx-border); border-radius: var(--gx-radius); overflow:auto; font-family: var(--gx-font-mono); font-size: .82rem; line-height: 1.6; color: #cdd6f4; }
+    pre.code .k { color: #c4b5ff; } pre.code .s { color: #a6e3a1; } pre.code .n { color: #fab387; } pre.code .c { color: #6b739c; font-style: italic; }
+
+    /* Components grid */
+    .comp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 18px; }
+    .comp-grid .gx-card { display: flex; flex-direction: column; gap: 14px; }
+    .comp-grid h3 { margin: 0; font-size: 1rem; }
+    .swatches { display:flex; gap:8px; }
+    .sw { width: 28px; height: 28px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
+    .sw.active { border-color: #fff; }
+
+    footer { padding: 60px 0 80px; border-top: 1px solid var(--gx-border); text-align: center; color: var(--gx-text-muted); }
+    footer a { color: var(--gx-text-soft); }
+  </style>
 </head>
 <body>
-    <!-- Cosmic Background -->
-    <div class="cosmic-background">
-        <div class="stars-layer"></div>
-        <div class="nebula-layer"></div>
-        <div class="black-hole-center"></div>
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav__inner">
+      <div class="brand"><span class="dot"></span> GalaxyJS <span class="gx-badge gx-badge--accent">v3</span></div>
+      <nav class="nav__links">
+        <a href="#animations">Animations</a>
+        <a href="#playground">Playground</a>
+        <a href="#components">Components</a>
+        <a href="#start">Get Started</a>
+        <a href="https://github.com/Edwson/GalaxyJS" target="_blank" rel="noopener" class="gx-btn gx-btn--ghost gx-btn--sm cta">★ GitHub</a>
+        <a href="#" class="gx-btn gx-btn--ghost gx-btn--sm cta" id="themeBtn">☾ Theme</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div id="hero-bg"></div>
+    <div class="wrap hero__content">
+      <span class="eyebrow">Zero dependencies · 43 animations · UI kit</span>
+      <h1>The universe,<br /><span class="gx-text-gradient">one line of code.</span></h1>
+      <p class="lead">GalaxyJS is a tiny, beautiful animation &amp; component library. Cosmic canvas backdrops, themeable UI components, and a single unified API: <code>Galaxy.create()</code>.</p>
+      <div class="gx-row">
+        <a href="#playground" class="gx-btn gx-btn--primary gx-btn--lg">Try the playground</a>
+        <a href="#start" class="gx-btn gx-btn--ghost gx-btn--lg">Get started</a>
+      </div>
+      <div class="gx-row pill-row">
+        <span class="gx-badge">⚡ Shared rAF loop</span>
+        <span class="gx-badge">♿ Reduced-motion aware</span>
+        <span class="gx-badge">🎨 Light / dark themes</span>
+        <span class="gx-badge">📦 ~14kb, no build step</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANIMATIONS -->
+  <section id="animations" class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">The Collection</span>
+      <h2>43 cosmic animations</h2>
+      <p>Every animation is a canvas surface auto-sized to its container, paused when off-screen, and rendered through one shared loop. Click any card to load it in the playground.</p>
+    </div>
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <!-- PLAYGROUND -->
+  <section id="playground" style="background: var(--gx-bg-soft);">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Live Playground</span>
+        <h2>Tweak it. Copy it. Ship it.</h2>
+        <p>Adjust parameters in real time and copy the exact code you need.</p>
+      </div>
+      <div class="play">
+        <div id="play-stage" class="gx-card" style="padding:0;"></div>
+        <div class="panel">
+          <div class="control">
+            <label for="animSel">Animation</label>
+            <select id="animSel" class="gx-select"></select>
+          </div>
+          <div class="control">
+            <label>Speed <b id="speedVal">1.0</b></label>
+            <input id="speed" type="range" min="0.1" max="3" step="0.1" value="1" />
+          </div>
+          <div class="control">
+            <label>Density <b id="densVal">1.0</b></label>
+            <input id="density" type="range" min="0.2" max="2.5" step="0.1" value="1" />
+          </div>
+          <div class="control">
+            <label>Accent palette</label>
+            <div class="swatches" id="swatches"></div>
+          </div>
+          <pre class="code" id="codeOut"></pre>
+          <button class="gx-btn gx-btn--accent gx-btn--block" id="copyBtn">Copy code</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPONENTS -->
+  <section id="components" class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">UI Kit</span>
+      <h2>Components, fully themed</h2>
+      <p>Buttons, cards, modals, toasts, tooltips, tabs, accordions and more — all driven by the same design tokens, all wired with one call to <code>Galaxy.autoInit()</code>.</p>
     </div>
 
-    <!-- Navigation -->
-    <nav class="galaxy-nav">
-        <div class="nav-container">
-            <div class="logo">
-                <span class="logo-text">GalaxyJS</span>
-                <div class="logo-orbit">
-                    <div class="logo-planet"></div>
-                </div>
-            </div>
-            <ul class="nav-menu">
-                <li><a href="#home" class="nav-link">Home</a></li>
-                <li><a href="#demos" class="nav-link">Demos</a></li>
-                <li><a href="#docs" class="nav-link">Documentation</a></li>
-                <li><a href="https://github.com/Edwson/GalaxyJS" class="nav-link">GitHub</a></li>
-            </ul>
+    <div class="comp-grid">
+      <div class="gx-card gx-card--spotlight">
+        <h3>Buttons</h3>
+        <div class="gx-row gx-row--wrap">
+          <button class="gx-btn gx-btn--primary">Primary</button>
+          <button class="gx-btn gx-btn--accent">Accent</button>
+          <button class="gx-btn gx-btn--ghost">Ghost</button>
+          <button class="gx-btn gx-btn--danger">Danger</button>
         </div>
-    </nav>
+      </div>
 
-    <!-- Hero Section -->
-    <section id="home" class="hero-section">
-        <div class="hero-content">
-            <h1 class="hero-title">
-                <span class="title-line">Galaxy</span>
-                <span class="title-line">JS</span>
-            </h1>
-            <p class="hero-subtitle">Cosmic animations for the modern web</p>
-            <div class="hero-buttons">
-                <button class="btn-primary" onclick="window.scrollToSection('docs')">Get Started</button>
-                <button class="btn-secondary" onclick="window.scrollToSection('demos')">View Demos</button>
-            </div>
+      <div class="gx-card gx-card--spotlight">
+        <h3>Toasts</h3>
+        <div class="gx-row gx-row--wrap">
+          <button class="gx-btn gx-btn--ghost" onclick="Galaxy.toast('Star saved to your galaxy ✨', {type:'success'})">Success</button>
+          <button class="gx-btn gx-btn--ghost" onclick="Galaxy.toast('Solar flare detected', {type:'warning'})">Warning</button>
+          <button class="gx-btn gx-btn--ghost" onclick="Galaxy.toast('Signal lost', {type:'danger'})">Danger</button>
         </div>
-        <div class="hero-visual">
-            <div class="galaxy-system">
-                <div class="central-star"></div>
-                <div class="orbit orbit-1">
-                    <div class="planet planet-1"></div>
-                </div>
-                <div class="orbit orbit-2">
-                    <div class="planet planet-2"></div>
-                </div>
-                <div class="orbit orbit-3">
-                    <div class="planet planet-3"></div>
-                </div>
-            </div>
+      </div>
+
+      <div class="gx-card gx-card--spotlight">
+        <h3>Modal &amp; Confirm</h3>
+        <div class="gx-row gx-row--wrap">
+          <button class="gx-btn gx-btn--ghost" id="modalBtn">Open modal</button>
+          <button class="gx-btn gx-btn--ghost" id="confirmBtn">Confirm</button>
         </div>
-    </section>
+      </div>
 
-    <!-- Demos Section -->
-    <section id="demos" class="demos-section">
-        <h2 class="section-title">Animation Demos</h2>
-        <div class="demos-grid">
-            <!-- Demo 1: Pulsar Effect -->
-            <div class="demo-card" data-demo="pulsar">
-                <div class="demo-visual">
-                    <div class="pulsar-animation">
-                        <div class="pulsar-core"></div>
-                        <div class="pulsar-waves"></div>
-                    </div>
-                </div>
-                <h3>Pulsar Effect</h3>
-                <p>Neutron star pulse animation</p>
-            </div>
-
-            <!-- Demo 2: Black Hole -->
-            <div class="demo-card" data-demo="blackhole">
-                <div class="demo-visual">
-                    <div class="black-hole-animation">
-                        <div class="event-horizon"></div>
-                        <div class="accretion-disk"></div>
-                    </div>
-                </div>
-                <h3>Black Hole</h3>
-                <p>Event horizon and accretion disk</p>
-            </div>
-
-            <!-- Demo 3: Wormhole -->
-            <div class="demo-card" data-demo="wormhole">
-                <div class="demo-visual">
-                    <div class="wormhole-animation">
-                        <div class="wormhole-tunnel"></div>
-                        <div class="wormhole-stars"></div>
-                    </div>
-                </div>
-                <h3>Wormhole</h3>
-                <p>Space-time tunnel effect</p>
-            </div>
-
-            <!-- Demo 4: Supernova -->
-            <div class="demo-card" data-demo="supernova">
-                <div class="demo-visual">
-                    <div class="supernova-animation">
-                        <div class="supernova-core"></div>
-                        <div class="supernova-shockwave"></div>
-                    </div>
-                </div>
-                <h3>Supernova</h3>
-                <p>Stellar explosion effect</p>
-            </div>
-
-            <!-- Demo 5: Asteroid Field -->
-            <div class="demo-card" data-demo="asteroids">
-                <div class="demo-visual">
-                    <div class="asteroid-field">
-                        <div class="asteroid asteroid-1"></div>
-                        <div class="asteroid asteroid-2"></div>
-                        <div class="asteroid asteroid-3"></div>
-                        <div class="asteroid asteroid-4"></div>
-                    </div>
-                </div>
-                <h3>Asteroid Field</h3>
-                <p>Dynamic space debris</p>
-            </div>
-
-            <!-- Demo 6: Cosmic Ray -->
-            <div class="demo-card" data-demo="cosmic-ray">
-                <div class="demo-visual">
-                    <div class="cosmic-ray-animation">
-                        <div class="ray-particle"></div>
-                        <div class="ray-trail"></div>
-                    </div>
-                </div>
-                <h3>Cosmic Ray</h3>
-                <p>High-energy particle effect</p>
-            </div>
-
-            <!-- Demo 7: Dwarf Planet -->
-            <div class="demo-card" data-demo="dwarf-planet">
-                <div class="demo-visual">
-                    <div class="dwarf-planet-animation">
-                        <div class="dwarf-planet"></div>
-                        <div class="planet-rings"></div>
-                    </div>
-                </div>
-                <h3>Dwarf Planet</h3>
-                <p>Small celestial body</p>
-            </div>
-
-            <!-- Demo 8: Nebula -->
-            <div class="demo-card" data-demo="nebula">
-                <div class="demo-visual">
-                    <div class="nebula-animation">
-                        <div class="nebula-cloud"></div>
-                        <div class="nebula-particles"></div>
-                    </div>
-                </div>
-                <h3>Nebula</h3>
-                <p>Interstellar cloud formation</p>
-            </div>
-
-            <!-- Demo 9: Binary Stars -->
-            <div class="demo-card" data-demo="binary-stars">
-                <div class="demo-visual">
-                    <div class="binary-stars-animation">
-                        <div class="star star-1"></div>
-                        <div class="star star-2"></div>
-                        <div class="orbit-path"></div>
-                    </div>
-                </div>
-                <h3>Binary Stars</h3>
-                <p>Dual star system</p>
-            </div>
-
-            <!-- Demo 10: Cosmic Dust -->
-            <div class="demo-card" data-demo="cosmic-dust">
-                <div class="demo-visual">
-                    <div class="cosmic-dust-animation">
-                        <div class="dust-particle dust-1"></div>
-                        <div class="dust-particle dust-2"></div>
-                        <div class="dust-particle dust-3"></div>
-                        <div class="dust-particle dust-4"></div>
-                    </div>
-                </div>
-                <h3>Cosmic Dust</h3>
-                <p>Interstellar particles</p>
-            </div>
-
-            <!-- Demo 11: Time Dilation -->
-            <div class="demo-card" data-demo="time-dilation">
-                <div class="demo-visual">
-                    <div class="time-dilation-animation">
-                        <div class="time-clock"></div>
-                        <div class="time-warp"></div>
-                    </div>
-                </div>
-                <h3>Time Dilation</h3>
-                <p>Relativistic time effect</p>
-            </div>
-
-            <!-- Demo 12: Quantum Tunneling -->
-            <div class="demo-card" data-demo="quantum-tunneling">
-                <div class="demo-visual">
-                    <div class="quantum-tunneling-animation">
-                        <div class="quantum-particle"></div>
-                        <div class="energy-barrier"></div>
-                    </div>
-                </div>
-                <h3>Quantum Tunneling</h3>
-                <p>Quantum mechanical effect</p>
-            </div>
-
-            <!-- Demo 13: Cosmic Microwave Background -->
-            <div class="demo-card" data-demo="cmb">
-                <div class="demo-visual">
-                    <div class="cmb-animation">
-                        <div class="cmb-pattern"></div>
-                        <div class="cmb-noise"></div>
-                    </div>
-                </div>
-                <h3>CMB Radiation</h3>
-                <p>Cosmic microwave background</p>
-            </div>
-
-            <!-- Demo 14: Gravitational Waves -->
-            <div class="demo-card" data-demo="gravitational-waves">
-                <div class="demo-visual">
-                    <div class="gravitational-waves-animation">
-                        <div class="wave-ripple wave-1"></div>
-                        <div class="wave-ripple wave-2"></div>
-                        <div class="wave-ripple wave-3"></div>
-                    </div>
-                </div>
-                <h3>Gravitational Waves</h3>
-                <p>Space-time ripples</p>
-            </div>
-
-            <!-- Demo 15: Dark Matter -->
-            <div class="demo-card" data-demo="dark-matter">
-                <div class="demo-visual">
-                    <div class="dark-matter-animation">
-                        <div class="dark-matter-field"></div>
-                        <div class="visible-matter"></div>
-                    </div>
-                </div>
-                <h3>Dark Matter</h3>
-                <p>Invisible mass effect</p>
-            </div>
-
-            <!-- Demo 16: Solar Wind -->
-            <div class="demo-card" data-demo="solar-wind">
-                <div class="demo-visual">
-                    <div class="solar-wind-animation">
-                        <div class="solar-particles"></div>
-                        <div class="magnetic-field"></div>
-                    </div>
-                </div>
-                <h3>Solar Wind</h3>
-                <p>Charged particle stream</p>
-            </div>
-
-            <!-- Demo 17: Cosmic Strings -->
-            <div class="demo-card" data-demo="cosmic-strings">
-                <div class="demo-visual">
-                    <div class="cosmic-strings-animation">
-                        <div class="string string-1"></div>
-                        <div class="string string-2"></div>
-                        <div class="string string-3"></div>
-                    </div>
-                </div>
-                <h3>Cosmic Strings</h3>
-                <p>Topological defects</p>
-            </div>
-
-            <!-- Demo 18: Hawking Radiation -->
-            <div class="demo-card" data-demo="hawking-radiation">
-                <div class="demo-visual">
-                    <div class="hawking-radiation-animation">
-                        <div class="black-hole-mini"></div>
-                        <div class="radiation-particles"></div>
-                    </div>
-                </div>
-                <h3>Hawking Radiation</h3>
-                <p>Black hole evaporation</p>
-            </div>
-
-            <!-- Demo 19: Cosmic Inflation -->
-            <div class="demo-card" data-demo="cosmic-inflation">
-                <div class="demo-visual">
-                    <div class="cosmic-inflation-animation">
-                        <div class="inflation-field"></div>
-                        <div class="space-expansion"></div>
-                    </div>
-                </div>
-                <h3>Cosmic Inflation</h3>
-                <p>Rapid universe expansion</p>
-            </div>
-
-            <!-- Demo 20: Multiverse -->
-            <div class="demo-card" data-demo="multiverse">
-                <div class="demo-visual">
-                    <div class="multiverse-animation">
-                        <div class="universe-bubble bubble-1"></div>
-                        <div class="universe-bubble bubble-2"></div>
-                        <div class="universe-bubble bubble-3"></div>
-                    </div>
-                </div>
-                <h3>Multiverse</h3>
-                <p>Parallel universes</p>
-            </div>
-
-            <!-- Demo 21: Neutron Star -->
-            <div class="demo-card" data-demo="neutron-star">
-                <div class="demo-visual">
-                    <div class="neutron-star-animation">
-                        <div class="star-core"></div>
-                        <div class="magnetic-field"></div>
-                        <div class="pulsar-beams"></div>
-                    </div>
-                </div>
-                <h3>Neutron Star</h3>
-                <p>Ultra-dense stellar remnant</p>
-            </div>
-
-            <!-- Demo 22: Quasar -->
-            <div class="demo-card" data-demo="quasar">
-                <div class="demo-visual">
-                    <div class="quasar-animation">
-                        <div class="accretion-disk-intense"></div>
-                        <div class="jet-stream"></div>
-                        <div class="energy-bursts"></div>
-                    </div>
-                </div>
-                <h3>Quasar</h3>
-                <p>Active galactic nucleus</p>
-            </div>
-
-            <!-- Demo 23: Dark Energy -->
-            <div class="demo-card" data-demo="dark-energy">
-                <div class="demo-visual">
-                    <div class="dark-energy-animation">
-                        <div class="space-fabric"></div>
-                        <div class="expansion-field"></div>
-                        <div class="energy-particles"></div>
-                    </div>
-                </div>
-                <h3>Dark Energy</h3>
-                <p>Mysterious expansion force</p>
-            </div>
-
-            <!-- Demo 24: Cosmic Microwave Background -->
-            <div class="demo-card" data-demo="cosmic-microwave">
-                <div class="demo-visual">
-                    <div class="cosmic-microwave-animation">
-                        <div class="radiation-pattern"></div>
-                        <div class="temperature-variations"></div>
-                        <div class="background-noise"></div>
-                    </div>
-                </div>
-                <h3>Cosmic Microwave Background</h3>
-                <p>Echo of the Big Bang</p>
-            </div>
-
-            <!-- Demo 25: Gravitational Lensing -->
-            <div class="demo-card" data-demo="gravitational-lensing">
-                <div class="demo-visual">
-                    <div class="gravitational-lensing-animation">
-                        <div class="lens-mass"></div>
-                        <div class="light-rays"></div>
-                        <div class="distorted-image"></div>
-                    </div>
-                </div>
-                <h3>Gravitational Lensing</h3>
-                <p>Light bending by gravity</p>
-            </div>
-
-            <!-- Demo 26: Spacetime Curvature -->
-            <div class="demo-card" data-demo="spacetime-curvature">
-                <div class="demo-visual">
-                    <div class="spacetime-curvature-animation">
-                        <div class="fabric-grid"></div>
-                        <div class="mass-object"></div>
-                        <div class="curvature-waves"></div>
-                    </div>
-                </div>
-                <h3>Spacetime Curvature</h3>
-                <p>Einstein's warped space</p>
-            </div>
-
-            <!-- Demo 27: Quantum Entanglement -->
-            <div class="demo-card" data-demo="quantum-entanglement">
-                <div class="demo-visual">
-                    <div class="quantum-entanglement-animation">
-                        <div class="particle-a"></div>
-                        <div class="particle-b"></div>
-                        <div class="entanglement-field"></div>
-                    </div>
-                </div>
-                <h3>Quantum Entanglement</h3>
-                <p>Spooky action at a distance</p>
-            </div>
-
-            <!-- Demo 28: Cosmic Ray Burst -->
-            <div class="demo-card" data-demo="cosmic-ray-burst">
-                <div class="demo-visual">
-                    <div class="cosmic-ray-burst-animation">
-                        <div class="burst-source"></div>
-                        <div class="ray-shower"></div>
-                        <div class="energy-wave"></div>
-                    </div>
-                </div>
-                <h3>Cosmic Ray Burst</h3>
-                <p>High-energy particle explosion</p>
-            </div>
-
-            <!-- Demo 29: Solar Flare -->
-            <div class="demo-card" data-demo="solar-flare">
-                <div class="demo-visual">
-                    <div class="solar-flare-animation">
-                        <div class="sun-surface"></div>
-                        <div class="flare-eruption"></div>
-                        <div class="plasma-arcs"></div>
-                    </div>
-                </div>
-                <h3>Solar Flare</h3>
-                <p>Solar magnetic explosion</p>
-            </div>
-
-            <!-- Demo 30: Asteroid Impact -->
-            <div class="demo-card" data-demo="asteroid-impact">
-                <div class="demo-visual">
-                    <div class="asteroid-impact-animation">
-                        <div class="asteroid-body"></div>
-                        <div class="impact-crater"></div>
-                        <div class="debris-field"></div>
-                    </div>
-                </div>
-                <h3>Asteroid Impact</h3>
-                <p>Celestial collision event</p>
-            </div>
-
-            <!-- Demo 31: Spiral Galaxy -->
-            <div class="demo-card" data-demo="spiral-galaxy">
-                <div class="demo-visual">
-                    <div class="spiral-galaxy-animation">
-                        <div class="galaxy-core"></div>
-                        <div class="spiral-arm arm-1"></div>
-                        <div class="spiral-arm arm-2"></div>
-                        <div class="spiral-arm arm-3"></div>
-                        <div class="star-field"></div>
-                        <div class="cosmic-dust-clouds"></div>
-                    </div>
-                </div>
-                <h3>Spiral Galaxy</h3>
-                <p>Majestic cosmic whirlpool</p>
-            </div>
-
-            <!-- Demo 32: Cosmic Vortex -->
-            <div class="demo-card" data-demo="cosmic-vortex">
-                <div class="demo-visual">
-                    <div class="cosmic-vortex-animation">
-                        <div class="vortex-core"></div>
-                        <div class="energy-rings"></div>
-                        <div class="particle-streams"></div>
-                        <div class="space-distortion"></div>
-                        <div class="quantum-foam"></div>
-                    </div>
-                </div>
-                <h3>Cosmic Vortex</h3>
-                <p>Spacetime whirlpool</p>
-            </div>
-
-            <!-- Demo 33: Stellar Nursery -->
-            <div class="demo-card" data-demo="stellar-nursery">
-                <div class="demo-visual">
-                    <div class="stellar-nursery-animation">
-                        <div class="nebula-cloud"></div>
-                        <div class="protostars"></div>
-                        <div class="stellar-winds"></div>
-                        <div class="accretion-disks"></div>
-                        <div class="cosmic-rays"></div>
-                    </div>
-                </div>
-                <h3>Stellar Nursery</h3>
-                <p>Birthplace of stars</p>
-            </div>
-
-            <!-- Demo 34: Quantum Field -->
-            <div class="demo-card" data-demo="quantum-field">
-                <div class="demo-visual">
-                    <div class="quantum-field-animation">
-                        <div class="field-grid"></div>
-                        <div class="virtual-particles"></div>
-                        <div class="quantum-fluctuations"></div>
-                        <div class="energy-waves"></div>
-                        <div class="probability-clouds"></div>
-                    </div>
-                </div>
-                <h3>Quantum Field</h3>
-                <p>Subatomic reality</p>
-            </div>
-
-            <!-- Demo 35: Dark Matter Web -->
-            <div class="demo-card" data-demo="dark-matter-web">
-                <div class="demo-visual">
-                    <div class="dark-matter-web-animation">
-                        <div class="web-structure"></div>
-                        <div class="matter-nodes"></div>
-                        <div class="gravitational-lines"></div>
-                        <div class="void-regions"></div>
-                        <div class="cosmic-filaments"></div>
-                    </div>
-                </div>
-                <h3>Dark Matter Web</h3>
-                <p>Cosmic scaffolding</p>
-            </div>
-
-            <!-- Demo 36: Neutron Star Collision -->
-            <div class="demo-card" data-demo="neutron-star-collision">
-                <div class="demo-visual">
-                    <div class="neutron-star-collision-animation">
-                        <div class="star-a"></div>
-                        <div class="star-b"></div>
-                        <div class="collision-wave"></div>
-                        <div class="gravitational-waves"></div>
-                        <div class="kilonova-explosion"></div>
-                    </div>
-                </div>
-                <h3>Neutron Star Collision</h3>
-                <p>Cosmic gold factory</p>
-            </div>
-
-            <!-- Demo 37: Cosmic Storm -->
-            <div class="demo-card" data-demo="cosmic-storm">
-                <div class="demo-visual">
-                    <div class="cosmic-storm-animation">
-                        <div class="storm-clouds"></div>
-                        <div class="lightning-arcs"></div>
-                        <div class="plasma-winds"></div>
-                        <div class="energy-vortices"></div>
-                        <div class="cosmic-rain"></div>
-                    </div>
-                </div>
-                <h3>Cosmic Storm</h3>
-                <p>Space weather</p>
-            </div>
-
-            <!-- Demo 38: Interstellar Travel -->
-            <div class="demo-card" data-demo="interstellar-travel">
-                <div class="demo-visual">
-                    <div class="interstellar-travel-animation">
-                        <div class="starship"></div>
-                        <div class="warp-field"></div>
-                        <div class="star-trails"></div>
-                        <div class="space-time-bubble"></div>
-                        <div class="destination-star"></div>
-                    </div>
-                </div>
-                <h3>Interstellar Travel</h3>
-                <p>Warp speed journey</p>
-            </div>
-
-            <!-- Demo 39: Black Hole Merger -->
-            <div class="demo-card" data-demo="black-hole-merger">
-                <div class="demo-visual">
-                    <div class="black-hole-merger-animation">
-                        <div class="black-hole-1"></div>
-                        <div class="black-hole-2"></div>
-                        <div class="merger-ring"></div>
-                        <div class="gravitational-waves-intense"></div>
-                        <div class="final-singularity"></div>
-                    </div>
-                </div>
-                <h3>Black Hole Merger</h3>
-                <p>Cosmic dance of death</p>
-            </div>
-
-            <!-- Demo 40: Cosmic Symphony -->
-            <div class="demo-card" data-demo="cosmic-symphony">
-                <div class="demo-visual">
-                    <div class="cosmic-symphony-animation">
-                        <div class="harmonic-waves"></div>
-                        <div class="resonant-particles"></div>
-                        <div class="cosmic-strings-vibrating"></div>
-                        <div class="energy-chords"></div>
-                        <div class="universal-harmony"></div>
-                    </div>
-                </div>
-                <h3>Cosmic Symphony</h3>
-                <p>Music of the spheres</p>
-            </div>
+      <div class="gx-card gx-card--spotlight">
+        <h3>Tooltips</h3>
+        <div class="gx-row gx-row--wrap">
+          <button class="gx-btn gx-btn--ghost" data-gx-tooltip="I appear on top" data-gx-tooltip-pos="top">Top</button>
+          <button class="gx-btn gx-btn--ghost" data-gx-tooltip="I appear below" data-gx-tooltip-pos="bottom">Bottom</button>
+          <button class="gx-btn gx-btn--ghost" data-gx-tooltip="To the right →" data-gx-tooltip-pos="right">Right</button>
         </div>
-    </section>
+      </div>
 
-
-    <!-- Documentation Section -->
-    <section id="docs" class="docs-section">
-        <h2 class="section-title">Documentation</h2>
-        <div class="docs-content">
-            <div class="docs-sidebar">
-                <h3>Quick Start</h3>
-                <ul>
-                    <li><a href="#installation">Installation</a></li>
-                    <li><a href="#basic-usage">Basic Usage</a></li>
-                    <li><a href="#api-reference">API Reference</a></li>
-                    <li><a href="#examples">Examples</a></li>
-                    <li><a href="#configuration">Configuration</a></li>
-                    <li><a href="#advanced-usage">Advanced Usage</a></li>
-                </ul>
-                
-                <h3>Animations</h3>
-                <ul>
-                    <li><a href="#stellar-animations">Stellar Objects</a></li>
-                    <li><a href="#cosmic-animations">Cosmic Phenomena</a></li>
-                    <li><a href="#quantum-animations">Quantum Effects</a></li>
-                    <li><a href="#relativity-animations">Relativity Effects</a></li>
-                </ul>
-            </div>
-            <div class="docs-main">
-                <div id="installation" class="doc-section">
-                    <h3>Installation</h3>
-                    <p>Include GalaxyJS in your project:</p>
-                    <pre><code>&lt;script src="js/main.js"&gt;&lt;/script&gt;
-&lt;script src="js/animations.js"&gt;&lt;/script&gt;
-&lt;link rel="stylesheet" href="css/animations.css"&gt;</code></pre>
-                    
-                    <p>Or install via npm:</p>
-                    <pre><code>npm install galaxyjs
-# or
-yarn add galaxyjs</code></pre>
-                </div>
-                
-                <div id="basic-usage" class="doc-section">
-                    <h3>Basic Usage</h3>
-                    <p>Initialize GalaxyJS and create animations:</p>
-                    <pre><code>// Initialize GalaxyJS
-const galaxy = new GalaxyJS({
-    debug: true,
-    autoInit: true
-});
-
-// Create a pulsar animation
-galaxy.animations.initPulsar('.pulsar-element', {
-    frequency: 2,
-    intensity: 0.8
-});
-
-// Create a black hole animation
-galaxy.animations.initBlackHole('.blackhole-element', {
-    eventHorizon: true,
-    accretionDisk: true
-});</code></pre>
-                </div>
-                
-                <div id="api-reference" class="doc-section">
-                    <h3>API Reference</h3>
-                    
-                    <h4>GalaxyJS Constructor</h4>
-                    <pre><code>new GalaxyJS(options)</code></pre>
-                    <p><strong>Options:</strong></p>
-                    <ul>
-                        <li><code>debug</code> (boolean): Enable debug logging</li>
-                        <li><code>autoInit</code> (boolean): Auto-initialize on DOM ready</li>
-                        <li><code>particleCount</code> (number): Default particle count</li>
-                        <li><code>trailLength</code> (number): Mouse trail length</li>
-                    </ul>
-                    
-                    <h4>Animation Methods</h4>
-                    <p>All animation methods follow this pattern:</p>
-                    <pre><code>galaxy.animations.init[AnimationName](element, options)</code></pre>
-                </div>
-                
-                <div id="stellar-animations" class="doc-section">
-                    <h3>Stellar Objects</h3>
-                    
-                    <h4>Pulsar</h4>
-                    <pre><code>galaxy.animations.initPulsar(element, {
-    frequency: 2,        // Hz
-    intensity: 0.8,      // 0-1
-    waveCount: 3,        // Number of waves
-    color: '#ffffff'     // Wave color
-});</code></pre>
-                    
-                    <h4>Black Hole</h4>
-                    <pre><code>galaxy.animations.initBlackHole(element, {
-    eventHorizon: true,      // Show event horizon
-    accretionDisk: true,     // Show accretion disk
-    rotationSpeed: 0.02,     // Rotation speed
-    diskParticles: 50        // Number of particles
-});</code></pre>
-                    
-                    <h4>Neutron Star</h4>
-                    <pre><code>galaxy.animations.initNeutronStar(element, {
-    rotationSpeed: 0.02,     // Core rotation speed
-    magneticField: true,     // Show magnetic field
-    pulsarBeams: true        // Show pulsar beams
-});</code></pre>
-                    
-                    <h4>Supernova</h4>
-                    <pre><code>galaxy.animations.initSupernova(element, {
-    explosionForce: 100,     // Explosion intensity
-    particleCount: 30,       // Number of particles
-    duration: 3000           // Animation duration (ms)
-});</code></pre>
-                    
-                    <h4>Binary Stars</h4>
-                    <pre><code>galaxy.animations.initBinaryStars(element, {
-    orbitSpeed: 0.01,        // Orbital speed
-    starSize: 12,            // Star size (px)
-    orbitRadius: 30          // Orbit radius (px)
-});</code></pre>
-                    
-                    <h4>Solar Flare</h4>
-                    <pre><code>galaxy.animations.initSolarFlare(element, {
-    flareIntensity: 0.7,     // Flare intensity
-    plasmaArcCount: 4,       // Number of plasma arcs
-    eruptionSpeed: 0.03      // Eruption speed
-});</code></pre>
-                </div>
-                
-                <div id="cosmic-animations" class="doc-section">
-                    <h3>Cosmic Phenomena</h3>
-                    
-                    <h4>Wormhole</h4>
-                    <pre><code>galaxy.animations.initWormhole(element, {
-    depth: 200,              // Tunnel depth
-    starCount: 20,           // Number of stars
-    tunnelSpeed: 0.05        // Travel speed
-});</code></pre>
-                    
-                    <h4>Quasar</h4>
-                    <pre><code>galaxy.animations.initQuasar(element, {
-    accretionDiskSpeed: 0.03,    // Disk rotation speed
-    jetStreamIntensity: 0.8,     // Jet stream intensity
-    energyBurstRate: 0.1         // Burst frequency
-});</code></pre>
-                    
-                    <h4>Nebula</h4>
-                    <pre><code>galaxy.animations.initNebula(element, {
-    particleCount: 30,       // Number of particles
-    cloudSize: 80,           // Cloud size (px)
-    driftSpeed: 0.01         // Particle drift speed
-});</code></pre>
-                    
-                    <h4>Asteroid Field</h4>
-                    <pre><code>galaxy.animations.initAsteroidField(element, {
-    asteroidCount: 15,       // Number of asteroids
-    fieldSize: 200,          // Field size (px)
-    rotationSpeed: 0.01      // Rotation speed
-});</code></pre>
-                    
-                    <h4>Asteroid Impact</h4>
-                    <pre><code>galaxy.animations.initAsteroidImpact(element, {
-    impactForce: 0.8,        // Impact intensity
-    debrisCount: 10,         // Number of debris pieces
-    craterSize: 0.6          // Crater size multiplier
-});</code></pre>
-                    
-                    <h4>Cosmic Ray</h4>
-                    <pre><code>galaxy.animations.initCosmicRay(element, {
-    rayCount: 5,             // Number of rays
-    speed: 2,                // Ray speed
-    length: 50               // Ray length (px)
-});</code></pre>
-                    
-                    <h4>Cosmic Ray Burst</h4>
-                    <pre><code>galaxy.animations.initCosmicRayBurst(element, {
-    burstRate: 0.1,          // Burst frequency
-    rayCount: 8,             // Number of rays
-    energyWaveSpeed: 0.02    // Wave propagation speed
-});</code></pre>
-                    
-                    <h4>Solar Wind</h4>
-                    <pre><code>galaxy.animations.initSolarWind(element, {
-    particleCount: 20,       // Number of particles
-    windSpeed: 3,            // Wind speed
-    magneticField: true      // Show magnetic field
-});</code></pre>
-                    
-                    <h4>Cosmic Dust</h4>
-                    <pre><code>galaxy.animations.initCosmicDust(element, {
-    particleCount: 50,       // Number of particles
-    driftSpeed: 0.005,       // Drift speed
-    particleSize: 1          // Particle size (px)
-});</code></pre>
-                    
-                    <h4>Cosmic Strings</h4>
-                    <pre><code>galaxy.animations.initCosmicStrings(element, {
-    stringCount: 3,          // Number of strings
-    vibrationSpeed: 0.02,    // Vibration speed
-    stringLength: 60         // String length (px)
-});</code></pre>
-                </div>
-                
-                <div id="quantum-animations" class="doc-section">
-                    <h3>Quantum Effects</h3>
-                    
-                    <h4>Quantum Tunneling</h4>
-                    <pre><code>galaxy.animations.initQuantumTunneling(element, {
-    barrierHeight: 50,       // Energy barrier height
-    particleSpeed: 2,        // Particle speed
-    tunnelProbability: 0.3   // Tunneling probability
-});</code></pre>
-                    
-                    <h4>Quantum Entanglement</h4>
-                    <pre><code>galaxy.animations.initQuantumEntanglement(element, {
-    entanglementStrength: 0.8,   // Entanglement strength
-    particleSpinSpeed: 0.02,     // Spin speed
-    fieldRadius: 30              // Field radius (px)
-});</code></pre>
-                    
-                    <h4>Hawking Radiation</h4>
-                    <pre><code>galaxy.animations.initHawkingRadiation(element, {
-    radiationRate: 5,        // Radiation frequency
-    particleEnergy: 2,       // Particle energy
-    evaporationSpeed: 0.01   // Evaporation speed
-});</code></pre>
-                </div>
-                
-                <div id="relativity-animations" class="doc-section">
-                    <h3>Relativity Effects</h3>
-                    
-                    <h4>Time Dilation</h4>
-                    <pre><code>galaxy.animations.initTimeDilation(element, {
-    dilationFactor: 0.5,     // Time dilation factor
-    clockSpeed: 0.01         // Clock tick speed
-});</code></pre>
-                    
-                    <h4>Gravitational Lensing</h4>
-                    <pre><code>galaxy.animations.initGravitationalLensing(element, {
-    lensMass: 0.8,           // Lens mass strength
-    lightRayCount: 5,        // Number of light rays
-    distortionStrength: 0.5  // Distortion intensity
-});</code></pre>
-                    
-                    <h4>Spacetime Curvature</h4>
-                    <pre><code>galaxy.animations.initSpacetimeCurvature(element, {
-    massStrength: 0.6,       // Mass effect strength
-    fabricGridSize: 20,      // Grid size (px)
-    curvatureWaves: true     // Show curvature waves
-});</code></pre>
-                    
-                    <h4>Gravitational Waves</h4>
-                    <pre><code>galaxy.animations.initGravitationalWaves(element, {
-    waveCount: 3,            // Number of waves
-    waveSpeed: 2,            // Wave propagation speed
-    amplitude: 20            // Wave amplitude (px)
-});</code></pre>
-                </div>
-                
-                <div id="cosmic-background-animations" class="doc-section">
-                    <h3>Cosmic Background Effects</h3>
-                    
-                    <h4>Dark Matter</h4>
-                    <pre><code>galaxy.animations.initDarkMatter(element, {
-    fieldStrength: 0.5,      // Field strength
-    fieldRadius: 80,         // Field radius (px)
-    visibleMatterOpacity: 0.5 // Visible matter opacity
-});</code></pre>
-                    
-                    <h4>Dark Energy</h4>
-                    <pre><code>galaxy.animations.initDarkEnergy(element, {
-    expansionRate: 0.005,    // Expansion rate
-    fieldStrength: 0.6,      // Field strength
-    particleCount: 20        // Number of particles
-});</code></pre>
-                    
-                    <h4>Cosmic Microwave Background</h4>
-                    <pre><code>galaxy.animations.initCosmicMicrowave(element, {
-    patternSpeed: 0.001,     // Pattern rotation speed
-    temperatureVariations: true, // Show temperature variations
-    noiseLevel: 0.1          // Background noise level
-});</code></pre>
-                    
-                    <h4>Cosmic Inflation</h4>
-                    <pre><code>galaxy.animations.initCosmicInflation(element, {
-    expansionRate: 0.1,      // Expansion rate
-    fieldStrength: 0.8,      // Field strength
-    duration: 6000           // Animation duration (ms)
-});</code></pre>
-                    
-                    <h4>Multiverse</h4>
-                    <pre><code>galaxy.animations.initMultiverse(element, {
-    universeCount: 3,        // Number of universes
-    bubbleSize: 40,          // Bubble size (px)
-    expansionSpeed: 0.01     // Expansion speed
-});</code></pre>
-
-                    <h4>Neutron Star</h4>
-                    <pre><code>galaxy.animations.initNeutronStar(element, {
-    pulseRate: 0.02,         // Pulse rate
-    brightness: 0.9,         // Star brightness
-    color: '#CCE0FF'         // Star color
-});</code></pre>
-
-                    <h4>Quasar</h4>
-                    <pre><code>galaxy.animations.initQuasar(element, {
-    coreSize: 15,            // Core size (px)
-    jetLength: 60,           // Jet length (px)
-    jetSpeed: 2,             // Jet animation speed
-    brightness: 1.0          // Core brightness
-});</code></pre>
-
-                    <h4>Spiral Galaxy</h4>
-                    <pre><code>galaxy.animations.initSpiralGalaxy(element, {
-    numArms: 4,              // Number of spiral arms
-    numStars: 200,           // Number of stars
-    rotationSpeed: 0.01,     // Rotation speed
-    spiralTightness: 0.25    // How tight the spiral is
-});</code></pre>
-
-                    <h4>Cosmic Vortex</h4>
-                    <pre><code>galaxy.animations.initCosmicVortex(element, {
-    particleCount: 20,       // Number of particles
-    vortexSpeed: 0.05,       // Rotation speed
-    radius: 35,              // Vortex radius
-    color: '#C864FF'         // Particle color
-});</code></pre>
-
-                    <h4>Stellar Nursery</h4>
-                    <pre><code>galaxy.animations.initStellarNursery(element, {
-    cloudCount: 5,           // Number of gas clouds
-    formingStars: true,      // Show forming stars
-    cloudSize: 40,           // Cloud size (px)
-    color: 'hsl(280, 60%, 50%)' // Cloud color
-});</code></pre>
-
-                    <h4>Quantum Field</h4>
-                    <pre><code>galaxy.animations.initQuantumField(element, {
-    gridSize: 5,             // Grid size (5x5)
-    fluctuationSpeed: 0.05,  // Fluctuation speed
-    intensity: 0.8,          // Field intensity
-    color: '#9664FF'         // Field color
-});</code></pre>
-
-                    <h4>Dark Matter Web</h4>
-                    <pre><code>galaxy.animations.initDarkMatterWeb(element, {
-    nodeCount: 8,            // Number of nodes
-    connections: 2,          // Connections per node
-    webRadius: 35,           // Web radius (%)
-    color: '#643296'         // Web color
-});</code></pre>
-
-                    <h4>Neutron Star Collision</h4>
-                    <pre><code>galaxy.animations.initNeutronStarCollision(element, {
-    collisionSpeed: 0.5,     // Approach speed
-    explosionSize: 60,       // Explosion radius
-    particleCount: 16,       // Debris particles
-    cycleTime: 5000          // Time per cycle (ms)
-});</code></pre>
-
-                    <h4>Cosmic Storm</h4>
-                    <pre><code>galaxy.animations.initCosmicStorm(element, {
-    lightningFrequency: 1500, // Lightning interval (ms)
-    particleCount: 15,        // Storm particles
-    stormIntensity: 0.8,      // Storm intensity
-    color: '#C8C8FF'          // Lightning color
-});</code></pre>
-
-                    <h4>Interstellar Travel</h4>
-                    <pre><code>galaxy.animations.initInterstellarTravel(element, {
-    starCount: 20,           // Number of star trails
-    speed: 3,                // Travel speed
-    trailLength: 30,         // Star trail length
-    color: '#FFFFFF'         // Star trail color
-});</code></pre>
-
-                    <h4>Black Hole Merger</h4>
-                    <pre><code>galaxy.animations.initBlackHoleMerger(element, {
-    approachSpeed: 0.2,      // Orbital decay speed
-    waveCount: 3,            // Gravitational waves
-    mergeRadius: 0,          // Merge distance
-    cycleTime: 6000          // Time per cycle (ms)
-});</code></pre>
-
-                    <h4>Cosmic Symphony</h4>
-                    <pre><code>galaxy.animations.initCosmicSymphony(element, {
-    barCount: 12,            // Number of sound bars
-    waveSpeed: 0.1,          // Wave animation speed
-    amplitude: 30,           // Bar height amplitude
-    gradient: true           // Use gradient colors
-});</code></pre>
-
-                    <h4>Solar Flare</h4>
-                    <pre><code>galaxy.animations.initSolarFlare(element, {
-    flareInterval: 1500,     // Time between flares (ms)
-    flareLength: 60,         // Flare length (px)
-    flareWidth: 4,           // Flare width (px)
-    color: '#FFC832'         // Flare color
-});</code></pre>
-
-                    <h4>Binary Stars</h4>
-                    <pre><code>galaxy.animations.initBinaryStars(element, {
-    orbitRadius: 35,         // Orbit radius
-    orbitSpeed: 0.03,        // Orbital speed
-    star1Color: '#FFC864',   // Primary star color
-    star2Color: '#96C8FF'    // Secondary star color
-});</code></pre>
-
-                    <h4>Dwarf Planet</h4>
-                    <pre><code>galaxy.animations.initDwarfPlanet(element, {
-    planetSize: 12,          // Planet size (px)
-    orbitRadius: 40,         // Orbit radius
-    orbitSpeed: 0.02,        // Orbital speed
-    color: '#C89664'         // Planet color
-});</code></pre>
-                </div>
-
-                <div id="configuration" class="doc-section">
-                    <h3>Configuration</h3>
-                    <p>Global configuration options:</p>
-                    <pre><code>const galaxy = new GalaxyJS({
-    debug: true,             // Enable debug mode
-    autoInit: true,          // Auto-initialize
-    particleCount: 100,      // Default particle count
-    trailLength: 20,         // Mouse trail length
-    theme: 'dark',           // Theme (dark/light)
-    performance: 'high'      // Performance mode
-});</code></pre>
-                </div>
-                
-                <div id="advanced-usage" class="doc-section">
-                    <h3>Advanced Usage</h3>
-                    
-                    <h4>Custom Particle Systems</h4>
-                    <pre><code>// Create custom particle system
-const particleSystem = galaxy.animations.createParticleSystem(container, {
-    particleCount: 200,
-    gravity: 0.1,
-    friction: 0.98,
-    bounce: 0.8
-});
-
-// Stop the system
-particleSystem.isActive = false;</code></pre>
-                    
-                    <h4>Mouse Trail Effects</h4>
-                    <pre><code>// Create mouse trail
-const mouseTrail = galaxy.animations.initMouseTrail(container, {
-    trailLength: 30,
-    particleSize: 4,
-    fadeSpeed: 0.95
-});</code></pre>
-                    
-                    <h4>Gravity Simulation</h4>
-                    <pre><code>// Create gravity simulation
-const gravitySim = galaxy.animations.initGravitySimulation(container, {
-    bodyCount: 8,
-    gravity: 0.5
-});</code></pre>
-                    
-                    <h4>Event Handling</h4>
-                    <pre><code>// Listen for animation events
-document.addEventListener('galaxyjs:initialized', (e) => {
-    console.log('GalaxyJS initialized', e.detail);
-});
-
-document.addEventListener('galaxyjs:demo-click', (e) => {
-    console.log('Demo clicked:', e.detail.demoType);
-});</code></pre>
-                </div>
-                
-                <div id="examples" class="doc-section">
-                    <h3>Examples</h3>
-                    
-                    <h4>Complete Example</h4>
-                    <pre><code>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-    &lt;title&gt;GalaxyJS Example&lt;/title&gt;
-    &lt;link rel="stylesheet" href="css/animations.css"&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;div class="pulsar-animation"&gt;
-        &lt;div class="pulsar-core"&gt;&lt;/div&gt;
-        &lt;div class="pulsar-waves"&gt;&lt;/div&gt;
-    &lt;/div&gt;
-    
-    &lt;script src="js/main.js"&gt;&lt;/script&gt;
-    &lt;script src="js/animations.js"&gt;&lt;/script&gt;
-    &lt;script&gt;
-        // Initialize GalaxyJS
-        const galaxy = new GalaxyJS({
-            debug: true,
-            autoInit: true
-        });
-        
-        // Create pulsar animation
-        galaxy.animations.initPulsar('.pulsar-animation', {
-            frequency: 2,
-            intensity: 0.8
-        });
-    &lt;/script&gt;
-&lt;/body&gt;
-&lt;/html&gt;</code></pre>
-                </div>
-            </div>
+      <div class="gx-card gx-card--spotlight" data-gx-tabs>
+        <h3>Tabs</h3>
+        <div class="gx-tabs__list" role="tablist">
+          <button class="gx-tab" aria-selected="true">Orbit</button>
+          <button class="gx-tab">Nebula</button>
+          <button class="gx-tab">Pulsar</button>
         </div>
-    </section>
+        <div class="gx-tab-panel gx-soft">Planets trace clean elliptical paths around a star.</div>
+        <div class="gx-tab-panel gx-soft" hidden>Soft drifting clouds of ionized gas.</div>
+        <div class="gx-tab-panel gx-soft" hidden>A rotating neutron star beaming radiation.</div>
+      </div>
 
-    <!-- Footer -->
-    <footer class="galaxy-footer">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h4>GalaxyJS</h4>
-                <p>Cosmic animations for the modern web</p>
-            </div>
-            <div class="footer-section">
-                <h4>Links</h4>
-                <ul>
-                    <li><a href="#github">GitHub</a></li>
-                    <li><a href="#docs">Documentation</a></li>
-                    <li><a href="#examples">Examples</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>Connect</h4>
-                <div class="social-links">
-                    <a href="https://github.com/Edwson/GalaxyJS" class="social-link"><i class="ti ti-brand-github"></i></a>
-                    <a href="https://www.linkedin.com/in/ed-chen-saas/" class="social-link"><i class="ti ti-brand-linkedin"></i></a>
-                </div>
-            </div>
+      <div class="gx-card gx-card--spotlight">
+        <h3>Accordion</h3>
+        <div class="gx-accordion" data-gx-accordion style="border:none;">
+          <div class="gx-accordion__item">
+            <button class="gx-accordion__header">Is it really zero-dependency? <span class="gx-accordion__icon">⌄</span></button>
+            <div class="gx-accordion__panel"><div class="gx-accordion__panel-inner">Yes — pure vanilla JS and CSS. No React, no build step required.</div></div>
+          </div>
+          <div class="gx-accordion__item">
+            <button class="gx-accordion__header">Does it respect reduced motion? <span class="gx-accordion__icon">⌄</span></button>
+            <div class="gx-accordion__panel"><div class="gx-accordion__panel-inner">Always. Animations render a single static frame when the user prefers reduced motion.</div></div>
+          </div>
         </div>
-        <div class="footer-bottom">
-            <p>Made By <a href="https://www.linkedin.com/in/ed-chen-saas/" target="_blank">Ed Chen</a> | <a href="https://edwson.com/" target="_blank">Website</a></p>
+      </div>
+
+      <div class="gx-card gx-card--spotlight">
+        <h3>Form controls</h3>
+        <div class="gx-stack">
+          <input class="gx-input" placeholder="your@email.com" />
+          <label class="gx-switch"><input type="checkbox" checked /><span class="gx-switch__track"></span><span class="gx-switch__thumb"></span></label>
+          <div class="gx-progress"><div class="gx-progress__bar" style="width:64%"></div></div>
         </div>
-    </footer>
+      </div>
 
-    <!-- Scripts -->
-    <!-- New Modern Modules -->
-    <script src="js/particle-pool.js"></script>
-    <script src="js/performance-monitor.js"></script>
-    <script src="js/animation-engine.js"></script>
-    <script src="js/advanced-animations.js"></script>
-    <script src="js/animation-factory.js"></script>
-    <script src="js/accessibility.js"></script>
-    <script src="js/canvas-optimizer.js"></script>
+      <div class="gx-card gx-card--spotlight">
+        <h3>Badges &amp; Avatars</h3>
+        <div class="gx-row gx-row--wrap">
+          <span class="gx-badge gx-badge--accent"><span class="gx-badge__dot"></span> New</span>
+          <span class="gx-badge gx-badge--success">Stable</span>
+          <span class="gx-badge gx-badge--warning">Beta</span>
+        </div>
+        <div class="gx-avatar-group" style="margin-top:14px">
+          <span class="gx-avatar gx-avatar--status">GX</span>
+          <span class="gx-avatar gx-avatar--status gx-avatar--busy" style="background:linear-gradient(135deg,#f472b6,#fbbf24)">AB</span>
+          <span class="gx-avatar gx-avatar--status gx-avatar--offline" style="background:linear-gradient(135deg,#34d399,#22d3ee)">CD</span>
+        </div>
+      </div>
 
-    <!-- Original Scripts -->
-    <script src="js/main.js"></script>
-    <script src="js/animations.js"></script>
-    <script src="js/particles.js"></script>
+      <div class="gx-card gx-card--spotlight">
+        <h3>Alerts</h3>
+        <div class="gx-stack">
+          <div class="gx-alert gx-alert--success"><span class="gx-alert__icon">✓</span><div><p class="gx-alert__title">Launch ready</p><p class="gx-alert__body">All systems nominal.</p></div></div>
+          <div class="gx-alert gx-alert--danger"><span class="gx-alert__icon">⚠</span><div><p class="gx-alert__title">Hull breach</p><p class="gx-alert__body">Seal the airlock now.</p></div></div>
+        </div>
+      </div>
 
-    <!-- Integration Script -->
-    <script src="js/galaxy-enhanced.js"></script>
+      <div class="gx-card gx-card--spotlight">
+        <h3>Segmented &amp; Drawer</h3>
+        <div class="gx-segmented" data-gx-segmented role="group">
+          <button class="gx-segmented__option" aria-checked="true">Day</button>
+          <button class="gx-segmented__option">Week</button>
+          <button class="gx-segmented__option">Month</button>
+        </div>
+        <div class="gx-row" style="margin-top:14px">
+          <button class="gx-btn gx-btn--ghost" id="drawerBtn">Open drawer</button>
+          <button class="gx-btn gx-btn--ghost" id="loadBtn">Loading…</button>
+        </div>
+      </div>
 
-    <!-- Complete Animation Implementations - Makes ALL 40+ animations display properly -->
-    <script src="js/complete-animations.js"></script>
+      <div class="gx-card gx-card--spotlight">
+        <h3>Popover &amp; Rating</h3>
+        <div class="gx-row gx-row--wrap" style="align-items:flex-start">
+          <span style="position:relative">
+            <button class="gx-btn gx-btn--ghost" data-gx-popover data-gx-popover-target="#pop1">Details ▾</button>
+            <div class="gx-popover" id="pop1"><strong>Orbit insertion</strong><p class="gx-soft" style="margin:6px 0 0;font-size:.85rem">Burn scheduled for T-minus 42s.</p></div>
+          </span>
+          <span class="gx-rating" data-gx-rating="5" data-gx-value="3"></span>
+        </div>
+      </div>
+
+      <div class="gx-card gx-card--spotlight">
+        <h3>Steps</h3>
+        <div class="gx-steps">
+          <div class="gx-step is-done"><div class="gx-step__dot">✓</div><div class="gx-step__label">Fuel</div></div>
+          <div class="gx-step is-done"><div class="gx-step__dot">✓</div><div class="gx-step__label">Ignite</div></div>
+          <div class="gx-step is-active"><div class="gx-step__dot">3</div><div class="gx-step__label">Launch</div></div>
+          <div class="gx-step"><div class="gx-step__dot">4</div><div class="gx-step__label">Orbit</div></div>
+        </div>
+      </div>
+
+      <div class="gx-card gx-card--spotlight">
+        <h3>Checkbox, Radio &amp; Range</h3>
+        <div class="gx-stack">
+          <label class="gx-check"><input type="checkbox" checked /><span class="gx-check__box">✓</span> Enable thrusters</label>
+          <label class="gx-radio-c"><input type="radio" name="orbit" checked /><span class="gx-radio-c__box"></span> Low orbit</label>
+          <label class="gx-radio-c"><input type="radio" name="orbit" /><span class="gx-radio-c__box"></span> Geostationary</label>
+          <input class="gx-range" type="range" min="0" max="100" value="70" />
+        </div>
+      </div>
+
+      <div class="gx-card gx-card--spotlight">
+        <h3>Pagination &amp; Chips</h3>
+        <div class="gx-pagination">
+          <button class="gx-page" disabled>‹</button>
+          <button class="gx-page is-active">1</button>
+          <button class="gx-page">2</button>
+          <button class="gx-page">3</button>
+          <button class="gx-page">›</button>
+        </div>
+        <div class="gx-row gx-row--wrap" style="margin-top:14px">
+          <span class="gx-chip">Mars <button class="gx-chip__close" aria-label="remove">✕</button></span>
+          <span class="gx-chip">Europa <button class="gx-chip__close" aria-label="remove">✕</button></span>
+          <span class="gx-chip">Titan <button class="gx-chip__close" aria-label="remove">✕</button></span>
+        </div>
+      </div>
+
+      <div class="gx-card gx-card--spotlight">
+        <h3>Ring progress &amp; Copy</h3>
+        <div class="gx-row" style="gap:20px">
+          <div class="gx-ring" style="--gx-value:72"><span class="gx-ring__label">72%</span></div>
+          <div class="gx-stack">
+            <button class="gx-btn gx-btn--accent" data-gx-copy="npm install galaxyjs">Copy install</button>
+            <div><span class="gx-kbd">⌘</span> <span class="gx-kbd">K</span> to search</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="gx-card gx-card--spotlight" style="grid-column: 1 / -1;">
+        <h3>Table</h3>
+        <table class="gx-table gx-table--striped">
+          <thead><tr><th>Body</th><th>Type</th><th>Distance (AU)</th></tr></thead>
+          <tbody>
+            <tr><td>Mercury</td><td>Terrestrial</td><td>0.39</td></tr>
+            <tr><td>Jupiter</td><td>Gas giant</td><td>5.20</td></tr>
+            <tr><td>Neptune</td><td>Ice giant</td><td>30.1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <template id="drawer-content">
+    <p class="gx-soft">This panel slid in from the side with one <code>Galaxy.drawer()</code> call. Press Esc or click the backdrop to dismiss.</p>
+    <label class="gx-check"><input type="checkbox" /><span class="gx-check__box">✓</span> Remember my choice</label>
+  </template>
+
+  <!-- GET STARTED -->
+  <section id="start" style="background: var(--gx-bg-soft);">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Get Started</span>
+        <h2>Use it your way</h2>
+        <p>Plain <code>&lt;script&gt;</code>, CDN, npm/ESM, zero-JS declarative — or let an AI agent wire it up for you. Same one-line API everywhere.</p>
+      </div>
+
+      <div class="comp-grid">
+        <div class="gx-card">
+          <div class="gx-row" style="justify-content:space-between"><h3 style="margin:0">Script tag</h3><span class="gx-badge">local files</span></div>
+          <pre class="code">&lt;link rel="stylesheet" href="galaxy.css"&gt;
+&lt;script src="galaxy.js"&gt;&lt;/script&gt;
+
+&lt;script&gt;
+  Galaxy.<span class="k">create</span>(<span class="s">'nebula'</span>, <span class="s">'#hero'</span>)
+&lt;/script&gt;</pre>
+        </div>
+
+        <div class="gx-card">
+          <div class="gx-row" style="justify-content:space-between"><h3 style="margin:0">CDN</h3><span class="gx-badge">no download</span></div>
+          <pre class="code">&lt;link rel="stylesheet"
+  href="https://unpkg.com/galaxyjs@3/galaxy.css"&gt;
+&lt;script
+  src="https://unpkg.com/galaxyjs@3/galaxy.js"&gt;&lt;/script&gt;</pre>
+        </div>
+
+        <div class="gx-card">
+          <div class="gx-row" style="justify-content:space-between"><h3 style="margin:0">npm / ESM</h3><span class="gx-badge">bundlers</span></div>
+          <pre class="code"><span class="c">npm install galaxyjs</span>
+
+<span class="k">import</span> Galaxy <span class="k">from</span> <span class="s">"galaxyjs"</span>;
+<span class="k">import</span> <span class="s">"galaxyjs/galaxy.css"</span>;
+
+Galaxy.<span class="k">create</span>(<span class="s">"nebula"</span>, <span class="s">"#hero"</span>);</pre>
+        </div>
+
+        <div class="gx-card">
+          <div class="gx-row" style="justify-content:space-between"><h3 style="margin:0">Declarative</h3><span class="gx-badge">zero JS</span></div>
+          <pre class="code"><span class="c">&lt;!-- animation --&gt;</span>
+&lt;div data-galaxy=<span class="s">"warp"</span> data-galaxy-speed=<span class="s">"1.5"</span>&gt;&lt;/div&gt;
+
+<span class="c">&lt;!-- components auto-wire too --&gt;</span>
+&lt;button data-gx-tooltip=<span class="s">"Hi!"</span>&gt;Hover&lt;/button&gt;</pre>
+        </div>
+      </div>
+
+      <!-- AI / MCP -->
+      <div class="gx-card gx-card--glow" style="margin-top:22px; border-color: var(--gx-border-strong);">
+        <div class="gx-row" style="gap:10px; flex-wrap:wrap">
+          <span class="gx-badge gx-badge--accent"><span class="gx-badge__dot"></span> AI · MCP</span>
+          <h3 style="margin:0">Let an AI build it for you</h3>
+        </div>
+        <p class="gx-soft" style="margin:10px 0 0; max-width:760px;">
+          GalaxyJS ships a machine-readable <a href="galaxy.manifest.json" target="_blank" rel="noopener"><code>galaxy.manifest.json</code></a>,
+          an <a href="llms.txt" target="_blank" rel="noopener"><code>llms.txt</code></a> guide, and a
+          <a href="https://github.com/Edwson/GalaxyJS/tree/main/mcp" target="_blank" rel="noopener">Model Context Protocol server</a>.
+          Any AI agent can discover and use every animation &amp; component in one line — at minimal token cost.
+        </p>
+        <div class="play" style="grid-template-columns: 1fr 1fr; margin-top:18px;">
+          <div>
+            <p class="gx-soft" style="margin:0 0 8px; font-size:.85rem">Add to your MCP client (e.g. Claude Desktop):</p>
+            <pre class="code">{
+  <span class="s">"mcpServers"</span>: {
+    <span class="s">"galaxyjs"</span>: {
+      <span class="s">"command"</span>: <span class="s">"npx"</span>,
+      <span class="s">"args"</span>: [<span class="s">"-y"</span>, <span class="s">"galaxyjs-mcp"</span>]
+    }
+  }
+}</pre>
+          </div>
+          <div>
+            <p class="gx-soft" style="margin:0 0 8px; font-size:.85rem">Then just ask:</p>
+            <pre class="code"><span class="c">// you</span>
+"Use GalaxyJS to add a slow
+ purple nebula to #hero"
+
+<span class="c">// agent calls galaxy_snippet →</span>
+Galaxy.<span class="k">create</span>(<span class="s">'nebula'</span>, <span class="s">'#hero'</span>, {
+  speed: <span class="n">0.6</span>,
+  colors: [<span class="s">'#7c5cff'</span>, <span class="s">'#4c1d95'</span>]
+});</pre>
+          </div>
+        </div>
+        <div class="gx-row gx-row--wrap" style="margin-top:14px; gap:10px;">
+          <button class="gx-btn gx-btn--ghost gx-btn--sm" data-gx-copy='{ "mcpServers": { "galaxyjs": { "command": "npx", "args": ["-y", "galaxyjs-mcp"] } } }' data-gx-copy-msg="MCP config copied">Copy MCP config</button>
+          <a class="gx-btn gx-btn--subtle gx-btn--sm" href="docs/API.md" target="_blank" rel="noopener">API reference →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div class="gx-row" style="justify-content:center; gap:14px; flex-wrap:wrap; margin-bottom:18px;">
+        <a class="gx-btn gx-btn--ghost gx-btn--sm" href="https://github.com/Edwson/GalaxyJS" target="_blank" rel="noopener">★ GitHub</a>
+        <a class="gx-btn gx-btn--ghost gx-btn--sm" href="https://www.edwson.com" target="_blank" rel="noopener">🌐 edwson.com</a>
+        <a class="gx-btn gx-btn--ghost gx-btn--sm" href="https://www.linkedin.com/in/ed-chen-saas" target="_blank" rel="noopener">in&nbsp;LinkedIn</a>
+      </div>
+      <p><strong>GalaxyJS v3 "Nova"</strong> · MIT License · Zero dependencies</p>
+      <p class="gx-muted" style="font-size:.92rem;">
+        Made by <a href="https://www.edwson.com" target="_blank" rel="noopener">Ed Chen</a>
+        &nbsp;·&nbsp;
+        <a href="https://www.linkedin.com/in/ed-chen-saas" target="_blank" rel="noopener">LinkedIn</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="galaxy.js"></script>
+  <script>
+    // ---- Hero background ----
+    Galaxy.create('starfield', '#hero-bg', { count: 220, speed: 1 });
+
+    // ---- Animation gallery ----
+    var animals = [
+      ['starfield','drifting stars'], ['warp','hyperspace'], ['blackHole','accretion disk'],
+      ['nebula','gas clouds'], ['spiral','galaxy arms'], ['meteors','shooting stars'],
+      ['constellation','network'], ['particles','interactive'], ['aurora','light ribbons'],
+      ['wormhole','tunnel'], ['orbits','planets'], ['pulsar','neutron star'], ['gradient','mesh flow'],
+      ['fireflies','wandering glow'], ['matrix','digital rain'], ['plasma','color field'],
+      ['fireworks','bursts'], ['snow','snowfall'], ['waves','ocean'],
+      ['dna','double helix'], ['lightning','bolts'], ['ripples','rings'], ['comets','tails'],
+      ['confetti','celebration'], ['bubbles','rising'], ['fog','drifting mist'],
+      ['grid','synthwave'], ['rain','rainfall'], ['vortex','spiral core'],
+      ['sparkle','glints'], ['tunnel','neon tunnel'], ['swarm','flocking'], ['ribbons','silk'],
+      ['flowfield','flow field'], ['globe','dotted globe'], ['heartbeat','ECG monitor'],
+      ['equalizer','audio bars'], ['clock','analog clock'], ['rays','light rays'],
+      ['radar','radar sweep'], ['embers','fire embers'], ['typewriter','typing'], ['spirograph','curves']
+    ];
+    var gallery = document.getElementById('gallery');
+    animals.forEach(function (a) {
+      var card = document.createElement('div');
+      card.className = 'gx-card demo-card gx-card--interactive';
+      card.innerHTML = '<div class="surface" id="g-' + a[0] + '"></div><div class="meta"><h3>' + a[0] + '</h3><span>' + a[1] + '</span></div>';
+      gallery.appendChild(card);
+      Galaxy.create(a[0], '#g-' + a[0], {});
+      card.addEventListener('click', function () { loadAnim(a[0]); document.getElementById('playground').scrollIntoView({ behavior: 'smooth' }); });
+    });
+
+    // ---- Playground ----
+    var stage = null, current = 'nebula';
+    var palettes = [
+      ['#7c5cff','#22d3ee','#f472b6'],
+      ['#34d399','#22d3ee','#a3e635'],
+      ['#fb7185','#f472b6','#fbbf24'],
+      ['#ffffff','#9bd0ff','#c9b8ff'],
+      ['#f59e0b','#ef4444','#7c5cff']
+    ];
+    var activePalette = 0;
+    var sel = document.getElementById('animSel');
+    animals.forEach(function (a) { var o = document.createElement('option'); o.value = a[0]; o.textContent = a[0]; sel.appendChild(o); });
+    sel.value = current;
+
+    var swWrap = document.getElementById('swatches');
+    palettes.forEach(function (p, i) {
+      var s = document.createElement('div');
+      s.className = 'sw' + (i === 0 ? ' active' : '');
+      s.style.background = 'linear-gradient(135deg,' + p[0] + ',' + p[1] + ')';
+      s.addEventListener('click', function () {
+        activePalette = i;
+        [].forEach.call(swWrap.children, function (c) { c.classList.remove('active'); });
+        s.classList.add('active'); rebuild();
+      });
+      swWrap.appendChild(s);
+    });
+
+    function opts() {
+      var speed = parseFloat(document.getElementById('speed').value);
+      var dens = parseFloat(document.getElementById('density').value);
+      var d = Galaxy.defaults(current) || {};
+      var o = { speed: speed, colors: palettes[activePalette] };
+      // scale whatever density-like key the animation has
+      ['count','stars','particles','bodies','rings','points','layers','lines'].forEach(function (k) {
+        if (d[k] != null) o[k] = Math.round(d[k] * dens);
+      });
+      return o;
+    }
+    function rebuild() {
+      if (stage) stage.destroy();
+      stage = Galaxy.create(current, '#play-stage', opts());
+      renderCode();
+    }
+    function loadAnim(name) { current = name; sel.value = name; rebuild(); }
+
+    function renderCode() {
+      var o = opts();
+      var lines = ["Galaxy.<span class='k'>create</span>(<span class='s'>'" + current + "'</span>, <span class='s'>'#stage'</span>, {"];
+      lines.push("  speed: <span class='n'>" + o.speed + "</span>,");
+      ['count','stars','particles','bodies','rings','points','layers','lines'].forEach(function (k) {
+        if (o[k] != null) lines.push("  " + k + ": <span class='n'>" + o[k] + "</span>,");
+      });
+      lines.push("  colors: [" + o.colors.map(function (c) { return "<span class='s'>'" + c + "'</span>"; }).join(', ') + "]");
+      lines.push("});");
+      document.getElementById('codeOut').innerHTML = lines.join('\n');
+    }
+
+    document.getElementById('speed').addEventListener('input', function (e) { document.getElementById('speedVal').textContent = parseFloat(e.target.value).toFixed(1); rebuild(); });
+    document.getElementById('density').addEventListener('input', function (e) { document.getElementById('densVal').textContent = parseFloat(e.target.value).toFixed(1); rebuild(); });
+    sel.addEventListener('change', function (e) { loadAnim(e.target.value); });
+    document.getElementById('copyBtn').addEventListener('click', function () {
+      var txt = document.getElementById('codeOut').textContent;
+      navigator.clipboard && navigator.clipboard.writeText(txt);
+      Galaxy.toast('Code copied to clipboard', { type: 'success' });
+    });
+    rebuild();
+
+    // ---- Component demos ----
+    document.getElementById('modalBtn').addEventListener('click', function () {
+      Galaxy.modal({
+        title: 'Welcome aboard 🚀',
+        body: 'This modal was created with a single <code>Galaxy.modal()</code> call. Press Esc or click outside to close.',
+        actions: [
+          { label: 'Maybe later', variant: 'ghost' },
+          { label: 'Launch', variant: 'primary', onClick: function () { Galaxy.toast('Liftoff!', { type: 'success' }); } }
+        ]
+      });
+    });
+    document.getElementById('confirmBtn').addEventListener('click', function () {
+      Galaxy.confirm('Eject the escape pod?', { okLabel: 'Eject', cancelLabel: 'Stay' }).then(function (ok) {
+        Galaxy.toast(ok ? 'Pod ejected 🛸' : 'Staying put', { type: ok ? 'info' : 'warning' });
+      });
+    });
+    document.getElementById('drawerBtn').addEventListener('click', function () {
+      Galaxy.drawer({ title: 'Mission control', side: 'right', html: document.getElementById('drawer-content').innerHTML,
+        actions: [{ label: 'Done', variant: 'primary' }] });
+    });
+    document.getElementById('loadBtn').addEventListener('click', function () {
+      var b = this; b.classList.add('is-loading');
+      setTimeout(function () { b.classList.remove('is-loading'); Galaxy.toast('Docking complete', { type: 'success' }); }, 1600);
+    });
+
+    // ---- Theme toggle ----
+    document.getElementById('themeBtn').addEventListener('click', function (e) {
+      e.preventDefault();
+      var t = Galaxy.toggleTheme();
+      this.innerHTML = (t === 'dark' ? '☾' : '☀') + ' Theme';
+    });
+  </script>
 </body>
 </html>
