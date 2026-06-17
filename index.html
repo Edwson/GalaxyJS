@@ -7,7 +7,7 @@
   <meta name="description" content="GalaxyJS — a zero-dependency cosmic animation & UI component library. Live playground." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="galaxy.css" />
+  <link rel="stylesheet" href="galaxy.css" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/gh/Edwson/GalaxyJS@main/galaxy.min.css'" />
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
@@ -459,6 +459,8 @@ Galaxy.<span class="k">create</span>(<span class="s">'nebula'</span>, <span clas
   </footer>
 
   <script src="galaxy.js"></script>
+  <!-- Self-host first; if the host blocks the local file (e.g. mod_security 403), fall back to the repo's jsDelivr CDN. Synchronous so Galaxy is defined before the boot script below. -->
+  <script>window.Galaxy||document.write('<script src="https://cdn.jsdelivr.net/gh/Edwson/GalaxyJS@main/galaxy.min.js"><\/script>');</script>
   <script>
     // ---- Hero background ----
     Galaxy.create('starfield', '#hero-bg', { count: 220, speed: 1 });
