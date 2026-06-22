@@ -118,6 +118,7 @@ const manifest = {
   },
   api: {
     create: "Galaxy.create(type, target, options) -> instance{ start, stop, pause, resume, update, destroy }",
+    scrollScene: "Galaxy.scrollScene(stickyStage, { scenes:[type|{type,options}], track?, onProgress?, reducedScene? }) -> { progress, layers, destroy } — bind scroll progress to a crossfading cinematic sequence of scenes; runs only the visible pair (battery-friendly), reduced-motion shows one static frame",
     register: "Galaxy.register(name, { defaults, setup })",
     theme: 'Galaxy.theme("dark"|"light"|{ accent, bg, ... })',
     toggleTheme: "Galaxy.toggleTheme()",
