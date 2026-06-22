@@ -508,9 +508,9 @@ Galaxy.<span class="k">create</span>(<span class="s">'nebula'</span>, <span clas
     </div>
   </footer>
 
-  <script src="galaxy.js"></script>
-  <!-- Self-host first; if the host blocks the local file (e.g. mod_security 403), fall back to the repo's jsDelivr CDN. Synchronous so Galaxy is defined before the boot script below. -->
-  <script>window.Galaxy||document.write('<script src="https://cdn.jsdelivr.net/gh/Edwson/GalaxyJS@main/galaxy.min.js"><\/script>');</script>
+  <script src="galaxy.js?v=3.2.0"></script>
+  <!-- Self-host first (version-pinned so a new page never loads a stale cached engine). If the host blocks the file (mod_security 403) OR serves an out-of-date engine without the v3.2 API, fall back to the repo's jsDelivr CDN. Synchronous so Galaxy is defined before the boot script below. -->
+  <script>(window.Galaxy&&window.Galaxy.scrollScene)||document.write('<script src="https://cdn.jsdelivr.net/gh/Edwson/GalaxyJS@main/galaxy.min.js"><\/script>');</script>
   <script>
     // ---- Cinematic scroll hero · Galaxy.scrollScene() (v3.2.0) ----
     // The hero IS the demo: scroll-bound scenes crossfade through the engine,
@@ -553,18 +553,25 @@ Galaxy.<span class="k">create</span>(<span class="s">'nebula'</span>, <span clas
       [].forEach.call(telBars.children, function (b, j) { b.classList.toggle('on', j <= i); });
       [].forEach.call(scrubMarks.children, function (m, j) { m.classList.toggle('on', j === i); });
     }
-    Galaxy.scrollScene('#cine-stage', {
-      scenes: cineScenes.map(function (s) { return { type: s.type }; }),
-      track: '#cine',
-      reducedScene: 0,
-      onProgress: function (p, i) {
-        if (scrubFill) scrubFill.style.width = (p * 100).toFixed(1) + '%';
-        if (telPct) telPct.textContent = Math.round(p * 100) + '%';
-        if (cineHint) cineHint.style.opacity = p > 0.02 ? '0' : '';
-        if (i !== lastIdx) { lastIdx = i; setCopy(i); }
-      }
-    });
     setCopy(0);
+    // Graceful degradation: if an out-of-date cached engine lacks scrollScene,
+    // keep the hero alive with a static scene and never break the gallery below.
+    try {
+      if (typeof Galaxy.scrollScene !== 'function') throw new Error('scrollScene unavailable');
+      Galaxy.scrollScene('#cine-stage', {
+        scenes: cineScenes.map(function (s) { return { type: s.type }; }),
+        track: '#cine',
+        reducedScene: 0,
+        onProgress: function (p, i) {
+          if (scrubFill) scrubFill.style.width = (p * 100).toFixed(1) + '%';
+          if (telPct) telPct.textContent = Math.round(p * 100) + '%';
+          if (cineHint) cineHint.style.opacity = p > 0.02 ? '0' : '';
+          if (i !== lastIdx) { lastIdx = i; setCopy(i); }
+        }
+      });
+    } catch (e) {
+      Galaxy.create('galaxyMerge', '#cine-stage', { speed: 1 });
+    }
 
     // ---- Animation gallery ----
     var animals = [
