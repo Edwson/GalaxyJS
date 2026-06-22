@@ -3,6 +3,25 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com/);
 versioning: [SemVer](https://semver.org/).
 
+## [3.2.0] "Cinematic" — 2026-06-22
+### Added
+- **`Galaxy.scrollScene(stickyStage, config)`** — a new top-level API that binds page-scroll
+  progress to a crossfading sequence of scenes. Pass `scenes: [type | { type, options }]`, an
+  optional `track` (the tall element whose scroll drives progress), an `onProgress(p, index, scene)`
+  callback for HUD/telemetry, and `reducedScene` (which single frame to show under
+  `prefers-reduced-motion`). Returns `{ progress(), layers, destroy() }`.
+- **Battery-friendly by design:** only the ≤2 scenes that are crossfading are mounted/visible at a
+  time, so the engine's own IntersectionObserver runs exactly those and pauses the rest — no rAF
+  fighting across a long sequence. Reduced-motion renders **one** static representative frame.
+- The library's own showcase hero (`index.html`) is now a scroll-cinematic built on `scrollScene`
+  — the page literally demonstrates the feature: `galaxyMerge → quasar → supernova → magnetosphere`
+  with live telemetry and a scroll scrubber.
+- `galaxy.d.ts` (`ScrollSceneItem` / `ScrollSceneConfig` / `ScrollSceneInstance`), the manifest API
+  block, and `test.mjs` are updated in lockstep; tests assert the `scrollScene` API is present.
+
+### Unchanged
+- Still 60 animations and 13 components; no breaking changes to `create` / `register` / theming.
+
 ## [3.1.0] — 2026-06-17
 ### Added
 - **17 new cosmic animations (43 → 60):** `supernova`, `quasar`, `starcluster`, `cosmicWeb`,

@@ -817,3 +817,7 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ── scrollScene — cinematic scroll-bound scene sequence (v3.2.0) ── */
+.gx-scrollscene { position: relative; overflow: hidden; }
+.gx-scrollscene__layer { position: absolute; inset: 0; }

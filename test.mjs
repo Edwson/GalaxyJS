@@ -26,6 +26,7 @@ const dts = read('galaxy.d.ts');
 console.log('runtime');
 ok(typeof Galaxy.version === 'string', 'Galaxy.version is a string (' + Galaxy.version + ')');
 ok(typeof Galaxy.create === 'function' && typeof Galaxy.list === 'function' && typeof Galaxy.defaults === 'function', 'public API present (create / list / defaults)');
+ok(typeof Galaxy.scrollScene === 'function', 'scrollScene API present (cinematic scroll sequences)');
 const runtimeNames = Galaxy.list();
 ok(runtimeNames.length === 60, 'runtime lists 60 animations (got ' + runtimeNames.length + ')');
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GalaxyJS v3 — Interactive Showcase</title>
+  <title>GalaxyJS v3.2 "Cinematic" — Interactive Showcase</title>
   <meta name="description" content="GalaxyJS — a zero-dependency cosmic animation & UI component library. Live playground." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -29,14 +29,47 @@
     .nav__links a { padding: 8px 14px; border-radius: 999px; text-decoration: none; color: var(--gx-text-soft); font-size: .9rem; font-weight: 600; }
     .nav__links a:hover { background: var(--gx-surface-2); color: var(--gx-text); }
 
-    /* Hero */
-    .hero { position: relative; min-height: 78vh; display: grid; place-items: center; overflow: hidden; text-align: center; }
-    #hero-bg { position: absolute; inset: 0; }
-    .hero__content { position: relative; z-index: 2; padding: 80px 0; }
-    .hero h1 { font-size: clamp(2.6rem, 7vw, 4.6rem); line-height: 1.02; margin: 0 0 18px; font-weight: 800; letter-spacing: -0.02em; }
-    .hero p.lead { font-size: clamp(1rem, 2.4vw, 1.3rem); color: var(--gx-text-soft); max-width: 640px; margin: 0 auto 28px; line-height: 1.6; }
-    .hero .gx-row { justify-content: center; }
-    .pill-row { margin-top: 28px; gap: 8px; flex-wrap: wrap; }
+    /* Cinematic scroll hero — powered by Galaxy.scrollScene() (v3.2.0) */
+    .cine { position: relative; }
+    .cine__pin { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+    .cine__stage { position: absolute; inset: 0; z-index: 1; }
+    .cine__grad { position: absolute; inset: 0; z-index: 2; pointer-events: none;
+      background:
+        radial-gradient(130% 90% at 18% 100%, color-mix(in srgb, var(--gx-bg) 90%, transparent), transparent 58%),
+        linear-gradient(180deg, color-mix(in srgb, var(--gx-bg) 46%, transparent), transparent 26%, color-mix(in srgb, var(--gx-bg) 64%, transparent)); }
+    .cine__frame { position: absolute; inset: 16px; z-index: 3; pointer-events: none; border-radius: 14px;
+      border: 1px solid color-mix(in srgb, var(--gx-accent-2) 18%, transparent); }
+    .cine__frame::before, .cine__frame::after { content: ""; position: absolute; width: 18px; height: 18px; border: 2px solid var(--gx-accent-2); opacity: .7; }
+    .cine__frame::before { left: -1px; top: -1px; border-right: 0; border-bottom: 0; border-top-left-radius: 14px; }
+    .cine__frame::after { right: -1px; bottom: -1px; border-left: 0; border-top: 0; border-bottom-right-radius: 14px; }
+    .cine__hud { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+    .cine__copy { position: absolute; left: 0; bottom: 0; pointer-events: auto;
+      max-width: 720px; padding: 0 clamp(24px, 5vw, 72px) clamp(76px, 13vh, 124px); }
+    .cine__eyebrow { font-family: var(--gx-font-mono); font-size: .72rem; letter-spacing: .18em; text-transform: uppercase; color: var(--gx-accent-2); margin-bottom: 14px; }
+    .cine__h1 { font-size: clamp(2.4rem, 6.4vw, 4.6rem); line-height: 1.03; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.02em; white-space: pre-line; min-height: 2em; }
+    .cine__lead { font-size: clamp(1rem, 2.1vw, 1.22rem); color: var(--gx-text-soft); margin: 0 0 24px; line-height: 1.6; max-width: 560px; min-height: 3em; }
+    .cine__cta { display: flex; gap: 12px; flex-wrap: wrap; }
+    .cine__pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+    .cine__tel { position: absolute; top: clamp(82px, 13vh, 116px); right: clamp(20px, 5vw, 60px); z-index: 5; width: 234px;
+      font-family: var(--gx-font-mono); font-size: .72rem; color: var(--gx-text-soft); pointer-events: none;
+      border: 1px solid color-mix(in srgb, var(--gx-accent-2) 24%, var(--gx-border)); border-radius: 12px;
+      background: color-mix(in srgb, var(--gx-bg) 60%, transparent); backdrop-filter: blur(8px); padding: 12px 15px; }
+    .cine__tel-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed color-mix(in srgb, var(--gx-accent-2) 16%, var(--gx-border)); }
+    .cine__tel-row:last-of-type { border-bottom: 0; }
+    .cine__tel-row b { color: var(--gx-accent-2); font-weight: 500; }
+    .cine__tel-bars { display: flex; gap: 3px; margin-top: 10px; }
+    .cine__tel-bar { flex: 1; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--gx-accent-2) 16%, var(--gx-border)); transition: background .25s; }
+    .cine__tel-bar.on { background: var(--gx-accent-2); }
+    @media (max-width: 820px) { .cine__tel { display: none; } }
+    .cine__scrub { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; padding: 0 clamp(24px, 5vw, 72px) 22px; pointer-events: none; }
+    .cine__scrub-track { position: relative; height: 2px; border-radius: 2px; background: color-mix(in srgb, var(--gx-text) 14%, transparent); }
+    .cine__scrub-fill { position: absolute; left: 0; top: 0; height: 100%; width: 0; border-radius: 2px; background: linear-gradient(90deg, var(--gx-accent), var(--gx-accent-2)); }
+    .cine__scrub-marks { display: flex; justify-content: space-between; margin-top: 10px; font-family: var(--gx-font-mono); font-size: .62rem; letter-spacing: .06em; color: var(--gx-text-muted); }
+    .cine__scrub-marks span.on { color: var(--gx-accent-2); }
+    .cine__hint { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); z-index: 5; pointer-events: none;
+      font-family: var(--gx-font-mono); font-size: .7rem; letter-spacing: .1em; color: var(--gx-text-muted); transition: opacity .4s; animation: cineBob 1.9s ease-in-out infinite; }
+    @keyframes cineBob { 0%, 100% { transform: translateX(-50%) translateY(0); opacity: .65; } 50% { transform: translateX(-50%) translateY(5px); opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .cine__hint { animation: none; } }
 
     section { padding: 80px 0; }
     .section-head { text-align: center; max-width: 680px; margin: 0 auto 48px; }
@@ -81,7 +114,7 @@
   <!-- NAV -->
   <header class="nav">
     <div class="wrap nav__inner">
-      <div class="brand"><span class="dot"></span> GalaxyJS <span class="gx-badge gx-badge--accent">v3</span></div>
+      <div class="brand"><span class="dot"></span> GalaxyJS <span class="gx-badge gx-badge--accent">v3.2</span></div>
       <nav class="nav__links">
         <a href="#animations">Animations</a>
         <a href="#playground">Playground</a>
@@ -93,25 +126,42 @@
     </div>
   </header>
 
-  <!-- HERO -->
-  <div class="hero">
-    <div id="hero-bg"></div>
-    <div class="wrap hero__content">
-      <span class="eyebrow">Zero dependencies · 60 animations · UI kit</span>
-      <h1>The universe,<br /><span class="gx-text-gradient">one line of code.</span></h1>
-      <p class="lead">GalaxyJS is a tiny, beautiful animation &amp; component library. Cosmic canvas backdrops, themeable UI components, and a single unified API: <code>Galaxy.create()</code>.</p>
-      <div class="gx-row">
-        <a href="#playground" class="gx-btn gx-btn--primary gx-btn--lg">Try the playground</a>
-        <a href="#start" class="gx-btn gx-btn--ghost gx-btn--lg">Get started</a>
-      </div>
-      <div class="gx-row pill-row">
-        <span class="gx-badge">⚡ Shared rAF loop</span>
-        <span class="gx-badge">♿ Reduced-motion aware</span>
-        <span class="gx-badge">🎨 Light / dark themes</span>
-        <span class="gx-badge">📦 ~14kb, no build step</span>
+  <!-- CINEMATIC HERO · powered by Galaxy.scrollScene() (v3.2.0) -->
+  <section class="cine" id="cine" style="height:360vh;">
+    <div class="cine__pin">
+      <div class="cine__stage" id="cine-stage"></div>
+      <div class="cine__grad"></div>
+      <div class="cine__frame"></div>
+      <div class="cine__hud">
+        <div class="cine__copy">
+          <div class="cine__eyebrow" id="cineEyebrow">Zero dependencies · 60 animations · v3.2.0</div>
+          <h1 class="cine__h1 gx-text-gradient" id="cineH1">The universe,
+one line of code.</h1>
+          <p class="cine__lead" id="cineLead">Cosmic canvas backdrops, a themeable UI kit, and one unified API: <code>Galaxy.create()</code>.</p>
+          <div class="cine__cta">
+            <a href="#playground" class="gx-btn gx-btn--primary gx-btn--lg">Try the playground</a>
+            <a href="#start" class="gx-btn gx-btn--ghost gx-btn--lg">Get started</a>
+          </div>
+          <div class="cine__pills">
+            <span class="gx-badge">⚡ One shared rAF</span>
+            <span class="gx-badge">♿ Reduced-motion safe</span>
+            <span class="gx-badge">📦 ~21 kB gzip · no build</span>
+          </div>
+        </div>
+        <div class="cine__tel" aria-hidden="true">
+          <div class="cine__tel-row"><span>SCENE</span><b id="telScene">galaxyMerge</b></div>
+          <div class="cine__tel-row"><span>PHASE</span><b id="telIdx">01 / 04</b></div>
+          <div class="cine__tel-row"><span>PROGRESS</span><b id="telPct">0%</b></div>
+          <div class="cine__tel-bars" id="telBars"></div>
+        </div>
+        <div class="cine__scrub" aria-hidden="true">
+          <div class="cine__scrub-track"><div class="cine__scrub-fill" id="scrubFill"></div></div>
+          <div class="cine__scrub-marks" id="scrubMarks"></div>
+        </div>
+        <div class="cine__hint" id="cineHint">↓ scroll to explore</div>
       </div>
     </div>
-  </div>
+  </section>
 
   <!-- ANIMATIONS -->
   <section id="animations" class="wrap">
@@ -449,7 +499,7 @@ Galaxy.<span class="k">create</span>(<span class="s">'nebula'</span>, <span clas
         <a class="gx-btn gx-btn--ghost gx-btn--sm" href="https://www.edwson.com" target="_blank" rel="noopener">🌐 edwson.com</a>
         <a class="gx-btn gx-btn--ghost gx-btn--sm" href="https://www.linkedin.com/in/ed-chen-saas" target="_blank" rel="noopener">in&nbsp;LinkedIn</a>
       </div>
-      <p><strong>GalaxyJS v3 "Nova"</strong> · MIT License · Zero dependencies</p>
+      <p><strong>GalaxyJS v3.2 "Cinematic"</strong> · MIT License · Zero dependencies</p>
       <p class="gx-muted" style="font-size:.92rem;">
         Made by <a href="https://www.edwson.com" target="_blank" rel="noopener">Ed Chen</a>
         &nbsp;·&nbsp;
@@ -462,8 +512,59 @@ Galaxy.<span class="k">create</span>(<span class="s">'nebula'</span>, <span clas
   <!-- Self-host first; if the host blocks the local file (e.g. mod_security 403), fall back to the repo's jsDelivr CDN. Synchronous so Galaxy is defined before the boot script below. -->
   <script>window.Galaxy||document.write('<script src="https://cdn.jsdelivr.net/gh/Edwson/GalaxyJS@main/galaxy.min.js"><\/script>');</script>
   <script>
-    // ---- Hero background ----
-    Galaxy.create('starfield', '#hero-bg', { count: 220, speed: 1 });
+    // ---- Cinematic scroll hero · Galaxy.scrollScene() (v3.2.0) ----
+    // The hero IS the demo: scroll-bound scenes crossfade through the engine,
+    // and the page narrates the library as you go. One API call paints it.
+    var cineScenes = [
+      { type: 'galaxyMerge',
+        eyebrow: 'Zero dependencies · 60 animations · v3.2.0',
+        h1: 'The universe,\none line of code.',
+        lead: 'Cosmic canvas backdrops, a themeable UI kit, and one unified API: <code>Galaxy.create()</code>.' },
+      { type: 'quasar',
+        eyebrow: 'The collection',
+        h1: '60 cosmic\nanimations.',
+        lead: 'Each is a canvas surface — auto-sized to its container, paused off-screen, drawn through one shared rAF loop.' },
+      { type: 'supernova',
+        eyebrow: 'Accessible by contract',
+        h1: 'Beautiful,\nand behaved.',
+        lead: 'Reduced-motion safe, HiDPI-crisp, screen-reader-friendly. Motion off &rarr; every scene renders a single static frame.' },
+      { type: 'magnetosphere',
+        eyebrow: 'New in v3.2.0 · Cinematic',
+        h1: 'This hero\nis one call.',
+        lead: 'Scroll-bound scenes, crossfading, battery-friendly. <code>Galaxy.scrollScene()</code> — the same engine that paints this page.' }
+    ];
+    var elEye = document.getElementById('cineEyebrow'), elH1 = document.getElementById('cineH1'),
+        elLead = document.getElementById('cineLead'), telScene = document.getElementById('telScene'),
+        telIdx = document.getElementById('telIdx'), telPct = document.getElementById('telPct'),
+        telBars = document.getElementById('telBars'), scrubFill = document.getElementById('scrubFill'),
+        scrubMarks = document.getElementById('scrubMarks'), cineHint = document.getElementById('cineHint');
+    cineScenes.forEach(function (s) {
+      var b = document.createElement('div'); b.className = 'cine__tel-bar'; telBars.appendChild(b);
+      var m = document.createElement('span'); m.textContent = s.type; scrubMarks.appendChild(m);
+    });
+    var lastIdx = -1;
+    function setCopy(i) {
+      var s = cineScenes[i];
+      if (elEye) elEye.textContent = s.eyebrow;
+      if (elH1) elH1.textContent = s.h1;
+      if (elLead) elLead.innerHTML = s.lead;
+      if (telScene) telScene.textContent = s.type;
+      if (telIdx) telIdx.textContent = ('0' + (i + 1)).slice(-2) + ' / 0' + cineScenes.length;
+      [].forEach.call(telBars.children, function (b, j) { b.classList.toggle('on', j <= i); });
+      [].forEach.call(scrubMarks.children, function (m, j) { m.classList.toggle('on', j === i); });
+    }
+    Galaxy.scrollScene('#cine-stage', {
+      scenes: cineScenes.map(function (s) { return { type: s.type }; }),
+      track: '#cine',
+      reducedScene: 0,
+      onProgress: function (p, i) {
+        if (scrubFill) scrubFill.style.width = (p * 100).toFixed(1) + '%';
+        if (telPct) telPct.textContent = Math.round(p * 100) + '%';
+        if (cineHint) cineHint.style.opacity = p > 0.02 ? '0' : '';
+        if (i !== lastIdx) { lastIdx = i; setCopy(i); }
+      }
+    });
+    setCopy(0);
 
     // ---- Animation gallery ----
     var animals = [

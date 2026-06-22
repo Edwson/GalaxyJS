@@ -1,6 +1,6 @@
-/*! GalaxyJS v3.1 "Nova" — galaxy.js
+/*! GalaxyJS v3.2 "Cinematic" — galaxy.js
  *  A zero-dependency cosmic animation + UI component library.
- *  Unified API:  Galaxy.create(type, target, options)
+ *  Unified API:  Galaxy.create(type, target, options) · Galaxy.scrollScene(stage, config)
  *  UMD: works as <script>, CommonJS, and (interop) ES import.
  *  MIT License.
  * ------------------------------------------------------------------ */
@@ -15,7 +15,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  var VERSION = "3.1.0";
+  var VERSION = "3.2.0";
   var hasDOM = typeof document !== "undefined";
   var prefersReduced =
     hasDOM &&
@@ -2673,11 +2673,104 @@
   }
 
   /* ============================================================
+   * scrollScene — bind scroll progress to a crossfading sequence of scenes.
+   * The GalaxyJS answer to scroll-driven timelines, at the SCENE level.
+   *
+   * Galaxy.scrollScene(stickyStage, {
+   *   scenes: ['galaxyMerge', { type: 'quasar', options: {...} }, ...],
+   *   track: '#hero',          // tall element whose scroll drives progress (default: stage.parentNode)
+   *   onProgress: (p, i, s) => {},
+   *   reducedScene: 0          // which scene to show as a static frame under prefers-reduced-motion
+   * })
+   *
+   * Only the (at most two) crossfading scenes are display:block at a time, so the
+   * engine's own IntersectionObserver runs exactly those and pauses the rest — no
+   * extra rAF, battery-friendly. Reduced-motion: one static representative frame.
+   * ========================================================== */
+  function scrollScene(target, config) {
+    var stage = resolve(target);
+    if (!stage) throw new Error("GalaxyJS: scrollScene target not found");
+    config = config || {};
+    var list = (config.scenes || []).map(function (s) { return typeof s === "string" ? { type: s } : s; });
+    if (!list.length) throw new Error("GalaxyJS: scrollScene needs at least one scene");
+
+    var track = config.track ? resolve(config.track) : (stage.parentNode || stage);
+    stage.classList.add("gx-scrollscene");
+
+    var layers = list.map(function (s, i) {
+      var layer = document.createElement("div");
+      layer.className = "gx-scrollscene__layer";
+      layer.style.cssText = "position:absolute;inset:0;opacity:" + (i === 0 ? 1 : 0) +
+        ";transition:opacity .2s linear;display:" + (i < 2 ? "block" : "none") + ";";
+      stage.appendChild(layer);
+      var ctrl = mountAnimation(s.type, layer, Object.assign({ autoplay: false }, s.options || {}));
+      return { layer: layer, ctrl: ctrl, type: s.type };
+    });
+
+    var n = list.length;
+    var lastP = -1, scheduled = false, dead = false;
+
+    function progress() {
+      if (!hasDOM) return 0;
+      var r = track.getBoundingClientRect();
+      var vh = window.innerHeight || document.documentElement.clientHeight || 1;
+      var scrollable = r.height - vh;
+      if (scrollable <= 0) return 0;
+      return Math.max(0, Math.min(1, (-r.top) / scrollable));
+    }
+
+    function apply(p) {
+      var pos = p * (n - 1);
+      var idx = Math.min(n - 1, Math.floor(pos));
+      var frac = pos - idx;
+      for (var i = 0; i < n; i++) {
+        var op = 0, vis = false;
+        if (i === idx) { op = idx < n - 1 ? 1 - frac : 1; vis = true; }
+        else if (i === idx + 1) { op = frac; vis = true; }
+        var L = layers[i].layer;
+        L.style.display = vis ? "block" : "none"; // engine IO runs only the visible (crossfading) pair
+        L.style.opacity = op;
+      }
+      if (typeof config.onProgress === "function") {
+        var active = (frac >= 0.5 && idx < n - 1) ? idx + 1 : idx;
+        config.onProgress(p, active, list[active]);
+      }
+    }
+
+    // Reduced-motion: show one representative static frame, no scroll binding.
+    if (prefersReduced) {
+      var rIdx = Math.min(n - 1, config.reducedScene != null ? config.reducedScene : 0);
+      layers.forEach(function (l, i) { l.layer.style.display = i === rIdx ? "block" : "none"; l.layer.style.opacity = i === rIdx ? 1 : 0; });
+      try { layers[rIdx].ctrl.start(); } catch (e) {}
+      if (typeof config.onProgress === "function") config.onProgress(0, rIdx, list[rIdx]);
+      return { el: stage, layers: layers, progress: function () { return 0; }, destroy: destroy };
+    }
+
+    function tick() { scheduled = false; if (dead) return; var p = progress(); if (Math.abs(p - lastP) < 0.0008) return; lastP = p; apply(p); }
+    function schedule() { if (!scheduled && hasDOM) { scheduled = true; requestAnimationFrame(tick); } }
+    if (hasDOM) {
+      window.addEventListener("scroll", schedule, { passive: true });
+      window.addEventListener("resize", schedule, { passive: true });
+    }
+    apply(progress());
+
+    function destroy() {
+      dead = true;
+      if (hasDOM) { window.removeEventListener("scroll", schedule); window.removeEventListener("resize", schedule); }
+      layers.forEach(function (l) { try { l.ctrl.destroy(); } catch (e) {} if (l.layer.parentNode) l.layer.parentNode.removeChild(l.layer); });
+      stage.classList.remove("gx-scrollscene");
+    }
+
+    return { el: stage, layers: layers, progress: progress, destroy: destroy };
+  }
+
+  /* ============================================================
    * Public API
    * ========================================================== */
   var Galaxy = {
     version: VERSION,
     create: function (type, target, options) { return mountAnimation(type, target, options); },
+    scrollScene: scrollScene,
     register: function (name, def) { registerAnimation(name, def); return Galaxy; },
     list: function () { return Object.keys(animations); },
     defaults: function (name) { return animations[name] ? Object.assign({}, animations[name].defaults) : null; },

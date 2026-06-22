@@ -9,11 +9,18 @@ no framework, ~20&nbsp;kB gzipped.
 [![CI](https://github.com/Edwson/GalaxyJS/actions/workflows/ci.yml/badge.svg)](https://github.com/Edwson/GalaxyJS/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 ![Zero dependencies](https://img.shields.io/badge/dependencies-0-7c5cff)
-![Version](https://img.shields.io/badge/version-3.1-22d3ee)
+![Version](https://img.shields.io/badge/version-3.2-22d3ee)
 
-> Live demo: https://edwson.com/GalaxyJS/ · Open [`index.html`](index.html) locally for the interactive playground.
+> Live demo: https://edwson.github.io/GalaxyJS/ (mirror: https://edwson.com/GalaxyJS/) · Open [`index.html`](index.html) locally for the interactive playground.
 
 ---
+
+## ✨ What's new in v3.2 "Cinematic"
+
+- **`Galaxy.scrollScene()`** — bind page scroll to a crossfading sequence of scenes. One call turns
+  a sticky stage into a scroll-scrubbed cinematic, with an `onProgress(p, index, scene)` hook for
+  your own HUD. Only the visible pair runs (battery-friendly), and reduced-motion shows one static
+  frame. The showcase hero is built with it — [see below](#-cinematic-scroll-scenes-v32).
 
 ## ✨ What's new in v3 "Nova"
 
@@ -87,6 +94,40 @@ Add your own:
 ```js
 Galaxy.register("rain", { defaults: { count: 200 }, setup(host) { /* ... */ } });
 ```
+
+---
+
+## 🎬 Cinematic scroll scenes (v3.2)
+
+Bind page scroll to a crossfading sequence of scenes — the whole hero in one call:
+
+```html
+<section id="cine" style="height: 360vh;">     <!-- the scroll "track" (gives you room) -->
+  <div style="position: sticky; top: 0; height: 100vh;">
+    <div id="stage" style="position:absolute; inset:0;"></div>
+    <!-- your own HUD/headline overlay here -->
+  </div>
+</section>
+```
+
+```js
+Galaxy.scrollScene("#stage", {
+  scenes: ["galaxyMerge", "quasar", "supernova", "magnetosphere"],
+  track: "#cine",
+  reducedScene: 0, // which single frame to show when motion is off
+  onProgress(p, index, scene) {
+    // p is 0..1 across the whole sequence; index is the active scene.
+    // Drive your own headline, telemetry, scrubber, etc.
+  }
+});
+```
+
+- Pass scenes as `"name"` or `{ type: "name", options: { speed: 1.2 } }`.
+- Only the ≤2 crossfading scenes are mounted at a time, so the engine pauses everything else —
+  no rAF fighting across a long sequence.
+- Under `prefers-reduced-motion`, it renders **one** static frame (`reducedScene`) and still fires
+  `onProgress` once so your copy is correct.
+- Returns `{ progress(), layers, destroy() }`. Call `destroy()` to unbind on teardown.
 
 ---
 

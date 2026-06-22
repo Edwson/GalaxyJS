@@ -1,4 +1,4 @@
-// Type definitions for GalaxyJS v3.1 "Nova"
+// Type definitions for GalaxyJS v3.2 "Cinematic"
 // A zero-dependency cosmic animation + UI component library.
 // Project: https://github.com/Edwson/GalaxyJS
 
@@ -180,12 +180,39 @@ export interface ConfirmOptions {
 /** Theme tokens, e.g. { accent: "#7c5cff", bg: "#000" }. */
 export type ThemeTokens = Record<string, string>;
 
+/** A scene in a scrollScene sequence: an animation name, or a name + its options. */
+export type ScrollSceneItem =
+  | (AnimationType | string)
+  | { type: AnimationType | string; options?: AnimationOptions };
+
+export interface ScrollSceneConfig {
+  /** Ordered scenes to crossfade through as the user scrolls. */
+  scenes: ScrollSceneItem[];
+  /** The tall element whose scroll drives progress. Default: the stage's parent. */
+  track?: Target;
+  /** Called on each progress change: p is 0..1, i is the active scene index. */
+  onProgress?(p: number, index: number, scene: ScrollSceneItem): void;
+  /** Which scene to render as a single static frame under prefers-reduced-motion. Default: 0. */
+  reducedScene?: number;
+}
+
+/** Controller returned by Galaxy.scrollScene(). */
+export interface ScrollSceneInstance {
+  el: HTMLElement;
+  layers: { layer: HTMLElement; ctrl: AnimationInstance; type: string }[];
+  /** Current scroll progress, 0..1. */
+  progress(): number;
+  destroy(): void;
+}
+
 export interface GalaxyStatic {
   readonly version: string;
   readonly prefersReducedMotion: boolean;
 
   /** Create an animation surface inside the target element. */
   create(type: AnimationType | string, target: Target, options?: AnimationOptions): AnimationInstance;
+  /** Bind scroll progress to a crossfading cinematic sequence of scenes (reduced-motion safe). */
+  scrollScene(stickyStage: Target, config: ScrollSceneConfig): ScrollSceneInstance;
   /** Register a custom animation. */
   register(name: string, def: AnimationDefinition): GalaxyStatic;
   /** List all registered animation names. */

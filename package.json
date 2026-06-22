@@ -1,6 +1,6 @@
 {
   "name": "galaxyjs",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "GalaxyJS v3 'Nova' \u2014 a zero-dependency cosmic animation & UI component library. One unified API (Galaxy.create), 60 canvas animations, themeable UI components, full accessibility & reduced-motion support.",
   "main": "galaxy.js",
   "module": "galaxy.js",
