@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GalaxyJS v3.2 "Cinematic" — Interactive Showcase</title>
+  <title>GalaxyJS v3.3 "Deep Field" — Interactive Showcase</title>
+  <link rel="canonical" href="https://edwson.github.io/GalaxyJS/">
   <meta name="description" content="GalaxyJS — a zero-dependency cosmic animation & UI component library. Live playground." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -29,7 +30,7 @@
     .nav__links a { padding: 8px 14px; border-radius: 999px; text-decoration: none; color: var(--gx-text-soft); font-size: .9rem; font-weight: 600; }
     .nav__links a:hover { background: var(--gx-surface-2); color: var(--gx-text); }
 
-    /* Cinematic scroll hero — powered by Galaxy.scrollScene() (v3.2.0) */
+    /* Cinematic scroll hero — powered by Galaxy.scrollScene() (v3.3.0) */
     .cine { position: relative; }
     .cine__pin { position: sticky; top: 0; height: 100vh; overflow: hidden; }
     .cine__stage { position: absolute; inset: 0; z-index: 1; }
@@ -114,7 +115,7 @@
   <!-- NAV -->
   <header class="nav">
     <div class="wrap nav__inner">
-      <div class="brand"><span class="dot"></span> GalaxyJS <span class="gx-badge gx-badge--accent">v3.2</span></div>
+      <div class="brand"><span class="dot"></span> GalaxyJS <span class="gx-badge gx-badge--accent">v3.3</span></div>
       <nav class="nav__links">
         <a href="#animations">Animations</a>
         <a href="#playground">Playground</a>
@@ -126,7 +127,7 @@
     </div>
   </header>
 
-  <!-- CINEMATIC HERO · powered by Galaxy.scrollScene() (v3.2.0) -->
+  <!-- CINEMATIC HERO · powered by Galaxy.scrollScene() (v3.3.0) -->
   <section class="cine" id="cine" style="height:360vh;">
     <div class="cine__pin">
       <div class="cine__stage" id="cine-stage"></div>
@@ -134,7 +135,7 @@
       <div class="cine__frame"></div>
       <div class="cine__hud">
         <div class="cine__copy">
-          <div class="cine__eyebrow" id="cineEyebrow">Zero dependencies · 60 animations · v3.2.0</div>
+          <div class="cine__eyebrow" id="cineEyebrow">Zero dependencies · 80 animations · v3.3.0</div>
           <h1 class="cine__h1 gx-text-gradient" id="cineH1">The universe,
 one line of code.</h1>
           <p class="cine__lead" id="cineLead">Cosmic canvas backdrops, a themeable UI kit, and one unified API: <code>Galaxy.create()</code>.</p>
@@ -499,7 +500,7 @@ Galaxy.<span class="k">create</span>(<span class="s">'nebula'</span>, <span clas
         <a class="gx-btn gx-btn--ghost gx-btn--sm" href="https://www.edwson.com" target="_blank" rel="noopener">🌐 edwson.com</a>
         <a class="gx-btn gx-btn--ghost gx-btn--sm" href="https://www.linkedin.com/in/ed-chen-saas" target="_blank" rel="noopener">in&nbsp;LinkedIn</a>
       </div>
-      <p><strong>GalaxyJS v3.2 "Cinematic"</strong> · MIT License · Zero dependencies</p>
+      <p><strong>GalaxyJS v3.3 "Deep Field"</strong> · MIT License · Zero dependencies</p>
       <p class="gx-muted" style="font-size:.92rem;">
         Made by <a href="https://www.edwson.com" target="_blank" rel="noopener">Ed Chen</a>
         &nbsp;·&nbsp;
@@ -508,8 +509,8 @@ Galaxy.<span class="k">create</span>(<span class="s">'nebula'</span>, <span clas
     </div>
   </footer>
 
-  <script src="galaxy.js?v=3.2.0"></script>
-  <!-- Self-host first (version-pinned so a new page never loads a stale cached engine). If the host blocks the file (mod_security 403) OR serves an out-of-date engine without the v3.2 API, fall back to the repo's jsDelivr CDN. Synchronous so Galaxy is defined before the boot script below. -->
+  <script src="galaxy.js?v=3.3.0"></script>
+  <!-- Self-host first (version-pinned so a new page never loads a stale cached engine). If the host blocks the file (mod_security 403) OR serves an out-of-date engine without the v3.3 API, fall back to the repo's jsDelivr CDN. Synchronous so Galaxy is defined before the boot script below. -->
   <script>(window.Galaxy&&window.Galaxy.scrollScene)||document.write('<script src="https://cdn.jsdelivr.net/gh/Edwson/GalaxyJS@main/galaxy.min.js"><\/script>');</script>
   <script>
     // ---- Cinematic scroll hero · Galaxy.scrollScene() (v3.2.0) ----
@@ -517,7 +518,7 @@ Galaxy.<span class="k">create</span>(<span class="s">'nebula'</span>, <span clas
     // and the page narrates the library as you go. One API call paints it.
     var cineScenes = [
       { type: 'galaxyMerge',
-        eyebrow: 'Zero dependencies · 60 animations · v3.2.0',
+        eyebrow: 'Zero dependencies · 80 animations · v3.3.0',
         h1: 'The universe,\none line of code.',
         lead: 'Cosmic canvas backdrops, a themeable UI kit, and one unified API: <code>Galaxy.create()</code>.' },
       { type: 'quasar',
@@ -529,7 +530,7 @@ Galaxy.<span class="k">create</span>(<span class="s">'nebula'</span>, <span clas
         h1: 'Beautiful,\nand behaved.',
         lead: 'Reduced-motion safe, HiDPI-crisp, screen-reader-friendly. Motion off &rarr; every scene renders a single static frame.' },
       { type: 'magnetosphere',
-        eyebrow: 'New in v3.2.0 · Cinematic',
+        eyebrow: 'New in v3.3.0 · Deep Field',
         h1: 'This hero\nis one call.',
         lead: 'Scroll-bound scenes, crossfading, battery-friendly. <code>Galaxy.scrollScene()</code> — the same engine that paints this page.' }
     ];
@@ -593,7 +594,19 @@ Galaxy.<span class="k">create</span>(<span class="s">'nebula'</span>, <span clas
       ['galaxyMerge','tidal streams'], ['lattice','crystal'], ['moire','shimmer'],
       ['starburst','lens flare'], ['pillars','gas columns'], ['ionstorm','plasma arcs'],
       ['stardust','parallax dust'], ['orrery','armillary'], ['oscilloscope','Lissajous'],
-      ['bokeh','depth of field'], ['magnetosphere','field lines']
+      ['bokeh','depth of field'], ['magnetosphere','field lines'],
+      // v3.3 "Deep Field" — relativistic & gravitational
+      ['lensing','Einstein ring'], ['accretionDisk','Doppler beaming'], ['nBody','n-body gravity'],
+      ['tidalStream','tidal tails'], ['inspiral','gravitational waves'],
+      // v3.3 — volumetric & raymarched (WebGL2)
+      ['volumetricNebula','raymarched gas'], ['starSurface','photosphere'], ['atmosphere','limb scattering'],
+      ['dustLanes','self-shadowed dust'], ['protoplanetary','planet-carved gaps'],
+      // v3.3 — instruments
+      ['spectrograph','absorption lines'], ['transitCurve','transit photometry'], ['waterfall','radio spectrogram'],
+      ['hrDiagram','H-R diagram'], ['pulsarTiming','folded profile'],
+      // v3.3 — pointer-driven & generative
+      ['gravityWell','drag a mass'], ['nebulaPaint','paint a nebula'], ['solarWind','bow shock'],
+      ['starForge','seed systems'], ['relativisticJets','spin-axis jets']
     ];
     var gallery = document.getElementById('gallery');
     animals.forEach(function (a) {

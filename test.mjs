@@ -28,7 +28,20 @@ ok(typeof Galaxy.version === 'string', 'Galaxy.version is a string (' + Galaxy.v
 ok(typeof Galaxy.create === 'function' && typeof Galaxy.list === 'function' && typeof Galaxy.defaults === 'function', 'public API present (create / list / defaults)');
 ok(typeof Galaxy.scrollScene === 'function', 'scrollScene API present (cinematic scroll sequences)');
 const runtimeNames = Galaxy.list();
-ok(runtimeNames.length === 60, 'runtime lists 60 animations (got ' + runtimeNames.length + ')');
+const COUNT = manifest.animations.length;
+ok(runtimeNames.length === COUNT, 'runtime and manifest agree on the animation count (' + COUNT + ')');
+// A floor, not a literal: catches accidental deletion without breaking on every
+// addition. Raise it when a release intentionally removes animations.
+ok(runtimeNames.length >= 80, 'no animations were lost (>= 80, got ' + runtimeNames.length + ')');
+
+console.log('WebGL2 tier');
+const src = read('galaxy.js');
+ok(/function registerShader\(/.test(src), 'registerShader (WebGL2 sugar) is present');
+ok(/webgl2/.test(src), 'a WebGL2 context is requested for shader animations');
+ok(/glPosterFallback/.test(src), 'shader surfaces fall back to a 2D poster when WebGL2 is missing');
+// A canvas returns the same context object every time, so losing it would poison
+// any later mount on that canvas. This bit us on ReactOmega; keep it locked here.
+ok(!/loseContext/.test(src), 'the library never force-loses a WebGL context');
 
 console.log('version agreement');
 ok(Galaxy.version === manifest.version, 'manifest version matches runtime');
@@ -42,10 +55,10 @@ ok(manifest.animations.every((a) => a.name && a.desc && a.options), 'every manif
 ok(manifest.components.length === 13 && manifest.components.every((c) => c.name && c.desc && c.usage), '13 components, each with name + desc + usage');
 
 console.log('counts agree across files');
-ok(/60 canvas animations/.test(pkg.description), 'package.json description says 60 canvas animations');
+ok(new RegExp(COUNT + ' canvas').test(pkg.description), 'package.json description states the real count (' + COUNT + ')');
 const dtsCount = (dts.match(/AnimationType\s*=([\s\S]*?);/)[1].match(/"[a-zA-Z]+"/g) || []).length;
-ok(dtsCount === 60, 'galaxy.d.ts declares 60 AnimationType members (got ' + dtsCount + ')');
-ok(/60 (canvas )?animations/.test(read('llms.txt')), 'llms.txt says 60 animations');
+ok(dtsCount === COUNT, 'galaxy.d.ts declares every animation in AnimationType (' + COUNT + ', got ' + dtsCount + ')');
+ok(new RegExp(COUNT + ' canvas').test(read('llms.txt')), 'llms.txt states the real count (' + COUNT + ')');
 
 console.log('cdn points at the minified bundles');
 ok(/galaxy\.min\.js/.test(manifest.cdn.js) && /galaxy\.min\.css/.test(manifest.cdn.css), 'manifest cdn references galaxy.min.* ');
