@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - name: Syntax check
+        run: |
+          node --check galaxy.js
+          node --check mcp/server.mjs && node --check mcp/tools.mjs && node --check mcp/build-manifest.cjs
+          node --check build.mjs && node --check test.mjs && node --check test-mcp.mjs
+      - name: Lint
+        run: npm run lint
+      - name: Manifest is in sync
+        run: node mcp/build-manifest.cjs && git diff --exit-code galaxy.manifest.json
+      - name: Build minified bundles
+        run: npm run build:min
+      - name: Contract test (no SDK)
+        run: npm test
+      - name: End-to-end MCP integration test
+        run: npm run test:mcp
