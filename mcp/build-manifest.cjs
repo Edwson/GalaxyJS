@@ -68,6 +68,34 @@ const ANIM_DESC = {
   oscilloscope: "Morphing Lissajous curves on a phosphor screen",
   bokeh: "Defocused additive light discs drifting through depth",
   magnetosphere: "Dipole field lines with pole-to-pole particle streams",
+
+  /* v3.3 "Deep Field" — relativistic & gravitational */
+  lensing: "Schwarzschild lensing of a background starfield, with the Einstein ring",
+  accretionDisk: "Accretion disk with relativistic Doppler beaming and gravitational redshift",
+  nBody: "Gravitational n-body integration with real orbital trails",
+  tidalStream: "A satellite torn into leading and trailing tidal tails past the Roche limit",
+  inspiral: "Binary inspiral shedding orbital energy as gravitational waves",
+
+  /* v3.3 — volumetric & raymarched (WebGL2) */
+  volumetricNebula: "Raymarched gas with Beer-Lambert absorption and Henyey-Greenstein scattering",
+  starSurface: "A photosphere with convective granulation, limb darkening, spots and prominences",
+  atmosphere: "A planetary limb with Rayleigh and Mie scattering through a decaying shell",
+  dustLanes: "Interstellar dust with self-shadowing, silhouetted against a luminous field",
+  protoplanetary: "A flared young-star disk with planet-carved gaps and scattering asymmetry",
+
+  /* v3.3 — instruments */
+  spectrograph: "A stellar absorption spectrum with named lines, scannable by pointer",
+  transitCurve: "An exoplanet transit light curve with limb-darkened ingress and egress",
+  waterfall: "A radio-telescope spectrogram scrolling in time",
+  hrDiagram: "A Hertzsprung-Russell diagram with a synthetic stellar population",
+  pulsarTiming: "A folded pulse profile building up, with timing residuals below",
+
+  /* v3.3 — pointer-driven & generative */
+  gravityWell: "Drag a mass and watch particles fall into real inverse-square orbits",
+  nebulaPaint: "Paint a nebula into an advecting, diffusing fluid field",
+  solarWind: "Solar wind deflected around a magnetosphere, with bow shock and polar cusps",
+  starForge: "Seed star systems that condense out of collapsing clouds",
+  relativisticJets: "Twin relativistic jets from a spinning black hole and its torus",
 };
 
 const COMPONENTS = [

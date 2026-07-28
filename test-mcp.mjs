@@ -13,6 +13,12 @@ import { dirname, join } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
+// Counts come from the generated manifest (itself generated from the runtime), so
+// adding an animation can never require editing this file.
+import { readFileSync as __rf } from 'node:fs';
+const MAN = JSON.parse(__rf(new URL('./galaxy.manifest.json', import.meta.url), 'utf8'));
+const NA = MAN.animations.length, NC = MAN.components.length;
+
 const here = dirname(fileURLToPath(import.meta.url));
 let fails = 0;
 const ok = (c, m) => { if (c) console.log('  ✓ ' + m); else { console.error('  ✗ ' + m); fails++; } };
@@ -34,10 +40,10 @@ try {
 
   console.log('tool calls');
   const qs = sc(await client.callTool({ name: 'galaxy_quickstart', arguments: {} }));
-  ok(qs.counts && qs.counts.animations === 60 && qs.counts.components === 13, 'galaxy_quickstart reports 60 animations + 13 components');
+  ok(qs.counts && qs.counts.animations === NA && qs.counts.components === NC, 'galaxy_quickstart reports ' + NA + ' animations + ' + NC + ' components');
 
   const list = sc(await client.callTool({ name: 'galaxy_list', arguments: {} }));
-  ok(list.animations.length === 60 && list.components.length === 13, 'galaxy_list returns 60 animations + 13 components');
+  ok(list.animations.length === NA && list.components.length === NC, 'galaxy_list returns ' + NA + ' animations + ' + NC + ' components');
   const filtered = sc(await client.callTool({ name: 'galaxy_list', arguments: { kind: 'animations', query: 'star' } }));
   ok(filtered.animations.length >= 1 && !filtered.components, 'galaxy_list filters by kind + query');
 

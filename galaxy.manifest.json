@@ -1,6 +1,6 @@
 {
   "name": "galaxyjs",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "title": "GalaxyJS",
   "description": "Zero-dependency cosmic animation & UI component library with one unified API.",
   "homepage": "https://github.com/Edwson/GalaxyJS",
@@ -923,6 +923,339 @@
         ],
         "background": "#04040c",
         "lines": 7
+      }
+    },
+    {
+      "name": "lensing",
+      "desc": "Schwarzschild lensing of a background starfield, with the Einstein ring",
+      "options": {
+        "mass": 1,
+        "spin": 0.35,
+        "stars": 1,
+        "speed": 1,
+        "interactive": true,
+        "colors": [
+          "#ffd9a0",
+          "#9fd0ff"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "accretionDisk",
+      "desc": "Accretion disk with relativistic Doppler beaming and gravitational redshift",
+      "options": {
+        "inclination": 1.15,
+        "beta": 0.5,
+        "temperature": 1,
+        "speed": 1,
+        "colors": [
+          "#e01500",
+          "#ffa62b",
+          "#bfe0ff"
+        ],
+        "background": "#04050c"
+      }
+    },
+    {
+      "name": "nBody",
+      "desc": "Gravitational n-body integration with real orbital trails",
+      "options": {
+        "count": 13,
+        "gravity": 1,
+        "softening": 1,
+        "trail": 1,
+        "speed": 1,
+        "colors": [
+          "#ff7a2f",
+          "#ffc978",
+          "#fff6e8",
+          "#bcd4ff"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "tidalStream",
+      "desc": "A satellite torn into leading and trailing tidal tails past the Roche limit",
+      "options": {
+        "count": 620,
+        "gravity": 1,
+        "periapsis": 0.24,
+        "speed": 1,
+        "colors": [
+          "#6ea8ff",
+          "#ff9a3c",
+          "#ffffff",
+          "#c9b6ff"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "inspiral",
+      "desc": "Binary inspiral shedding orbital energy as gravitational waves",
+      "options": {
+        "speed": 1,
+        "decay": 1,
+        "colors": [
+          "#7fb2ff",
+          "#ff77b8",
+          "#ffffff"
+        ],
+        "background": "#05060f"
+      }
+    },
+    {
+      "name": "volumetricNebula",
+      "desc": "Raymarched gas with Beer-Lambert absorption and Henyey-Greenstein scattering",
+      "options": {
+        "speed": 1,
+        "density": 1,
+        "absorption": 1,
+        "anisotropy": 0.6,
+        "interactive": true,
+        "colors": [
+          "#ff4f96",
+          "#31c9f5",
+          "#ffe6c2"
+        ],
+        "background": "#03030c"
+      }
+    },
+    {
+      "name": "starSurface",
+      "desc": "A photosphere with convective granulation, limb darkening, spots and prominences",
+      "options": {
+        "speed": 1,
+        "temperature": 5200,
+        "granulation": 1,
+        "spots": 0.55,
+        "interactive": true,
+        "colors": [
+          "#ff5a1e",
+          "#ffd9a0"
+        ],
+        "background": "#05030a"
+      }
+    },
+    {
+      "name": "atmosphere",
+      "desc": "A planetary limb with Rayleigh and Mie scattering through a decaying shell",
+      "options": {
+        "speed": 1,
+        "radius": 1,
+        "thickness": 0.1,
+        "rayleigh": 1,
+        "mie": 1,
+        "interactive": true,
+        "colors": [
+          "#6ff0d0",
+          "#3d7a52"
+        ],
+        "background": "#02030a"
+      }
+    },
+    {
+      "name": "dustLanes",
+      "desc": "Interstellar dust with self-shadowing, silhouetted against a luminous field",
+      "options": {
+        "speed": 1,
+        "density": 1,
+        "shadowSteps": 4,
+        "extinction": 1,
+        "interactive": true,
+        "colors": [
+          "#ffd6a5",
+          "#8ec5ff"
+        ],
+        "background": "#04050e"
+      }
+    },
+    {
+      "name": "protoplanetary",
+      "desc": "A flared young-star disk with planet-carved gaps and scattering asymmetry",
+      "options": {
+        "speed": 1,
+        "inclination": 62,
+        "gaps": 3,
+        "flare": 0.3,
+        "interactive": true,
+        "colors": [
+          "#ffb066",
+          "#8fb6ff",
+          "#fff2dc"
+        ],
+        "background": "#03030b"
+      }
+    },
+    {
+      "name": "spectrograph",
+      "desc": "A stellar absorption spectrum with named lines, scannable by pointer",
+      "options": {
+        "temperature": 5778,
+        "lines": true,
+        "speed": 1,
+        "interactive": true,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff"
+        ],
+        "background": "#04060f"
+      }
+    },
+    {
+      "name": "transitCurve",
+      "desc": "An exoplanet transit light curve with limb-darkened ingress and egress",
+      "options": {
+        "radiusRatio": 0.12,
+        "period": 3.4,
+        "limbDarkening": 0.6,
+        "impact": 0.28,
+        "teff": 5800,
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff"
+        ],
+        "background": "#04060f"
+      }
+    },
+    {
+      "name": "waterfall",
+      "desc": "A radio-telescope spectrogram scrolling in time",
+      "options": {
+        "bins": 96,
+        "noise": 1,
+        "signals": 3,
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff"
+        ],
+        "background": "#04060f"
+      }
+    },
+    {
+      "name": "hrDiagram",
+      "desc": "A Hertzsprung-Russell diagram with a synthetic stellar population",
+      "options": {
+        "count": 150,
+        "evolve": 1,
+        "speed": 1,
+        "interactive": true,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff"
+        ],
+        "background": "#04060f"
+      }
+    },
+    {
+      "name": "pulsarTiming",
+      "desc": "A folded pulse profile building up, with timing residuals below",
+      "options": {
+        "period": 5.757451924,
+        "jitter": 1.2,
+        "folds": 600,
+        "speed": 1,
+        "colors": [
+          "#22d3ee",
+          "#7c5cff"
+        ],
+        "background": "#04060f"
+      }
+    },
+    {
+      "name": "gravityWell",
+      "desc": "Drag a mass and watch particles fall into real inverse-square orbits",
+      "options": {
+        "count": 700,
+        "mass": 1,
+        "softening": 0.09,
+        "trail": 0.15,
+        "speed": 1,
+        "colors": [
+          "#12266b",
+          "#2563eb",
+          "#22d3ee",
+          "#a7f3d0",
+          "#fde68a",
+          "#fb7185"
+        ],
+        "background": "#04050e",
+        "interactive": true
+      }
+    },
+    {
+      "name": "nebulaPaint",
+      "desc": "Paint a nebula into an advecting, diffusing fluid field",
+      "options": {
+        "resolution": 96,
+        "dissipation": 0.9955,
+        "swirl": 1,
+        "speed": 1,
+        "colors": [
+          "#3b1178",
+          "#7c3aed",
+          "#e0499b",
+          "#22d3ee",
+          "#bff3ff"
+        ],
+        "background": "#04030c",
+        "interactive": true
+      }
+    },
+    {
+      "name": "solarWind",
+      "desc": "Solar wind deflected around a magnetosphere, with bow shock and polar cusps",
+      "options": {
+        "count": 520,
+        "pressure": 1,
+        "tilt": 0.3,
+        "speed": 1,
+        "colors": [
+          "#34d399",
+          "#22d3ee",
+          "#c4b5fd",
+          "#fca5a5"
+        ],
+        "background": "#03040d",
+        "interactive": true
+      }
+    },
+    {
+      "name": "starForge",
+      "desc": "Seed star systems that condense out of collapsing clouds",
+      "options": {
+        "maxSystems": 4,
+        "formation": 1,
+        "speed": 1,
+        "colors": [
+          "#fde68a",
+          "#22d3ee",
+          "#a78bfa",
+          "#fb7185"
+        ],
+        "background": "#03040c",
+        "interactive": true
+      }
+    },
+    {
+      "name": "relativisticJets",
+      "desc": "Twin relativistic jets from a spinning black hole and its torus",
+      "options": {
+        "beta": 0.96,
+        "tilt": 0.75,
+        "knots": 6,
+        "speed": 1,
+        "colors": [
+          "#dbeafe",
+          "#7c5cff",
+          "#ffb168"
+        ],
+        "background": "#03040d",
+        "interactive": true
       }
     }
   ],

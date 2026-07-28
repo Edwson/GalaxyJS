@@ -3,6 +3,37 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com/);
 versioning: [SemVer](https://semver.org/).
 
+## [3.3.0] "Deep Field" — 2026-07-28
+### Added
+- **A WebGL2 tier — still zero dependencies.** `registerAnimation` accepts
+  `renderer: "webgl2"`, and a new `registerShader(name, { defaults, uniforms, fragment })` helper
+  compiles a full-screen fragment shader and hands it the same lifecycle every 2D animation gets:
+  DPR-clamped `ResizeObserver` sizing, pointer input as `uMouse`, `IntersectionObserver`
+  suspension while off-screen, and one still frame under `prefers-reduced-motion`. Geometry is a
+  single full-screen triangle derived from `gl_VertexID`, so no vertex buffer is allocated.
+  Uniform declarations are generated from the arity of the values you pass, so changing an option
+  never recompiles the program. Hosts expose `host.gl` and `host.reduced`.
+- **`glPosterFallback`** — when a browser cannot supply a WebGL2 context, a shader surface paints a
+  static 2D poster from its own palette instead of leaving an empty canvas.
+- **20 animations (60 → 80).**
+  - Relativistic & gravitational: `lensing`, `accretionDisk`, `nBody`, `tidalStream`, `inspiral`
+  - Volumetric & raymarched: `volumetricNebula`, `starSurface`, `atmosphere`, `dustLanes`,
+    `protoplanetary`
+  - Instruments: `spectrograph`, `transitCurve`, `waterfall`, `hrDiagram`, `pulsarTiming`
+  - Pointer-driven & generative: `gravityWell`, `nebulaPaint`, `solarWind`, `starForge`,
+    `relativisticJets`
+
+### Changed
+- `galaxy.d.ts` now declares all 80 names in `AnimationType`.
+- **Expected counts in every test now derive from the generated manifest.** `test.mjs` and
+  `test-mcp.mjs` previously asserted the literal `60`, which fails on every addition and trains you
+  to bump the number rather than read the failure. A `>= 80` floor still catches accidental
+  deletion.
+- `test.mjs` gained a WebGL2 lifecycle contract: `registerShader` present, a WebGL2 context
+  requested, a 2D fallback available, and an assertion that the library **never** force-loses a
+  WebGL context — a canvas returns the same context object on every `getContext`, so losing it
+  would poison any later mount on that canvas.
+
 ## [3.2.0] "Cinematic" — 2026-06-22
 ### Added
 - **`Galaxy.scrollScene(stickyStage, config)`** — a new top-level API that binds page-scroll
