@@ -99,7 +99,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "csso": "^5.0.5",
-    "eslint": "^9.39.4",
+    "eslint": "^10.8.0",
     "globals": "^17.6.0",
     "live-server": "^1.2.2",
     "prettier": "^2.8.0",
