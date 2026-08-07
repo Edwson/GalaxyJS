@@ -1,7 +1,7 @@
 {
   "name": "galaxyjs",
-  "version": "3.3.0",
-  "description": "GalaxyJS v3 'Deep Field' — a zero-dependency cosmic animation & UI component library. One unified API (Galaxy.create), 80 canvas & WebGL2 animations, themeable UI components, full accessibility & reduced-motion support.",
+  "version": "3.4.0",
+  "description": "GalaxyJS v3 'Deep Field' — a cosmic animation & UI component library with zero required dependencies. One unified API (Galaxy.create), 86 canvas & WebGL2 animations (six of them optional three.js scenes), themeable UI components, full accessibility & reduced-motion support.",
   "main": "galaxy.js",
   "module": "galaxy.js",
   "types": "galaxy.d.ts",

@@ -1,8 +1,8 @@
 {
   "name": "galaxyjs",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "title": "GalaxyJS",
-  "description": "Zero-dependency cosmic animation & UI component library with one unified API.",
+  "description": "Cosmic animation & UI component library with one unified API. Zero required dependencies; six optional three.js scenes.",
   "homepage": "https://github.com/Edwson/GalaxyJS",
   "author": {
     "name": "Ed Chen",
@@ -21,6 +21,8 @@
     "create": "Galaxy.create(type, target, options) -> instance{ start, stop, pause, resume, update, destroy }",
     "scrollScene": "Galaxy.scrollScene(stickyStage, { scenes:[type|{type,options}], track?, onProgress?, reducedScene? }) -> { progress, layers, destroy } — bind scroll progress to a crossfading cinematic sequence of scenes; runs only the visible pair (battery-friendly), reduced-motion shows one static frame",
     "register": "Galaxy.register(name, { defaults, setup })",
+    "rendererOf": "Galaxy.rendererOf(name) -> \"2d\" | \"webgl2\" | \"three\"",
+    "useThree": "Galaxy.useThree(THREE) — supply your own three.js so the optional scenes never touch the network",
     "theme": "Galaxy.theme(\"dark\"|\"light\"|{ accent, bg, ... })",
     "toggleTheme": "Galaxy.toggleTheme()",
     "autoInit": "Galaxy.autoInit(scope?) — runs automatically; also wires data-* components",
@@ -60,10 +62,29 @@
     "gx-radio-c",
     "gx-range"
   ],
+  "tiers": {
+    "2d": 72,
+    "webgl2": 8,
+    "three": 6
+  },
+  "optionalDependency": {
+    "name": "three",
+    "version": "0.185.1",
+    "usedBy": [
+      "eventHorizon",
+      "molecularCloud",
+      "spiralForge",
+      "ringedWorld",
+      "gravitySim",
+      "starGlare"
+    ],
+    "how": "Loaded on demand by dynamic import the first time one of these scenes mounts; nothing is requested otherwise. Pass { threeUrl } to point elsewhere, or call Galaxy.useThree(THREE) to skip the network. If it cannot load, the scene paints a still poster instead of an empty box."
+  },
   "animations": [
     {
       "name": "starfield",
       "desc": "Drifting parallax stars with twinkle",
+      "renderer": "2d",
       "options": {
         "count": 160,
         "speed": 1,
@@ -79,6 +100,7 @@
     {
       "name": "warp",
       "desc": "Hyperspace streaks from the center",
+      "renderer": "2d",
       "options": {
         "count": 220,
         "speed": 1,
@@ -94,6 +116,7 @@
     {
       "name": "blackHole",
       "desc": "Accretion disk with gravitational-lensing glow",
+      "renderer": "2d",
       "options": {
         "radius": 0.18,
         "speed": 1,
@@ -109,6 +132,7 @@
     {
       "name": "nebula",
       "desc": "Drifting layered gas clouds",
+      "renderer": "2d",
       "options": {
         "count": 7,
         "speed": 1,
@@ -125,6 +149,7 @@
     {
       "name": "spiral",
       "desc": "Rotating logarithmic galaxy arms",
+      "renderer": "2d",
       "options": {
         "stars": 600,
         "arms": 3,
@@ -141,6 +166,7 @@
     {
       "name": "meteors",
       "desc": "Diagonal shooting stars",
+      "renderer": "2d",
       "options": {
         "count": 18,
         "speed": 1,
@@ -156,6 +182,7 @@
     {
       "name": "constellation",
       "desc": "Connected node network, reacts to the pointer",
+      "renderer": "2d",
       "options": {
         "count": 90,
         "speed": 1,
@@ -171,6 +198,7 @@
     {
       "name": "particles",
       "desc": "Cursor repel / attract particle field",
+      "renderer": "2d",
       "options": {
         "count": 120,
         "speed": 1,
@@ -187,6 +215,7 @@
     {
       "name": "aurora",
       "desc": "Flowing ribbons of light",
+      "renderer": "2d",
       "options": {
         "bands": 4,
         "speed": 1,
@@ -202,6 +231,7 @@
     {
       "name": "wormhole",
       "desc": "Receding tunnel of rings",
+      "renderer": "2d",
       "options": {
         "rings": 26,
         "speed": 1,
@@ -216,6 +246,7 @@
     {
       "name": "orbits",
       "desc": "Planets circling a star",
+      "renderer": "2d",
       "options": {
         "bodies": 6,
         "speed": 1,
@@ -232,6 +263,7 @@
     {
       "name": "pulsar",
       "desc": "Rhythmic expanding rings",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -245,6 +277,7 @@
     {
       "name": "gradient",
       "desc": "Animated mesh-gradient backdrop",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -258,6 +291,7 @@
     {
       "name": "fireflies",
       "desc": "Wandering glow that breathes (interactive)",
+      "renderer": "2d",
       "options": {
         "count": 60,
         "speed": 1,
@@ -273,6 +307,7 @@
     {
       "name": "matrix",
       "desc": "Falling digital rain",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -286,6 +321,7 @@
     {
       "name": "plasma",
       "desc": "Smooth flowing color field",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "scale": 1,
@@ -299,6 +335,7 @@
     {
       "name": "fireworks",
       "desc": "Launching shells that burst",
+      "renderer": "2d",
       "options": {
         "rate": 1,
         "speed": 1,
@@ -316,6 +353,7 @@
     {
       "name": "snow",
       "desc": "Drifting snowfall with wind",
+      "renderer": "2d",
       "options": {
         "count": 200,
         "speed": 1,
@@ -330,6 +368,7 @@
     {
       "name": "waves",
       "desc": "Layered ocean of sine waves",
+      "renderer": "2d",
       "options": {
         "layers": 4,
         "speed": 1,
@@ -346,6 +385,7 @@
     {
       "name": "dna",
       "desc": "Rotating double helix",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "points": 36,
@@ -360,6 +400,7 @@
     {
       "name": "lightning",
       "desc": "Branching bolts that flash",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -373,6 +414,7 @@
     {
       "name": "ripples",
       "desc": "Expanding concentric rings (interactive)",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -386,6 +428,7 @@
     {
       "name": "comets",
       "desc": "Glowing comets with trailing tails",
+      "renderer": "2d",
       "options": {
         "count": 4,
         "speed": 1,
@@ -402,6 +445,7 @@
     {
       "name": "confetti",
       "desc": "Celebratory falling paper",
+      "renderer": "2d",
       "options": {
         "rate": 1,
         "speed": 1,
@@ -419,6 +463,7 @@
     {
       "name": "bubbles",
       "desc": "Gentle rising bubbles",
+      "renderer": "2d",
       "options": {
         "count": 42,
         "speed": 1,
@@ -433,6 +478,7 @@
     {
       "name": "fog",
       "desc": "Drifting layered mist",
+      "renderer": "2d",
       "options": {
         "layers": 7,
         "speed": 1,
@@ -447,6 +493,7 @@
     {
       "name": "grid",
       "desc": "Synthwave perspective floor",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "lines": 16,
@@ -460,6 +507,7 @@
     {
       "name": "rain",
       "desc": "Angled rainfall",
+      "renderer": "2d",
       "options": {
         "count": 300,
         "speed": 1,
@@ -474,6 +522,7 @@
     {
       "name": "vortex",
       "desc": "Particles spiralling into the core",
+      "renderer": "2d",
       "options": {
         "count": 240,
         "speed": 1,
@@ -488,6 +537,7 @@
     {
       "name": "sparkle",
       "desc": "Twinkling glints",
+      "renderer": "2d",
       "options": {
         "count": 54,
         "speed": 1,
@@ -502,6 +552,7 @@
     {
       "name": "tunnel",
       "desc": "Neon polygon tunnel",
+      "renderer": "2d",
       "options": {
         "rings": 20,
         "sides": 6,
@@ -517,6 +568,7 @@
     {
       "name": "swarm",
       "desc": "Flocking boids, reacts to the pointer",
+      "renderer": "2d",
       "options": {
         "count": 64,
         "speed": 1,
@@ -531,6 +583,7 @@
     {
       "name": "ribbons",
       "desc": "Flowing silk ribbons",
+      "renderer": "2d",
       "options": {
         "count": 5,
         "speed": 1,
@@ -545,6 +598,7 @@
     {
       "name": "flowfield",
       "desc": "Particles following a flow field",
+      "renderer": "2d",
       "options": {
         "count": 600,
         "speed": 1,
@@ -560,6 +614,7 @@
     {
       "name": "globe",
       "desc": "Rotating dotted sphere",
+      "renderer": "2d",
       "options": {
         "count": 320,
         "speed": 1,
@@ -573,6 +628,7 @@
     {
       "name": "heartbeat",
       "desc": "ECG monitor sweep",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "bpm": 1,
@@ -585,6 +641,7 @@
     {
       "name": "equalizer",
       "desc": "Audio frequency bars",
+      "renderer": "2d",
       "options": {
         "bars": 32,
         "speed": 1,
@@ -599,6 +656,7 @@
     {
       "name": "clock",
       "desc": "Luminous analog clock (real time)",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -612,6 +670,7 @@
     {
       "name": "rays",
       "desc": "Rotating volumetric light rays",
+      "renderer": "2d",
       "options": {
         "count": 14,
         "speed": 1,
@@ -626,6 +685,7 @@
     {
       "name": "radar",
       "desc": "Sweeping radar with blips",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "blips": 7,
@@ -639,6 +699,7 @@
     {
       "name": "embers",
       "desc": "Rising fire sparks",
+      "renderer": "2d",
       "options": {
         "count": 120,
         "speed": 1,
@@ -653,6 +714,7 @@
     {
       "name": "typewriter",
       "desc": "Typing text effect (set `text`)",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "text": [
@@ -671,6 +733,7 @@
     {
       "name": "spirograph",
       "desc": "Evolving hypotrochoid curves",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -684,6 +747,7 @@
     {
       "name": "supernova",
       "desc": "A star charges, collapses, then erupts in a shockwave",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -699,6 +763,7 @@
     {
       "name": "quasar",
       "desc": "Black-hole core with edge-on accretion disk + twin jets",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -713,6 +778,7 @@
     {
       "name": "starcluster",
       "desc": "A dense globular cluster rotating in 3D with depth",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "count": 280,
@@ -728,6 +794,7 @@
     {
       "name": "cosmicWeb",
       "desc": "Large-scale filaments linking glowing nodes",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "nodes": 34,
@@ -743,6 +810,7 @@
     {
       "name": "eclipse",
       "desc": "Dark disk ringed by a living corona + diamond-ring flash",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -757,6 +825,7 @@
     {
       "name": "corona",
       "desc": "A roiling star with granulation and arcing prominences",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -772,6 +841,7 @@
     {
       "name": "galaxyMerge",
       "desc": "Two galactic cores orbiting with tidal star streams",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "stars": 480,
@@ -787,6 +857,7 @@
     {
       "name": "lattice",
       "desc": "A rotating crystalline icosahedron, glowing edges",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -800,6 +871,7 @@
     {
       "name": "moire",
       "desc": "Two drifting ring sets interfering into shimmer",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -813,6 +885,7 @@
     {
       "name": "starburst",
       "desc": "A breathing lens flare with chromatic spikes",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -827,6 +900,7 @@
     {
       "name": "pillars",
       "desc": "Towering nebular gas columns with embedded glints",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -842,6 +916,7 @@
     {
       "name": "ionstorm",
       "desc": "Electric plasma arcs leaping from a core to the rim",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -856,6 +931,7 @@
     {
       "name": "stardust",
       "desc": "Ultra-fine luminous dust on a parallax current",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "count": 320,
@@ -872,6 +948,7 @@
     {
       "name": "orrery",
       "desc": "Tilted concentric rings turning like an armillary",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "rings": 5,
@@ -887,6 +964,7 @@
     {
       "name": "oscilloscope",
       "desc": "Morphing Lissajous curves on a phosphor screen",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -899,6 +977,7 @@
     {
       "name": "bokeh",
       "desc": "Defocused additive light discs drifting through depth",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "count": 26,
@@ -914,6 +993,7 @@
     {
       "name": "magnetosphere",
       "desc": "Dipole field lines with pole-to-pole particle streams",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "colors": [
@@ -928,6 +1008,7 @@
     {
       "name": "lensing",
       "desc": "Schwarzschild lensing of a background starfield, with the Einstein ring",
+      "renderer": "webgl2",
       "options": {
         "mass": 1,
         "spin": 0.35,
@@ -944,6 +1025,7 @@
     {
       "name": "accretionDisk",
       "desc": "Accretion disk with relativistic Doppler beaming and gravitational redshift",
+      "renderer": "webgl2",
       "options": {
         "inclination": 1.15,
         "beta": 0.5,
@@ -960,6 +1042,7 @@
     {
       "name": "nBody",
       "desc": "Gravitational n-body integration with real orbital trails",
+      "renderer": "2d",
       "options": {
         "count": 13,
         "gravity": 1,
@@ -978,6 +1061,7 @@
     {
       "name": "tidalStream",
       "desc": "A satellite torn into leading and trailing tidal tails past the Roche limit",
+      "renderer": "2d",
       "options": {
         "count": 620,
         "gravity": 1,
@@ -995,6 +1079,7 @@
     {
       "name": "inspiral",
       "desc": "Binary inspiral shedding orbital energy as gravitational waves",
+      "renderer": "2d",
       "options": {
         "speed": 1,
         "decay": 1,
@@ -1009,6 +1094,7 @@
     {
       "name": "volumetricNebula",
       "desc": "Raymarched gas with Beer-Lambert absorption and Henyey-Greenstein scattering",
+      "renderer": "webgl2",
       "options": {
         "speed": 1,
         "density": 1,
@@ -1026,6 +1112,7 @@
     {
       "name": "starSurface",
       "desc": "A photosphere with convective granulation, limb darkening, spots and prominences",
+      "renderer": "webgl2",
       "options": {
         "speed": 1,
         "temperature": 5200,
@@ -1042,6 +1129,7 @@
     {
       "name": "atmosphere",
       "desc": "A planetary limb with Rayleigh and Mie scattering through a decaying shell",
+      "renderer": "webgl2",
       "options": {
         "speed": 1,
         "radius": 1,
@@ -1059,6 +1147,7 @@
     {
       "name": "dustLanes",
       "desc": "Interstellar dust with self-shadowing, silhouetted against a luminous field",
+      "renderer": "webgl2",
       "options": {
         "speed": 1,
         "density": 1,
@@ -1075,6 +1164,7 @@
     {
       "name": "protoplanetary",
       "desc": "A flared young-star disk with planet-carved gaps and scattering asymmetry",
+      "renderer": "webgl2",
       "options": {
         "speed": 1,
         "inclination": 62,
@@ -1092,6 +1182,7 @@
     {
       "name": "spectrograph",
       "desc": "A stellar absorption spectrum with named lines, scannable by pointer",
+      "renderer": "2d",
       "options": {
         "temperature": 5778,
         "lines": true,
@@ -1107,6 +1198,7 @@
     {
       "name": "transitCurve",
       "desc": "An exoplanet transit light curve with limb-darkened ingress and egress",
+      "renderer": "2d",
       "options": {
         "radiusRatio": 0.12,
         "period": 3.4,
@@ -1124,6 +1216,7 @@
     {
       "name": "waterfall",
       "desc": "A radio-telescope spectrogram scrolling in time",
+      "renderer": "2d",
       "options": {
         "bins": 96,
         "noise": 1,
@@ -1139,6 +1232,7 @@
     {
       "name": "hrDiagram",
       "desc": "A Hertzsprung-Russell diagram with a synthetic stellar population",
+      "renderer": "2d",
       "options": {
         "count": 150,
         "evolve": 1,
@@ -1154,6 +1248,7 @@
     {
       "name": "pulsarTiming",
       "desc": "A folded pulse profile building up, with timing residuals below",
+      "renderer": "2d",
       "options": {
         "period": 5.757451924,
         "jitter": 1.2,
@@ -1169,6 +1264,7 @@
     {
       "name": "gravityWell",
       "desc": "Drag a mass and watch particles fall into real inverse-square orbits",
+      "renderer": "2d",
       "options": {
         "count": 700,
         "mass": 1,
@@ -1190,6 +1286,7 @@
     {
       "name": "nebulaPaint",
       "desc": "Paint a nebula into an advecting, diffusing fluid field",
+      "renderer": "2d",
       "options": {
         "resolution": 96,
         "dissipation": 0.9955,
@@ -1209,6 +1306,7 @@
     {
       "name": "solarWind",
       "desc": "Solar wind deflected around a magnetosphere, with bow shock and polar cusps",
+      "renderer": "2d",
       "options": {
         "count": 520,
         "pressure": 1,
@@ -1227,6 +1325,7 @@
     {
       "name": "starForge",
       "desc": "Seed star systems that condense out of collapsing clouds",
+      "renderer": "2d",
       "options": {
         "maxSystems": 4,
         "formation": 1,
@@ -1244,6 +1343,7 @@
     {
       "name": "relativisticJets",
       "desc": "Twin relativistic jets from a spinning black hole and its torus",
+      "renderer": "webgl2",
       "options": {
         "beta": 0.96,
         "tilt": 0.75,
@@ -1256,6 +1356,140 @@
         ],
         "background": "#03040d",
         "interactive": true
+      }
+    },
+    {
+      "name": "eventHorizon",
+      "desc": "Schwarzschild black hole ray-traced in curved spacetime, with Doppler beaming",
+      "renderer": "three",
+      "options": {
+        "spin": 1,
+        "tilt": 0.42,
+        "diskInner": 2.6,
+        "diskOuter": 9,
+        "steps": 220,
+        "exposure": 0.85,
+        "colors": [
+          "#fff4e2",
+          "#ffb46b",
+          "#7c5cff"
+        ],
+        "background": "#03040a",
+        "interactive": true
+      }
+    },
+    {
+      "name": "molecularCloud",
+      "desc": "Raymarched 3D volume lit from within by an embedded protostar",
+      "renderer": "three",
+      "options": {
+        "colors": [
+          "#ffb37a",
+          "#78aaff",
+          "#c58cff"
+        ],
+        "background": "#04060e",
+        "res": 128,
+        "steps": 64,
+        "density": 9,
+        "shadow": 2.6,
+        "emission": 1.35,
+        "forward": 0.62,
+        "spin": 0.13,
+        "churn": 0.3,
+        "distance": 2.02
+      }
+    },
+    {
+      "name": "spiralForge",
+      "desc": "340,000 GPU-instanced stars on differential-rotation orbits",
+      "renderer": "three",
+      "options": {
+        "stars": 340000,
+        "arms": 2,
+        "pitch": 0.5,
+        "spin": 1,
+        "bulge": 0.26,
+        "thickness": 1,
+        "tilt": 36,
+        "size": 1,
+        "tint": 0.34,
+        "colors": [
+          "#ffc98a",
+          "#fff4e6",
+          "#a8c8ff"
+        ],
+        "background": "#03040c"
+      }
+    },
+    {
+      "name": "ringedWorld",
+      "desc": "Gas giant with Rayleigh atmosphere and mutual ring/planet shadowing",
+      "renderer": "three",
+      "options": {
+        "colors": [
+          "#f7e7c8",
+          "#d59a5c",
+          "#7a4f34",
+          "#cfe0ff"
+        ],
+        "background": "#03040a",
+        "bands": 9,
+        "ringInner": 1.34,
+        "ringOuter": 2.44,
+        "ringTau": 0.74,
+        "spin": 0.055,
+        "sunElev": 15.5,
+        "haze": 0.34,
+        "sun": 4,
+        "exposure": 1.05,
+        "distance": 4.55
+      }
+    },
+    {
+      "name": "gravitySim",
+      "desc": "GPGPU leapfrog N-body: two interacting disks with tidal tails",
+      "renderer": "three",
+      "options": {
+        "grid": 160,
+        "speed": 1,
+        "mass": 9000,
+        "separation": 40,
+        "eccentricity": 0.45,
+        "softening": 2.2,
+        "pointSize": 1,
+        "glow": 1,
+        "exposure": 1.6,
+        "bloom": 0.45,
+        "interactive": true,
+        "colors": [
+          "#2f4bff",
+          "#22d3ee",
+          "#ffd08a",
+          "#fff3df"
+        ],
+        "background": "#03040a"
+      }
+    },
+    {
+      "name": "starGlare",
+      "desc": "Hand-rolled HDR bloom, anamorphic streak and lens aberration chain",
+      "renderer": "three",
+      "options": {
+        "speed": 1,
+        "bloomStrength": 1,
+        "bloomRadius": 1.15,
+        "threshold": 1,
+        "streak": 0.7,
+        "aberration": 1,
+        "exposure": 0.9,
+        "colors": [
+          "#fff4d6",
+          "#ffcf8a",
+          "#a8c8ff",
+          "#7d8dff"
+        ],
+        "background": "#03040a"
       }
     }
   ],
