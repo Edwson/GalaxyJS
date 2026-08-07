@@ -15,7 +15,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  var VERSION = "3.3.0";
+  var VERSION = "3.4.0";
   var hasDOM = typeof document !== "undefined";
   var prefersReduced =
     hasDOM &&
@@ -128,20 +128,46 @@
     else gl.uniform4f(loc, v[0], v[1], v[2], v[3]);
   }
 
-  /* A still poster painted in 2D when WebGL2 is unavailable — a shader surface
-   * must never degrade to an empty box. Shaders may supply a richer `fallback`. */
+  /* A still poster — a GPU surface must never degrade to an empty box.
+   * Shaders and three.js scenes may supply a richer `fallback`.
+   *
+   * This runs in two situations, and only one of them has a 2D context:
+   *   - the browser gave us no WebGL2 at all, so the canvas is 2D  → paint it;
+   *   - the context is alive but the content failed (a shader that would not
+   *     compile, three.js that would not load) → the canvas is already a WebGL
+   *     canvas and can never hand back a 2D context, so paint the *host*
+   *     element with the equivalent CSS gradient instead.
+   * Reaching for h.ctx unconditionally is how this used to throw. */
   function glPosterFallback(h) {
+    var pal = paletteOf(h.opts, ["#7c5cff", "#22d3ee"]);
+    var bg = h.opts.background || "#05060f";
+    var painted = false;
     return {
       draw: function () {
-        var c = h.ctx, w = h.width, hh = h.height;
-        var pal = paletteOf(h.opts, ["#7c5cff", "#22d3ee"]);
-        c.fillStyle = h.opts.background || "#05060f";
-        c.fillRect(0, 0, w, hh);
-        var g = c.createRadialGradient(w * 0.5, hh * 0.5, 0, w * 0.5, hh * 0.5, Math.max(w, hh) * 0.7);
-        g.addColorStop(0, rgba(pal[0], 0.55));
-        g.addColorStop(1, rgba(pal[pal.length - 1], 0));
-        c.fillStyle = g;
-        c.fillRect(0, 0, w, hh);
+        if (h.ctx) {
+          var c = h.ctx, w = h.width, hh = h.height;
+          c.fillStyle = bg;
+          c.fillRect(0, 0, w, hh);
+          var g = c.createRadialGradient(w * 0.5, hh * 0.5, 0, w * 0.5, hh * 0.5, Math.max(w, hh) * 0.7);
+          g.addColorStop(0, rgba(pal[0], 0.55));
+          g.addColorStop(1, rgba(pal[pal.length - 1], 0));
+          c.fillStyle = g;
+          c.fillRect(0, 0, w, hh);
+          return;
+        }
+        if (painted) return; // a CSS poster is static; set it once
+        painted = true;
+        h.el.style.background =
+          "radial-gradient(60% 60% at 50% 50%, " + rgba(pal[0], 0.55) + " 0%, " +
+          rgba(pal[pal.length - 1], 0) + " 100%), " + bg;
+        if (h.gl && !h.gl.isContextLost()) {
+          var b = hexToRgb(bg);
+          h.gl.clearColor(b[0] / 255, b[1] / 255, b[2] / 255, 0);
+          h.gl.clear(h.gl.COLOR_BUFFER_BIT);
+        }
+      },
+      destroy: function () {
+        if (painted) h.el.style.background = "";
       },
     };
   }
@@ -192,6 +218,136 @@
         };
       },
     });
+  }
+
+  /* ============================================================
+   * three.js tier — optional, lazy, and never required.
+   *
+   * The library's contract is zero *required* dependencies, and that does not
+   * change here. A scene that wants a real scene graph — meshes, PBR materials,
+   * render targets, a post-processing chain — declares `renderer: "three"`.
+   * three.js is then fetched once, on demand, the first time such a scene
+   * mounts. A page that never uses one downloads nothing extra; a page that
+   * cannot reach the CDN at all still paints the 2D poster rather than an empty
+   * box, exactly like the WebGL2 tier degrades.
+   *
+   * To skip the network entirely, hand the library your own copy:
+   *   import * as THREE from "three";
+   *   Galaxy.useThree(THREE);
+   * ...or point one scene somewhere else with `{ threeUrl: "/vendor/three.js" }`.
+   * ========================================================== */
+  var THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.min.js";
+  var threeMod = null; // the resolved namespace, once we have it
+  var threeWait = null; // the in-flight load, shared by every scene on the page
+
+  function loadThree(url) {
+    if (threeMod) return Promise.resolve(threeMod);
+    if (threeWait) return threeWait;
+    // A classic-script dynamic import: no bundler required, and nothing is
+    // requested until a three-tier scene is actually mounted.
+    threeWait = Promise.resolve()
+      .then(function () { return import(/* webpackIgnore: true */ url || THREE_URL); })
+      .then(function (m) { threeMod = m; return m; })
+      .catch(function (e) { threeWait = null; throw e; });
+    return threeWait;
+  }
+
+  /* Sugar over registerAnimation for a three.js scene.
+   *
+   * `scene(THREE, host)` runs only once three.js is available and returns the
+   * same little object every animation returns: { draw, resize?, update?,
+   * destroy? }. Until then — and forever, if the load fails — the poster draws,
+   * so `setup` can still answer synchronously like every other renderer. */
+  function registerThree(name, def) {
+    registerAnimation(name, {
+      renderer: "three",
+      defaults: def.defaults || {},
+      fallback: def.fallback || null,
+      setup: function (h) {
+        var poster = (def.fallback || glPosterFallback)(h);
+        var live = null;
+        var dead = false;
+        // The first resize lands before three.js arrives, so remember it.
+        var size = { w: h.width, h: h.height };
+
+        loadThree(h.opts.threeUrl)
+          .then(function (T) {
+            if (dead) return;
+            live = def.scene(T, h);
+            // Hand the surface over: drop anything the poster painted first.
+            if (poster.destroy) poster.destroy();
+            if (live.resize) live.resize(size.w, size.h);
+            // Under prefers-reduced-motion the core already drew its one frame
+            // (the poster). Now that the real scene exists, draw its still frame.
+            if (h.reduced) live.draw(def.staticTime !== undefined ? def.staticTime : 0, 0);
+          })
+          .catch(function (e) {
+            live = null;
+            if (typeof console !== "undefined") {
+              console.warn('GalaxyJS: "' + name + '" needs three.js; showing the still fallback.', e && e.message ? e.message : e);
+            }
+          });
+
+        return {
+          draw: function (t, dt) {
+            if (h.gl && h.gl.isContextLost()) return;
+            (live || poster).draw(t, dt);
+          },
+          resize: function (w, hh) {
+            size.w = w; size.h = hh;
+            var target = live || poster;
+            if (target.resize) target.resize(w, hh);
+          },
+          update: function (opts) {
+            if (live && live.update) live.update(opts);
+          },
+          destroy: function () {
+            dead = true;
+            // Never force a context loss — see the note in the WebGL2 tier.
+            if (live && live.destroy) live.destroy();
+            else if (poster.destroy) poster.destroy();
+            live = null;
+          },
+        };
+      },
+    });
+  }
+
+  /* Every three scene needs the same renderer wiring, and getting the pixel
+   * ratio wrong here is what makes a scene look soft. The core already sized
+   * the canvas to width*dpr, so setSize must not touch style or recompute it. */
+  function threeRenderer(T, h) {
+    var r = new T.WebGLRenderer({
+      canvas: h.canvas,
+      context: h.gl,
+      antialias: false,
+      alpha: true,
+      premultipliedAlpha: true,
+    });
+    r.setPixelRatio(h.dpr);
+    r.setSize(h.width, h.height, false);
+    if ("outputColorSpace" in r) r.outputColorSpace = T.SRGBColorSpace;
+    r.toneMapping = T.ACESFilmicToneMapping;
+    r.toneMappingExposure = 1;
+    return r;
+  }
+
+  /* Frees GPU memory for a scene graph without touching the context. */
+  function threeDispose(root, extra) {
+    if (root && root.traverse) {
+      root.traverse(function (o) {
+        if (o.geometry && o.geometry.dispose) o.geometry.dispose();
+        var m = o.material;
+        if (!m) return;
+        (Array.isArray(m) ? m : [m]).forEach(function (mm) {
+          for (var k in mm) {
+            if (mm[k] && mm[k].isTexture && mm[k].dispose) mm[k].dispose();
+          }
+          if (mm.dispose) mm.dispose();
+        });
+      });
+    }
+    (extra || []).forEach(function (o) { if (o && o.dispose) o.dispose(); });
   }
 
   /* ============================================================
@@ -246,10 +402,11 @@
     el.appendChild(canvas);
     var opts = Object.assign({}, def.defaults, options || {});
 
-    // A shader animation asks for WebGL2; if the browser cannot give one, the
-    // surface silently becomes a 2D poster rather than an empty canvas.
+    // A shader or three.js animation asks for WebGL2; if the browser cannot
+    // give one, the surface silently becomes a 2D poster rather than an empty
+    // canvas. (three.js renders into this same context — see threeRenderer.)
     var gl = null, ctx = null, setup = def.setup;
-    if (def.renderer === "webgl2") {
+    if (def.renderer === "webgl2" || def.renderer === "three") {
       try {
         gl = canvas.getContext("webgl2", {
           alpha: true, antialias: false, premultipliedAlpha: true, powerPreference: "low-power",
@@ -6109,6 +6266,1718 @@
   })();
 
   /* ============================================================
+   * three.js scenes (the optional tier) — 81-86
+   *
+   * Everything below needs a scene graph, real volumetrics, GPU-side state or a
+   * post-processing chain, which is exactly what the 2D and fragment-shader
+   * tiers cannot give. Nothing here loads until one of them is mounted.
+   * ========================================================== */
+
+  /* 81. eventHorizon — a Schwarzschild black hole, ray-traced in curved spacetime.
+   *
+   * The 2D `blackHole` and `lensing` scenes paint what lensing looks like. This
+   * one solves for it. Each pixel's photon is integrated through the Schwarzschild
+   * metric in the orbit-plane form
+   *
+   *     d²u/dφ² = -u + (3/2)·rs·u²        where u = 1/r
+   *
+   * so the photon ring, the Einstein ring of the starfield behind the hole, and
+   * the way the far side of the disk is bent up over the top all fall out of the
+   * integration instead of being drawn on. The disk carries relativistic Doppler
+   * shift and beaming (I ∝ δ⁴), which is why one side is bright blue-white and
+   * the other is dim and red — the asymmetry is the physics, not a gradient.
+   */
+  registerThree("eventHorizon", {
+    defaults: {
+      spin: 1,             // how fast the disk material orbits
+      tilt: 0.42,          // camera inclination above the disk plane, radians
+      diskInner: 2.6,      // inner disk radius in units of rs (ISCO ≈ 3)
+      diskOuter: 9,
+      steps: 220,          // integration steps per photon
+      exposure: 0.85,
+      colors: ["#fff4e2", "#ffb46b", "#7c5cff"],
+      background: "#03040a",
+      interactive: true,
+    },
+    scene: function (T, h) {
+      var renderer = threeRenderer(T, h);
+      renderer.toneMapping = T.NoToneMapping; // the shader tonemaps itself
+      var scene = new T.Scene();
+      var cam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      var pal = paletteOf(h.opts, ["#fff4e2", "#ffb46b", "#7c5cff"]);
+      // hexToRgb returns {r,g,b} — indexing it like an array yields NaN uniforms,
+      // and a NaN colour turns the whole frame white with no compile error.
+      var v3 = function (c) {
+        var f = function (x) { return Math.pow(x / 255, 2.2); };
+        return new T.Vector3(f(c.r), f(c.g), f(c.b));
+      };
+
+      var uni = {
+        uRes: { value: new T.Vector2(1, 1) },
+        uTime: { value: 0 },
+        uTilt: { value: h.opts.tilt },
+        uInner: { value: h.opts.diskInner },
+        uOuter: { value: h.opts.diskOuter },
+        uSpin: { value: h.opts.spin },
+        uSteps: { value: h.opts.steps },
+        uExposure: { value: h.opts.exposure },
+        uHot: { value: v3(pal[0]) },
+        uWarm: { value: v3(pal[1 % pal.length]) },
+        uCool: { value: v3(pal[2 % pal.length]) },
+        uBg: { value: v3(hexToRgb(h.opts.background || "#03040a")) },
+      };
+
+      var mat = new T.ShaderMaterial({
+        uniforms: uni,
+        vertexShader:
+          "void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }",
+        fragmentShader: [
+          "precision highp float;",
+          "uniform vec2 uRes; uniform float uTime, uTilt, uInner, uOuter, uSpin, uSteps, uExposure;",
+          "uniform vec3 uHot, uWarm, uCool, uBg;",
+          "out vec4 fragColor;",
+
+          "float hash(vec3 p){ return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }",
+          "float noise(vec3 p){",
+          "  vec3 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);",
+          "  float a = mix(mix(mix(hash(i), hash(i+vec3(1,0,0)), f.x), mix(hash(i+vec3(0,1,0)), hash(i+vec3(1,1,0)), f.x), f.y),",
+          "                mix(mix(hash(i+vec3(0,0,1)), hash(i+vec3(1,0,1)), f.x), mix(hash(i+vec3(0,1,1)), hash(i+vec3(1,1,1)), f.x), f.y), f.z);",
+          "  return a;",
+          "}",
+          "float fbm(vec3 p){ float s=0.0, a=0.5; for(int i=0;i<4;i++){ s+=a*noise(p); p*=2.03; a*=0.5; } return s; }",
+
+          /* The starfield the hole lenses. Sampled by direction, so a bent ray
+           * genuinely looks somewhere else in the sky. */
+          /* Stars as actual points on a spherical grid, not lit grid cells.
+           * Hashing floor(direction*k) paints cube-shaped cells, and because a
+           * lensed ray sweeps slowly along some loci it draws them as dotted
+           * straight lines across the sky. Placing one star at a random offset
+           * inside each cell with a smooth radial falloff removes the artifact
+           * and gives round stars that survive magnification near the ring. */
+          "vec3 sky(vec3 d){",
+          "  vec3 c = uBg;",
+          "  float lon = atan(d.z, d.x);",
+          "  float lat = asin(clamp(d.y, -1.0, 1.0));",
+          "  vec2 sc = vec2(lon * 0.1591549, lat * 0.3183099) * 150.0;",   // lon/2pi, lat/pi
+          "  vec2 cell = floor(sc), frc = fract(sc);",
+          "  for (int oy = -1; oy <= 1; oy++) {",
+          "    for (int ox = -1; ox <= 1; ox++) {",
+          "      vec2 o = vec2(float(ox), float(oy));",
+          "      vec2 id = cell + o;",
+          "      float r1 = hash(vec3(id, 1.0));",
+          "      if (r1 < 0.90) continue;",                              // ~10% of cells hold a star
+          "      vec2 pos = o + vec2(hash(vec3(id, 7.0)), hash(vec3(id, 13.0)));",
+          "      float dist = length(frc - pos);",
+          "      float mag = (r1 - 0.90) * 10.0;",                       // 0..1 brightness draw
+          "      float tw = 0.72 + 0.28 * sin(uTime * 1.9 + r1 * 90.0);",
+          "      vec3 tint = mix(vec3(0.62, 0.74, 1.0), vec3(1.0, 0.82, 0.62), hash(vec3(id, 21.0)));",
+          "      c += tint * pow(mag, 3.0) * tw * exp(-dist * dist * 190.0);",
+          "    }",
+          "  }",
+          // a faint galactic band, so lensing has large-scale structure to bend
+          "  float dy = d.y * 7.0;",
+          "  float band = exp(-dy * dy) * (0.012 + 0.05 * fbm(d * 7.0));",
+          "  c += uCool * band * 0.35;",
+          "  return c;",
+          "}",
+
+          /* Disk emission: temperature rises inward (T ∝ r^-3/4), turbulence in
+           * the orbiting frame, and a sharp inner cut. */
+          "vec3 disk(float r, float phi){",
+          "  float x = clamp((r - uInner) / max(0.001, uOuter - uInner), 0.0, 1.0);",
+          "  float temp = pow(uInner / r, 0.75);",
+          "  float orbit = uTime * uSpin * 34.0 / pow(r, 1.5);",   // Keplerian shear
+          "  float turb = fbm(vec3(cos(phi + orbit) * r, sin(phi + orbit) * r, r * 0.4) * 0.9);",
+          "  float dens = smoothstep(0.0, 0.09, x) * (1.0 - smoothstep(0.30, 0.95, x));",
+          "  dens *= 0.30 + 1.05 * turb * turb;",
+          "  vec3 col = mix(uWarm, uHot, clamp(temp * 1.25, 0.0, 1.0));",
+          "  return col * dens * (0.85 * temp * temp);",
+          "}",
+
+          "void main(){",
+          "  vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;",
+          // camera: looking at the hole from above the disk plane
+          "  float ct = cos(uTilt), st = sin(uTilt);",
+          "  vec3 eye = vec3(0.0, st, -ct) * 22.0;",
+          "  vec3 fwd = normalize(-eye);",
+          "  vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), fwd));",
+          "  vec3 up = cross(fwd, right);",
+          "  vec3 dir = normalize(fwd * 2.4 + right * uv.x + up * uv.y);",
+
+          /* Integrate in the plane spanned by (eye, dir). Everything below is
+           * 2D in that plane, which is what makes a real geodesic affordable. */
+          "  vec3 nrm = normalize(cross(eye, dir));",   // orbital plane normal
+          "  vec3 e1 = normalize(eye);",
+          "  vec3 e2 = normalize(cross(nrm, e1));",
+          "  float r = length(eye);",
+          "  float u = 1.0 / r;",
+          // du/dphi from the projection of the ray direction onto the plane basis
+          "  float dr = dot(dir, e1);",
+          "  float rdphi = dot(dir, e2);",
+          "  float du = -u * dr / max(1e-4, rdphi);",   // u' = -(1/r²)(dr/dphi)
+          "  float phi0 = 0.0;",
+          "  float dphi = 3.2 / uSteps;",              // sweep up to ~pi
+          "  vec3 acc = vec3(0.0);",
+          "  bool captured = false;",
+          "  float prevY = dot(eye, vec3(0.0, 1.0, 0.0));",
+          "  vec3 pos = eye;",
+
+          "  for (int i = 0; i < 512; i++) {",
+          "    if (float(i) >= uSteps) break;",
+          // RK2 on u'' = -u + 1.5*rs*u², rs = 1
+          "    float k1 = -u + 1.5 * u * u;",
+          "    float uMid = u + 0.5 * dphi * du;",
+          "    float duMid = du + 0.5 * dphi * k1;",
+          "    float k2 = -uMid + 1.5 * uMid * uMid;",
+          "    u += dphi * duMid;",
+          "    du += dphi * k2;",
+          "    phi0 += dphi;",
+          "    if (u <= 0.0) break;",                 // escaped to infinity
+          "    if (u > 1.0) { captured = true; break; }", // crossed the horizon r < rs
+          "    float rr = 1.0 / u;",
+          "    vec3 next = (e1 * cos(phi0) + e2 * sin(phi0)) * rr;",
+          "    float y = next.y;",
+          // disk crossing: sign change of y between steps, interpolated
+          "    if (prevY * y < 0.0) {",
+          "      float f = prevY / (prevY - y);",
+          "      vec3 hit = mix(pos, next, f);",
+          "      float hr = length(hit.xz);",
+          "      if (hr > uInner && hr < uOuter) {",
+          "        float ph = atan(hit.z, hit.x);",
+          // Doppler: orbital velocity of the material, projected on the line of sight
+          "        vec3 vdir = normalize(vec3(-hit.z, 0.0, hit.x));",
+          "        float beta = min(0.78, 1.02 / sqrt(max(1.2, hr)));",
+          "        vec3 look = normalize(hit - eye);",
+          "        float mu = dot(vdir, -look);",
+          "        float g = 1.0 / sqrt(1.0 - beta * beta);",
+          "        float delta = 1.0 / (g * (1.0 - beta * mu));",   // Doppler factor
+          "        float beam = pow(delta, 4.0);",                  // relativistic beaming
+          "        vec3 em = disk(hr, ph) * beam;",
+          // blueshift the approaching side, redden the receding side
+          "        em *= mix(vec3(1.0, 0.72, 0.5), vec3(0.72, 0.86, 1.0), clamp(delta * 0.5, 0.0, 1.0));",
+          "        acc += em;",
+          "      }",
+          "    }",
+          "    prevY = y; pos = next;",
+          "  }",
+
+          "  vec3 col = acc;",
+          "  if (!captured) {",
+          /* The outgoing direction is the full geodesic tangent:
+           *     d/dphi [ r(phi) * rhat ] = r' * rhat + r * phihat,   r' = -u'/u^2
+           * Using only the phihat term (the obvious mistake) leaves the far
+           * field a non-identity map, which smears background stars into long
+           * straight streaks right across the frame. */
+          "    vec3 rhat = e1 * cos(phi0) + e2 * sin(phi0);",
+          "    vec3 phat = -e1 * sin(phi0) + e2 * cos(phi0);",
+          "    vec3 tangent = normalize(rhat * (-du / max(1e-6, u)) + phat);",
+          "    col += sky(tangent);",
+          "  }",
+          "  col *= uExposure;",
+          "  col = col / (1.0 + col);",                       // Reinhard
+          "  col = pow(col, vec3(1.0 / 2.2));",
+          "  fragColor = vec4(col, 1.0);",
+          "}",
+        ].join("\n"),
+        glslVersion: T.GLSL3,
+      });
+
+      var quad = new T.Mesh(new T.PlaneGeometry(2, 2), mat);
+      quad.frustumCulled = false;
+      scene.add(quad);
+
+      return {
+        resize: function (w, hh) {
+          renderer.setPixelRatio(h.dpr);
+          renderer.setSize(w, hh, false);
+          uni.uRes.value.set(h.canvas.width, h.canvas.height);
+        },
+        update: function (o) {
+          uni.uTilt.value = o.tilt;
+          uni.uInner.value = o.diskInner;
+          uni.uOuter.value = o.diskOuter;
+          uni.uSpin.value = o.spin;
+          uni.uExposure.value = o.exposure;
+        },
+        draw: function (t) {
+          uni.uTime.value = t;
+          // the pointer leans the camera, so the lensing asymmetry is explorable
+          if (h.mouse.active) {
+            var ny = (h.mouse.y / Math.max(1, h.height)) - 0.5;
+            uni.uTilt.value += (h.opts.tilt - ny * 0.9 - uni.uTilt.value) * 0.06;
+          } else {
+            uni.uTilt.value += (h.opts.tilt - uni.uTilt.value) * 0.04;
+          }
+          renderer.render(scene, cam);
+        },
+        destroy: function () { threeDispose(scene, [mat, renderer]); },
+      };
+    },
+  });
+
+  /* molecularCloud — a real single-scattering volume raymarch.
+   *
+   * A 128^3 R8 Data3DTexture is filled on the CPU with curl-warped multiplicative
+   * ridged noise plus two dense cores, then marched inside a box in the box's own
+   * local space: entry/exit come from a slab intersection of the unit AABB, every
+   * sample takes a 6-step shadow march toward the embedded protostar, and the result
+   * composites with Beer-Lambert extinction and a Henyey-Greenstein phase function.
+   * Because the march happens in the mesh's local space, rotating the mesh rotates
+   * the volume *and* its star field: near filaments genuinely slide in front of far
+   * ones. No 2D fragment shader can produce that parallax.
+   */
+  registerThree("molecularCloud", {
+    defaults: {
+      colors: ["#ffb37a", "#78aaff", "#c58cff"],
+      background: "#04060e",
+      res: 128,           // 3D texture edge (128^3 = 2.1M voxels)
+      steps: 64,          // primary march samples
+      density: 9.0,       // extinction coefficient
+      shadow: 2.60,       // absorption along the light march
+      emission: 1.35,     // scatter gain
+      forward: 0.62,      // Henyey-Greenstein g
+      spin: 0.13,         // rad/s of volume rotation
+      churn: 0.30,        // amplitude of the internal shear
+      distance: 2.02,
+    },
+
+    scene: function (T, h) {
+      var renderer = threeRenderer(T, h);
+      var o = h.opts;
+      var pal = paletteOf(o, ["#ffb37a", "#78aaff", "#c58cff"]);
+      function lin(c) { // sRGB byte -> linear float triple
+        return [Math.pow(c.r / 255, 2.2), Math.pow(c.g / 255, 2.2), Math.pow(c.b / 255, 2.2)];
+      }
+      function v3(a) { return new T.Vector3(a[0], a[1], a[2]); }
+      var bg = lin(hexToRgb(o.background || "#04060e"));
+
+      /* ---- CPU volume -------------------------------------------------- */
+      var N = Math.max(48, Math.min(128, o.res | 0));
+      var G = 64, GM = G - 1, GS = 6;               // tiling value-noise lattice
+      var lat = new Float32Array(G * G * G), sd = 1337;
+      for (var i = 0; i < lat.length; i++) {
+        sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0;
+        lat[i] = sd / 4294967296;
+      }
+      // Lattice fetch wrapped to period m+1 then shifted, so every octave tiles
+      // exactly over the volume and no octave shows a seam at the box faces.
+      function gv(x, y, z, m, s) {
+        return lat[((((x & m) + s) & GM) << (GS * 2)) | ((((y & m) + s * 3) & GM) << GS) | (((z & m) + s * 7) & GM)];
+      }
+      function vn(x, y, z, m, s) {                   // trilinear value noise, period m+1
+        var xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
+        var fx = x - xi, fy = y - yi, fz = z - zi;
+        fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy); fz = fz * fz * (3 - 2 * fz);
+        var a = gv(xi, yi, zi, m, s), b = gv(xi + 1, yi, zi, m, s);
+        var c = gv(xi, yi + 1, zi, m, s), d = gv(xi + 1, yi + 1, zi, m, s);
+        var e = gv(xi, yi, zi + 1, m, s), f = gv(xi + 1, yi, zi + 1, m, s);
+        var g = gv(xi, yi + 1, zi + 1, m, s), k = gv(xi + 1, yi + 1, zi + 1, m, s);
+        var x0 = a + (b - a) * fx, x1 = c + (d - c) * fx;
+        var x2 = e + (f - e) * fx, x3 = g + (k - g) * fx;
+        var l0 = x0 + (x1 - x0) * fy, l1 = x2 + (x3 - x2) * fy;
+        return l0 + (l1 - l0) * fz;
+      }
+      // curl of a low-frequency vector potential, on a coarse grid we interpolate
+      var C = 24, curl = new Float32Array(C * C * C * 3), eps = 0.30;
+      function pot(x, y, z, s) { return vn(x, y, z, 3, s * 5 + 2); }
+      for (var cz = 0; cz < C; cz++) for (var cy = 0; cy < C; cy++) for (var cx = 0; cx < C; cx++) {
+        var gx = (cx / C) * 4, gy = (cy / C) * 4, gz = (cz / C) * 4;
+        var dP3y = pot(gx, gy + eps, gz, 3) - pot(gx, gy - eps, gz, 3);
+        var dP2z = pot(gx, gy, gz + eps, 2) - pot(gx, gy, gz - eps, 2);
+        var dP1z = pot(gx, gy, gz + eps, 1) - pot(gx, gy, gz - eps, 1);
+        var dP3x = pot(gx + eps, gy, gz, 3) - pot(gx - eps, gy, gz, 3);
+        var dP2x = pot(gx + eps, gy, gz, 2) - pot(gx - eps, gy, gz, 2);
+        var dP1y = pot(gx, gy + eps, gz, 1) - pot(gx, gy - eps, gz, 1), ci = (cz * C * C + cy * C + cx) * 3;
+        curl[ci] = (dP3y - dP2z) / eps; curl[ci + 1] = (dP1z - dP3x) / eps; curl[ci + 2] = (dP2x - dP1y) / eps;
+      }
+      function curlAt(u, v, w, comp) {              // nearest-ish coarse fetch, cheap
+        var ix = ((u * C) | 0) % C, iy = ((v * C) | 0) % C, iz = ((w * C) | 0) % C;
+        return curl[((iz * C * C + iy * C + ix) * 3) + comp];
+      }
+      var cores = [[0.12, -0.04, 0.05, 0.17, 0.85], [-0.36, 0.24, -0.30, 0.12, 0.55]];
+      var data = new Uint8Array(N * N * N);
+      var warpAmp = 0.55, ptr = 0;
+      for (var z = 0; z < N; z++) for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) {
+        var u = x / N, v = y / N, w = z / N;
+        var qx = u + curlAt(u, v, w, 0) * warpAmp;
+        var qy = v + curlAt(u, v, w, 1) * warpAmp;
+        var qz = w + curlAt(u, v, w, 2) * warpAmp;
+        // Multiplicative ridges: a voxel is only dense where every octave's ridge
+        // agrees, which is what leaves thin branching filaments and empty voids.
+        var fil = 1;
+        for (var oc = 0; oc < 5; oc++) {            // periods 4/8/16/32/64 (powers of two: the wrap is a mask)
+          var per = 4 << oc;
+          var wt = 0.30 + 0.14 * oc;                // fine octaves only modulate, so
+          var n = vn(qx * per, qy * per, qz * per, per - 1, oc * 5 + 1);
+          fil *= wt + (1 - wt) * (1 - Math.abs(n * 2 - 1));  // the big shapes survive
+        }
+        // hard-ish transfer function: sharp filament boundaries read as structure,
+        // a smooth ramp just reads as haze
+        fil = (fil - 0.42) / 0.20; if (fil < 0) fil = 0; if (fil > 1) fil = 1;
+        fil = fil * fil * (3 - 2 * fil);
+        var env = vn(u * 4, v * 4, w * 4, 3, 19);   // big clouds and voids
+        env = (env - 0.30) * 2.3; if (env < 0) env = 0; if (env > 1) env = 1;
+        var dv = fil * (0.10 + 1.15 * env);
+        var px = u * 2 - 1, py = v * 2 - 1, pz = w * 2 - 1;
+        // irregular envelope, so the silhouette is not a smooth ellipsoid
+        var rr = Math.sqrt(px * px + py * py * 1.80 + pz * pz);
+        var lowN = vn(u * 4 + 0.5, v * 4 + 0.5, w * 4 + 0.5, 3, 41) * 0.68
+                 + vn(u * 8 + 0.5, v * 8 + 0.5, w * 8 + 0.5, 7, 53) * 0.32;
+        var sh = (1.00 - rr + 0.52 * (lowN - 0.5)) / 0.42;
+        if (sh < 0) sh = 0; if (sh > 1) sh = 1;
+        dv *= sh * sh * (3 - 2 * sh);
+        for (var ci2 = 0; ci2 < cores.length; ci2++) {
+          var cc = cores[ci2];
+          var ddx = px - cc[0], ddy = py - cc[1], ddz = pz - cc[2];
+          dv += cc[4] * Math.exp(-(ddx * ddx + ddy * ddy + ddz * ddz) / (cc[3] * cc[3]));
+        }
+        data[ptr++] = dv > 1 ? 255 : (dv * 255) | 0;
+      }
+      var vol = new T.Data3DTexture(data, N, N, N);
+      vol.format = T.RedFormat; vol.type = T.UnsignedByteType;
+      vol.minFilter = T.LinearFilter; vol.magFilter = T.LinearFilter;
+      vol.wrapS = vol.wrapT = vol.wrapR = T.RepeatWrapping;
+      vol.unpackAlignment = 1; vol.needsUpdate = true;
+
+      /* ---- shader ------------------------------------------------------ */
+      var VERT = ["out vec3 vLocal;",
+        "void main(){ vLocal = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }"].join("\n");
+
+      var FRAG = [
+        "precision highp float;", "precision highp sampler3D;",
+        "uniform sampler3D uVol;",
+        "uniform vec3 uCam, uStar, uBg, uWarm, uCool, uRim;",
+        "uniform float uDens, uShadow, uEmit, uG, uSteps, uTwist;",
+        "in vec3 vLocal;", "out vec4 outColor;",
+        "float h21(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }",
+        "float h31(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719)))*43758.5453); }",
+        "float dens(vec3 p){",
+        "  float r = length(p * vec3(1.0,1.34,1.0));",
+        "  if (r > 1.04) return 0.0;",              // cheap early-out; the envelope is baked in
+        "  float a = uTwist * (1.0 - r*0.55);",     // differential shear: the cloud churns
+        "  vec3 q = vec3(p.x - a*p.z, p.y, p.z + a*p.x);",
+        "  return texture(uVol, q*0.5 + 0.5).r * smoothstep(1.04, 0.96, r);",
+        "}",
+        "float hg(float c, float g){ float d = 1.0 + g*g - 2.0*g*c; return (1.0-g*g)/(12.566371*pow(max(d,1e-4),1.5)); }",
+        "vec3 sky(vec3 d){",
+        "  vec3 c = uBg * (0.60 + 0.85*(d.y*0.5+0.5)) + uCool*0.0085 + uRim*0.0035;",
+        "  for (int L=0; L<2; L++){",
+        "    float sc = L==0 ? 27.0 : 47.0;",
+        "    vec3 g = d*sc; vec3 cel = floor(g); vec3 f = g - cel;",
+        "    float br = h31(cel + float(L)*3.7);",
+        "    if (br > 0.60){",
+        "      vec3 off = clamp(vec3(h31(cel+11.7), h31(cel+23.3), h31(cel+31.9)), 0.10, 0.90);",
+        "      float dd = length(f - off);",
+        "      float s = exp(-dd*dd*220.0) * (br-0.60)*2.6 / sc * 32.0;",
+        "      c += s * mix(vec3(0.62,0.74,1.0), vec3(1.0,0.86,0.66), h31(cel+7.3));",
+        "    }",
+        "  }",
+        "  return c;",
+        "}",
+        "void main(){",
+        "  vec3 ro = uCam;",
+        "  vec3 rd = normalize(vLocal - uCam);",
+        "  vec3 iv = 1.0/rd;",
+        "  vec3 t0 = (vec3(-1.0)-ro)*iv, t1 = (vec3(1.0)-ro)*iv;",
+        "  vec3 tn = min(t0,t1), tf = max(t0,t1);",
+        "  float tE = max(max(tn.x,tn.y),tn.z), tX = min(min(tf.x,tf.y),tf.z);",
+        "  vec3 col = sky(rd);",
+        "  tE = max(tE, 0.0);",
+        "  if (tX > tE){",
+        "    int NS = int(uSteps);",
+        "    float dt = (tX-tE)/float(NS);",
+        "    float t = tE + dt*h21(gl_FragCoord.xy);",
+        "    float tr = 1.0; vec3 acc = vec3(0.0);",
+        "    for (int i=0; i<96; i++){",
+        "      if (i>=NS || tr<0.012) break;",
+        "      vec3 p = ro + rd*t;",
+        "      float d = dens(p);",
+        "      if (d > 0.004){",
+        "        vec3 tos = uStar - p; float sdist = length(tos);",
+        "        vec3 ld = tos/max(sdist,1e-3);",
+        "        float ls = min(sdist, 0.60)/6.0; float tau = 0.0;",
+        "        for (int j=0; j<6; j++) tau += dens(p + ld*(ls*(float(j)+0.5)));",
+        "        float sh = exp(-tau*ls*uShadow*uDens);",
+        "        float ph = hg(dot(rd, ld), uG);",
+        "        float fall = min(1.0/(0.10 + sdist*sdist*2.6), 5.0);",
+        "        vec3 tint = mix(uWarm, mix(uRim, uCool, 0.62)*0.52, clamp((sdist-0.06)*0.92, 0.0, 1.0));",
+        "        tint *= mix(vec3(1.0), vec3(1.30,0.84,0.58), (1.0-sh)*exp(-sdist*1.6));",   // dust reddens what gets through
+        "        vec3 amb = (uCool*0.80 + uRim*0.20) * exp(-d*3.2) * 0.017;",
+        "        vec3 rad = tint*sh*fall*(0.30 + 9.0*ph) + amb;",
+        "        float a = 1.0 - exp(-d*uDens*dt);",
+        "        acc += tr * a * rad * uEmit;",
+        "        tr *= 1.0 - a;",
+        "      }",
+        "      vec3 sv = p - uStar; float r2 = dot(sv,sv);",
+        "      acc += tr * uWarm * (44.0/(1.0 + r2*r2*300000.0)) * dt;",
+        "      t += dt;",
+        "    }",
+        "    col = col*tr + acc;",
+        "  }",
+        "  col = (col*(2.10*col + 0.06)) / (col*(2.10*col + 0.90) + 0.16);",
+        "  outColor = vec4(pow(max(col, 0.0), vec3(1.0/2.2)), 1.0);",
+        "}"].join("\n");
+
+      var U = {
+        uVol: { value: vol },
+        uCam: { value: new T.Vector3() },
+        uStar: { value: new T.Vector3(0.10, -0.05, 0.06) },
+        uBg: { value: v3(bg) },
+        uWarm: { value: v3(lin(pal[0])) },
+        uCool: { value: v3(lin(pal[1 % pal.length])) },
+        uRim: { value: v3(lin(pal[2 % pal.length])) },
+        uDens: { value: o.density }, uShadow: { value: o.shadow },
+        uEmit: { value: o.emission }, uG: { value: o.forward },
+        uSteps: { value: Math.max(16, Math.min(96, o.steps | 0)) },
+        uTwist: { value: 0 },
+      };
+      var mat = new T.ShaderMaterial({
+        glslVersion: T.GLSL3, uniforms: U, vertexShader: VERT, fragmentShader: FRAG,
+        side: T.BackSide, depthWrite: false, depthTest: false,
+      });
+      var scene = new T.Scene();
+      var box = new T.Mesh(new T.BoxGeometry(18, 18, 18), mat);
+      box.frustumCulled = false;
+      scene.add(box);
+
+      var cam = new T.PerspectiveCamera(46, h.width / Math.max(1, h.height), 0.05, 200);
+      var camLocal = new T.Vector3(), origin = new T.Vector3();
+      var dist = o.distance, az = 0, el = 0;
+
+      function place(t) {
+        var mx = h.mouse.active ? (h.mouse.x / Math.max(1, h.width)) * 2 - 1 : 0;
+        var my = h.mouse.active ? (h.mouse.y / Math.max(1, h.height)) * 2 - 1 : 0;
+        az += (mx * 0.55 - az) * 0.06; el += (-my * 0.38 - el) * 0.06;
+        cam.position.set(
+          Math.sin(az) * Math.cos(el) * dist,
+          Math.sin(el) * dist,
+          Math.cos(az) * Math.cos(el) * dist
+        );
+        cam.lookAt(origin);
+        box.rotation.set(0.22 + t * o.spin * 0.31, 0.60 + t * o.spin, t * o.spin * 0.14);
+        box.updateMatrixWorld(true);
+        camLocal.copy(cam.position); box.worldToLocal(camLocal);
+        U.uCam.value.copy(camLocal);
+        U.uTwist.value = o.churn * Math.sin(t * 0.23) + o.churn * 0.5 * Math.sin(t * 0.41 + 1.0);
+      }
+      place(0);
+
+      return {
+        resize: function (w, hh) {
+          renderer.setPixelRatio(h.dpr); renderer.setSize(w, hh, false);
+          cam.aspect = w / Math.max(1, hh); cam.updateProjectionMatrix();
+        },
+        update: function (n) {
+          if (n.density != null) U.uDens.value = n.density;
+          if (n.emission != null) U.uEmit.value = n.emission;
+          if (n.forward != null) U.uG.value = n.forward;
+          if (n.shadow != null) U.uShadow.value = n.shadow;
+          if (n.distance != null) dist = n.distance;
+          if (n.spin != null) o.spin = n.spin;
+        },
+        draw: function (t) { place(h.reduced ? 0 : t); renderer.render(scene, cam); },
+        destroy: function () { threeDispose(scene, [vol, mat, renderer]); },
+      };
+    },
+  });
+
+  /* ============================================================
+   * spiralForge — a 340,000-star spiral galaxy in one draw call.
+   *
+   * WHY THIS NEEDS THREE.JS: it is a single T.Points over a BufferGeometry of
+   * ~340k real stars, each an independent body with its own orbital radius,
+   * phase, scale height, mass and photospheric temperature. A fullscreen
+   * fragment shader can fake a smear of arms; it cannot give you a third of a
+   * million individually-coloured, individually-orbiting point masses seen
+   * through a perspective camera with correct 1/w foreshortening.
+   *
+   * NO CPU WORK PER FRAME. The per-star attributes are baked exactly once in
+   * scene(). draw() touches four uniforms and the camera transform — there is
+   * no JavaScript loop over stars anywhere in the animation loop. Each star's
+   * orbital angle is integrated entirely in the VERTEX SHADER as
+   *     angle = phase + uTime * omega(r),  omega(r) = v0 / (r + rc)
+   * which is a real flat rotation curve: v(r) = v0 * r/(r+rc) is constant
+   * outside the core, so omega falls as 1/r. Consequence, and it is the correct
+   * one: the logarithmic-spiral arms baked into the phase distribution are a
+   * density-wave *pattern the stars drift through*, not a rigid structure.
+   * Because omega varies with radius the pattern shears and winds up over
+   * time. That is visible, and it is physics, not a bug.
+   * ========================================================== */
+  registerThree("spiralForge", {
+    defaults: {
+      stars: 340000,        // individual point masses (clamped to 60k..500k)
+      arms: 2,              // density-wave arms (2 = grand design)
+      pitch: 0.50,          // log-spiral pitch, radians
+      spin: 1,              // time scale on the rotation curve
+      bulge: 0.26,           // fraction of stars in the spheroidal old bulge
+      thickness: 1,         // thin-disk scale-height multiplier
+      tilt: 36,             // camera elevation above the disk plane, degrees
+      size: 1,
+      tint: 0.34,           // how far the palette pulls the blackbody colours
+      colors: ["#ffc98a", "#fff4e6", "#a8c8ff"],
+      background: "#03040c",
+    },
+    scene: function (T, h) {
+      var renderer = threeRenderer(T, h);
+      var o = h.opts;
+      var pal = paletteOf(o, ["#ffc98a", "#fff4e6", "#a8c8ff"]);
+      function pc(i) { var c = pal[i % pal.length]; return new T.Vector3(c.r / 255, c.g / 255, c.b / 255); }
+
+      var scene = new T.Scene();
+      var FOV = 40;
+      var cam = new T.PerspectiveCamera(FOV, Math.max(0.2, h.width / h.height), 0.05, 60);
+      renderer.setClearColor(new T.Color(o.background || "#03040c"), 1);
+
+      /* ---- one-time CPU bake of the stellar population ------------------ */
+      var N = Math.max(60000, Math.min(500000, Math.round(o.stars || 340000)));
+      var ARMS = Math.max(1, Math.round(o.arms || 2));
+      var TANP = Math.tan(Math.max(0.08, Math.min(0.9, o.pitch || 0.5)));
+      var HR = 0.95, RMAX = 3.0, RB = 0.085;
+      var THK = Math.max(0.15, o.thickness || 1);
+      var BF = Math.max(0, Math.min(0.6, o.bulge === undefined ? 0.26 : o.bulge));
+      var SZ = Math.max(0.2, o.size || 1);
+
+      var seed = 0x51ea2f1;
+      function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return (seed >>> 8) / 16777216; }
+      function ln() { return -Math.log(1e-7 + rnd()); }
+      function sat(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+
+      var pos = new Float32Array(N * 3);   // packed (radius, height, phase)
+      var st = new Float32Array(N * 3);    // packed (worldSize, temp01, intensity)
+      var i, r, y, ph, temp, dim, u;
+      for (i = 0; i < N; i++) {
+        if (rnd() < 0.07) {
+          // Metal-poor stellar halo: a sparse spheroid well outside the disk,
+          // old and red, on strongly inclined orbits.
+          r = 1.1 + 3.4 * Math.pow(rnd(), 1.7);
+          y = 0.75 * r * (rnd() + rnd() + rnd() - 1.5) * 1.2;
+          temp = 0.04 + 0.26 * Math.pow(rnd(), 1.6);
+          dim = 0.75;
+          ph = rnd() * Math.PI * 2;
+        } else if (rnd() < BF) {
+          // Spheroidal bulge: 3D exponential density, rho ~ exp(-r/RB), so the
+          // radius is Gamma(3) distributed. Flattened slightly onto the disk.
+          r = RB * (ln() + ln() + ln());
+          if (r > 1.3) r = 1.3 * rnd();
+          // The innermost few percent are the nuclear star cluster — a real
+          // component, and it keeps the projected centre from thinning out.
+          if (rnd() < 0.10) r *= 0.35;
+          y = 0.42 * r * (rnd() * 2 - 1);
+          // Age/metallicity gradient: the packed centre is whiter, the outer
+          // spheroid is the classic red old population.
+          temp = 0.12 + 0.32 * Math.pow(rnd(), 1.3) + 0.22 * sat(1.0 - r / 0.35);
+          dim = 0.72;
+          ph = rnd() * Math.PI * 2;
+        } else {
+          // Exponential thin disk: surface density Sigma ~ exp(-r/HR) means the
+          // radial PDF is r*exp(-r/HR), i.e. Gamma(2) — sampled exactly.
+          r = HR * (ln() + ln());
+          while (r > RMAX) r = HR * (ln() + ln());   // rejection, keeps the profile exact
+          var hz = (0.028 + 0.014 * r) * THK;          // gentle outward flare
+          y = hz * (rnd() + rnd() + rnd() - 1.5) * 1.7;
+          // Density-wave arms: pile the initial phase up on a logarithmic
+          // spiral theta = ln(r/r0)/tan(pitch), with a scatter that widens
+          // outward. Arms fade out inside the bar region and past the disk edge.
+          var af = sat((r - 0.3) / 0.45) * sat((RMAX + 0.5 - r) / 1.1);
+          var ridge = Math.log(Math.max(r, 0.1) / 0.26) / TANP;
+          var sep = (Math.PI * 2) / ARMS;
+          var w = 0.34 + 0.46 * (r / RMAX);
+          if (rnd() < 0.44 * af) {
+            var g = (rnd() + rnd() + rnd() - 1.5) * 1.15 * w;
+            ph = ridge + sep * Math.floor(rnd() * ARMS) + g;
+            // Young population: arms are where gas collapses, so this is where
+            // the rare, short-lived, hot O/B stars live.
+            u = rnd();
+            if (u < 0.05) temp = 0.82 + 0.18 * rnd();
+            else if (u < 0.21) temp = 0.60 + 0.20 * rnd();
+            else temp = 0.18 + 0.40 * rnd();
+            dim = 0.88;
+          } else {
+            ph = rnd() * Math.PI * 2;
+            temp = 0.14 + 0.44 * Math.pow(rnd(), 1.15);
+            dim = 0.68;
+          }
+          // Dust lanes. Signed angular offset from the nearest arm ridge, in
+          // units of the arm width; a narrow band on the concave side of each
+          // arm is where the molecular gas and dust sit, so stars behind it are
+          // extinguished. This is the dark thread that makes an arm read as an
+          // arm rather than a stripe.
+          var dd = ph - ridge;
+          dd -= Math.round(dd / sep) * sep;
+          var e = dd / w;
+          if (e > 0.32 && e < 0.80) dim *= 1.0 - 0.55 * af;
+          // Smooth outer truncation so the disk fades away instead of ending.
+          var tap = sat((RMAX - r) / 1.0);
+          dim *= 0.25 + 0.75 * tap * tap;
+        }
+        // Mass-temperature relation for the main sequence, then the
+        // mass-luminosity relation L ~ M^3.5. The dynamic range is 10^7, so it
+        // is compressed by fractional powers — apparent radius ~ L^0.10 and
+        // surface brightness ~ L^0.17 — which still leaves the hot blue giants
+        // several times bigger and brighter than the red dwarfs around them.
+        var mass = 0.18 * Math.pow(10, 2.05 * temp);
+        var lum = Math.pow(mass, 3.5);
+        pos[i * 3] = r; pos[i * 3 + 1] = y; pos[i * 3 + 2] = ph;
+        st[i * 3] = 0.0112 * SZ * (0.85 + 1.95 * Math.pow(lum, 0.10));
+        st[i * 3 + 1] = temp;
+        st[i * 3 + 2] = dim * (0.020 + 0.115 * Math.pow(lum, 0.17));
+      }
+
+      var geo = new T.BufferGeometry();
+      geo.setAttribute("position", new T.BufferAttribute(pos, 3));
+      geo.setAttribute("aStar", new T.BufferAttribute(st, 3));
+      geo.boundingSphere = new T.Sphere(new T.Vector3(0, 0, 0), 6.0);
+
+      var mat = new T.ShaderMaterial({
+        uniforms: {
+          uTime: { value: 0 },
+          uSpin: { value: 0.1 * (o.spin === undefined ? 1 : o.spin) },
+          uCore: { value: 0.4 },
+          uPx: { value: 500 },
+          uTint: { value: Math.max(0, Math.min(1, o.tint === undefined ? 0.34 : o.tint)) },
+          uCool: { value: pc(0) }, uWarm: { value: pc(1) }, uHot: { value: pc(2) },
+        },
+        vertexShader: [
+          "attribute vec3 aStar;",
+          "uniform float uTime, uSpin, uCore, uPx, uTint;",
+          "uniform vec3 uCool, uWarm, uHot;",
+          "varying vec3 vCol; varying float vI;",
+          // Blackbody locus, ~2500 K red -> 5800 K white -> 20000 K blue.
+          "vec3 bb(float t){",
+          "  vec3 a=vec3(1.00,0.36,0.09), b=vec3(1.00,0.64,0.33), c=vec3(1.00,0.93,0.86);",
+          "  vec3 d=vec3(0.80,0.86,1.00), e=vec3(0.60,0.71,1.00);",
+          "  if(t<0.30) return mix(a,b,t/0.30);",
+          "  if(t<0.58) return mix(b,c,(t-0.30)/0.28);",
+          "  if(t<0.82) return mix(c,d,(t-0.58)/0.24);",
+          "  return mix(d,e,(t-0.82)/0.18);",
+          "}",
+          "void main(){",
+          "  float r = position.x, hgt = position.y, ph = position.z;",
+          // Flat rotation curve: v(r)=v0*r/(r+rc) -> omega=v/r=v0/(r+rc).
+          "  float ang = ph + uTime * (uSpin / (r + uCore));",
+          "  vec3 p = vec3(cos(ang)*r, hgt, sin(ang)*r);",
+          "  vec4 mv = modelViewMatrix * vec4(p, 1.0);",
+          "  gl_Position = projectionMatrix * mv;",
+          "  float w = max(gl_Position.w, 0.02);",
+          "  float px = aStar.x * uPx / w;",           // perspective 1/w scaling
+          "  gl_PointSize = clamp(px, 1.0, 16.0);",
+          "  float sub = min(px, 1.0);",               // sub-pixel stars dim, not shrink
+          "  vec3 t = bb(aStar.y);",
+          "  vec3 q = aStar.y < 0.5 ? mix(uCool, uWarm, aStar.y*2.0)",
+          "                        : mix(uWarm, uHot, (aStar.y-0.5)*2.0);",
+          "  vCol = mix(t, t*0.35 + q*0.8, uTint);",
+          "  vI = aStar.z * sub * sub;",
+          "}",
+        ].join("\n"),
+        fragmentShader: [
+          "precision mediump float;",
+          "varying vec3 vCol; varying float vI;",
+          "void main(){",
+          "  vec2 q = gl_PointCoord - 0.5;",
+          "  float d2 = dot(q, q);",
+          "  if (d2 > 0.25) discard;",                 // round stars, never square
+          "  float a = 1.0 - d2 * 4.0;",
+          "  a = a * a * (0.35 + 0.65 * a);",          // soft airy-ish core
+          "  gl_FragColor = vec4(vCol * vI, a * vI);",
+          "}",
+        ].join("\n"),
+        blending: T.AdditiveBlending,
+        depthTest: false,
+        depthWrite: false,
+        transparent: true,
+      });
+
+      var stars = new T.Points(geo, mat);
+      stars.frustumCulled = false;
+      scene.add(stars);
+
+      var az = 0.65;
+      var el = (Math.max(6, Math.min(80, o.tilt || 36)) * Math.PI) / 180;
+      var elT = el;
+      function place() {
+        var R = 3.9;
+        cam.position.set(R * Math.cos(el) * Math.cos(az), R * Math.sin(el), R * Math.cos(el) * Math.sin(az));
+        cam.lookAt(0, -0.16, 0);
+      }
+      place();
+
+      return {
+        resize: function (w, hh) {
+          renderer.setPixelRatio(h.dpr);
+          renderer.setSize(w, hh, false);
+          cam.aspect = Math.max(0.2, w / hh);
+          cam.updateProjectionMatrix();
+          // gl_PointSize is in framebuffer pixels, so DPR belongs in here.
+          mat.uniforms.uPx.value = 0.5 * hh * h.dpr / Math.tan((FOV * 0.5 * Math.PI) / 180);
+        },
+        update: function (op) {
+          if (op.spin !== undefined) mat.uniforms.uSpin.value = 0.1 * op.spin;
+          if (op.tint !== undefined) mat.uniforms.uTint.value = op.tint;
+          if (op.background) renderer.setClearColor(new T.Color(op.background), 1);
+          if (op.tilt !== undefined) elT = (op.tilt * Math.PI) / 180;
+        },
+        draw: function (t, dt) {
+          mat.uniforms.uTime.value = t;
+          az = 0.65 + t * 0.035;                       // slow azimuthal drift
+          if (h.mouse && h.mouse.active) {
+            // Mouse height sweeps the view from near face-on to near edge-on.
+            var my = Math.max(0, Math.min(1, h.mouse.y / Math.max(1, h.height)));
+            elT = 1.18 + (0.06 - 1.18) * my;
+          }
+          var k = Math.min(1, (dt || 0.016) * 2.5);
+          el += (elT - el) * k;
+          place();
+          renderer.render(scene, cam);
+        },
+        destroy: function () { threeDispose(scene, [mat, geo, renderer]); },
+      };
+    },
+  });
+
+  /* ringedWorld — a ringed gas giant with real single-scattering optics. Four
+   * systems on one scene graph: a 1024x512 DataTexture of domain-warped tiling
+   * noise banded by latitude (zonal belts, not a marble); a Rayleigh shell marched
+   * 16 view samples deep with a 5-step solar march and chromatic Beer-Lambert
+   * extinction, so the limb is blue and the terminator reddens because the light
+   * reaching it took the longest path through the air; an annulus with radial
+   * optical depth, ringlets and a Cassini-style gap; and — the point of the scene —
+   * MUTUAL SHADOWING computed analytically in both directions (the blocks marked
+   * SHADOW), the rings darkening the planet and the planet darkening the rings out
+   * of one shared ringTau(), so the shadow carries the gap structure with it.
+   * Everything renders into a half-float target, tonemapped once at the end so the
+   * additive atmosphere composites in linear light.
+   */
+  registerThree("ringedWorld", {
+    defaults: {
+      colors: ["#f7e7c8", "#d59a5c", "#7a4f34", "#cfe0ff"],
+      background: "#03040a",
+      bands: 9.0,          // zonal band count
+      ringInner: 1.34,
+      ringOuter: 2.44,
+      ringTau: 0.74,       // vertical optical depth of the densest ringlets
+      spin: 0.055,         // planet rotation, texture widths per second
+      sunElev: 15.5,       // degrees above the ring plane
+      haze: 0.34,          // overlying-haze extinction -> limb darkening
+      sun: 4.0,
+      exposure: 1.05,
+      distance: 4.55,
+    },
+
+    scene: function (T, h) {
+      var renderer = threeRenderer(T, h);
+      var o = h.opts;
+      var pal = paletteOf(o, ["#f7e7c8", "#d59a5c", "#7a4f34", "#cfe0ff"]);
+      function lin(c) { return new T.Vector3(Math.pow(c.r / 255, 2.2), Math.pow(c.g / 255, 2.2), Math.pow(c.b / 255, 2.2)); }
+      function P(i) { return lin(pal[i % pal.length]); }
+      var bg = lin(hexToRgb(o.background || "#03040a"));
+
+      /* ---- CPU cloud deck: tiling value noise, banded by latitude ---------- */
+      var TW = 1024, TH = 512, G = 256, GM = 255;
+      var lat0 = new Float32Array(G * G), sd = 20240719;
+      for (var i = 0; i < lat0.length; i++) { sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0; lat0[i] = sd / 4294967296; }
+      function gv(x, y, m, s) { return lat0[((((x & m) + s) & GM) << 8) | ((y + s * 7) & GM)]; }
+      function vn(x, y, m, s) {           // bilinear value noise, period (m+1) in x
+        var xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi;
+        fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+        var a = gv(xi, yi, m, s) * (1 - fx) + gv(xi + 1, yi, m, s) * fx;
+        var b = gv(xi, yi + 1, m, s) * (1 - fx) + gv(xi + 1, yi + 1, m, s) * fx;
+        return a + (b - a) * fy;
+      }
+      // sy < 1 makes each octave vary fast in longitude and slowly in latitude,
+      // which is what stretches every eddy into a belt-parallel streak. `per` must
+      // be a power of two or the wrap in u grows a seam down the terminator.
+      function fbm(u, v, per, sy, s, oct) {
+        var amp = 0.5, t = 0, nrm = 0, p = per;
+        for (var k = 0; k < oct; k++) { t += amp * vn(u * p, v * p * sy, p - 1, s + k * 13); nrm += amp; amp *= 0.5; p *= 2; }
+        return t / nrm;
+      }
+      var data = new Uint8Array(TW * TH * 4), ptr = 0, nb = Math.max(3, o.bands);
+      var SU = [0.28, 0.72, 0.06], SV = [0.36, 0.60, 0.66], SR = [0.075, 0.045, 0.032];
+      for (var j = 0; j < TH; j++) {
+        var v = (j + 0.5) / TH, phi = (v - 0.5) * Math.PI;
+        for (var ii = 0; ii < TW; ii++) {
+          var u = (ii + 0.5) / TW;
+          // shear the latitude coordinate: belt boundaries buckle and braid along
+          // their own length, the way a shear instability rolls up in a jet stream
+          var y = phi + (fbm(u, v, 8, 0.30, 1, 4) - 0.5) * 0.105 + (fbm(u, v, 32, 0.30, 2, 3) - 0.5) * 0.038;
+          var q = 0.5 + 0.5 * (0.60 * Math.sin(y * nb) + 0.30 * Math.sin(y * nb * 1.9 + 1.3) + 0.34 * Math.sin(y * nb * 0.44 - 0.6));
+          q += (fbm(u, v, 32, 0.22, 3, 4) - 0.5) * 0.26;
+          var pole = Math.max(0, (Math.abs(phi) / 1.5708 - 0.62) / 0.38);
+          q = q * (1 - pole * pole) + 0.30 * pole * pole;   // darker polar hoods
+          var st = 0;                                       // anticyclonic ovals
+          for (var k2 = 0; k2 < 3; k2++) {
+            var du = u - SU[k2]; if (du > 0.5) du -= 1; if (du < -0.5) du += 1;
+            var dv = (v - SV[k2]) * 2.1, rr = Math.sqrt(du * du + dv * dv) / SR[k2];
+            if (rr < 1.7) {                                 // swirl the fine noise
+              var m = (1 - rr / 1.7) * (1 - rr / 1.7), ang = Math.atan2(dv, du) + rr * 1.9;
+              st = Math.max(st, m);
+              q += m * (0.30 + 0.34 * (vn(Math.cos(ang) * 9 + 40, Math.sin(ang) * 9 + rr * 5, 255, 7) - 0.5));
+            }
+          }
+          q = q < 0 ? 0 : q > 1 ? 1 : q;
+          data[ptr++] = (q * 255) | 0;                      // R: band / cloud albedo
+          data[ptr++] = (fbm(u, v, 64, 0.18, 5, 3) * 255) | 0;   // G: micro-contrast
+          data[ptr++] = (st * 255) | 0; data[ptr++] = 255;       // B: storm mask
+        }
+      }
+      var map = new T.DataTexture(data, TW, TH, T.RGBAFormat);
+      map.wrapS = T.RepeatWrapping; map.wrapT = T.ClampToEdgeWrapping;
+      map.minFilter = T.LinearMipmapLinearFilter; map.magFilter = T.LinearFilter;
+      map.generateMipmaps = true; map.needsUpdate = true;
+
+      /* ---- shared uniforms + the one density function both shadows use ----- */
+      var uL = { value: new T.Vector3(1, 0, 0) }, uCam = { value: new T.Vector3() };
+      var uRi = { value: o.ringInner }, uRo = { value: o.ringOuter }, uTauK = { value: o.ringTau };
+      var uSpin = { value: 0 }, uSun = { value: o.sun }, uIce = { value: P(3) };
+      var VERT = "out vec3 vP; void main(){ vP=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }";
+
+      // Radial optical depth of the sheet. The ring material AND the planet's
+      // shadow term both call this, so the shadow inherits every gap.
+      var RINGD = [
+        "uniform float uRi, uRo, uTauK;",
+        "float h11(float x){ return fract(sin(x*127.1)*43758.5453); }",
+        "float vn1(float x){ float i=floor(x), f=fract(x); f=f*f*(3.0-2.0*f); return mix(h11(i),h11(i+1.0),f); }",
+        "float ringTau(float r){",
+        "  if (r < uRi || r > uRo) return 0.0;    float x = (r - uRi)/(uRo - uRi);",
+        // Band-limit the fine octaves to the screen footprint of one radial step.
+        // Both have a mean of 1, so fading them where they cannot be resolved kills
+        // the moire without shifting the sheet's average density.
+        "  float fw = fwidth(x)*1.7;",
+        "  float d = 0.58 + 0.42*sin(x*7.5 - 0.8);",                                       // A/B plateaus
+        "  d *= mix(1.0, 0.72 + 0.58*vn1(x*27.0 + 3.1), 1.0 - smoothstep(0.0, 0.075, fw));",  // ringlets
+        "  d *= mix(1.0, 0.66 + 0.68*vn1(x*104.0),      1.0 - smoothstep(0.0, 0.034, fw));",  // grain
+        "  d *= smoothstep(0.022, 0.070, abs(x - 0.47));",                                 // Cassini gap
+        "  float g = (x - 0.80)/0.013; d *= 1.0 - 0.85*exp(-g*g);",                        // Encke gap
+        "  return max(d*smoothstep(0.0,0.05,x)*smoothstep(1.0,0.93,x), 0.0) * uTauK;",
+        "}"].join("\n");
+
+      var scene = new T.Scene();
+      var cam = new T.PerspectiveCamera(38, h.width / Math.max(1, h.height), 0.05, 300);
+
+      /* ---- planet --------------------------------------------------------- */
+      var pu = {
+        uMap: { value: map }, uL: uL, uCam: uCam, uSpin: uSpin, uSun: uSun,
+        uRi: uRi, uRo: uRo, uTauK: uTauK, uIce: uIce, uHaze: { value: o.haze },
+        uC0: { value: P(0) }, uC1: { value: P(1) }, uC2: { value: P(2) },
+        // storm tint: the belt colour pushed brighter and redder, still palette-derived
+        uHot: { value: P(1).clone().multiply(new T.Vector3(1.75, 1.05, 0.72)) },
+      };
+      var planetMat = new T.ShaderMaterial({
+        glslVersion: T.GLSL3, uniforms: pu,
+        vertexShader: "out vec2 vUv; out vec3 vP;\nvoid main(){ vUv=uv; vP=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
+        fragmentShader: ["precision highp float;", "uniform sampler2D uMap;",
+          "uniform vec3 uL,uCam,uC0,uC1,uC2,uHot,uIce; uniform float uSpin,uSun,uHaze;",
+          "in vec2 vUv; in vec3 vP; out vec4 outColor;", RINGD,
+          /* SHADOW #1 — THE RINGS ONTO THE PLANET.
+             Walk from the surface point toward the sun. The ring plane is y = 0, so
+             the crossing is at s = -p.y/L.y; if that lands inside the annulus the
+             sheet is between this point and the sun. The slant path through a sheet
+             of vertical depth tau is tau/sin(elevation) = tau/|L.y|, which is why a
+             low sun throws a much blacker ring shadow than a high one. */
+          "float ringShadow(vec3 p){",
+          "  if (abs(uL.y) < 1e-4) return 1.0;   float s = -p.y/uL.y;",
+          "  if (s <= 0.0) return 1.0;",                     // plane is anti-sunward
+          "  return exp(-ringTau(length((p + uL*s).xz))/max(abs(uL.y), 0.05));",
+          "}",
+          "void main(){",
+          "  vec3 n = normalize(vP);   vec4 tx = texture(uMap, vec2(vUv.x + uSpin, vUv.y));",
+          "  vec3 alb = mix(mix(uC2, uC1, smoothstep(0.0,0.54,tx.r)), uC0, smoothstep(0.46,1.0,tx.r));",
+          "  alb = mix(alb, uHot, tx.b*0.80) * (0.84 + 0.30*tx.g);   float nl = dot(n, uL);",
+          // wrapped diffuse: a deep scattering atmosphere carries light past the
+          // geometric terminator, so the day/night edge is soft, never a hard step
+          "  float wrap = clamp((nl + 0.14)/1.14, 0.0, 1.0), li = wrap*wrap;",
+          // limb darkening as Beer-Lambert extinction of the overlying haze along
+          // the slant view path — 1/mu air masses, so the limb goes dark smoothly
+          "  float mu = clamp(dot(n, normalize(uCam - vP)), 0.0, 1.0);",
+          "  float ld = exp(-uHaze*(1.0/max(mu,0.09) - 1.0));",
+          "  vec3 c = alb*(li*ld*ringShadow(vP)*uSun + 0.010);",
+          "  outColor = vec4(c + alb*uIce*0.055*smoothstep(-0.55,0.25,-nl), 1.0);",   // + ringshine
+          "}"].join("\n"),
+      });
+      scene.add(new T.Mesh(new T.SphereGeometry(1, 128, 80), planetMat));
+
+      /* ---- Rayleigh shell -------------------------------------------------- */
+      var RA = 1.105, au = {
+        uL: uL, uCam: uCam, uBeta: { value: new T.Vector3(2.60, 6.10, 15.5) },
+        uSky: { value: P(3) }, uRa: { value: RA }, uHs: { value: 0.030 }, uSunI: { value: 5.6 },
+      };
+      var airMat = new T.ShaderMaterial({
+        glslVersion: T.GLSL3, uniforms: au, transparent: true, blending: T.AdditiveBlending,
+        side: T.BackSide, depthTest: false, depthWrite: false, vertexShader: VERT,
+        fragmentShader: ["precision highp float;",
+          "uniform vec3 uL,uCam,uBeta,uSky; uniform float uRa,uHs,uSunI;",
+          "in vec3 vP; out vec4 outColor;",
+          "vec2 sph(vec3 ro, vec3 rd, float r){ float b=dot(ro,rd), c=dot(ro,ro)-r*r, d=b*b-c;",
+          "  if (d < 0.0) return vec2(1.0,-1.0); d=sqrt(d); return vec2(-b-d,-b+d); }",
+          "float dns(vec3 p){ return exp(-(length(p)-1.0)/uHs); }",
+          // solar optical depth from a sample: 5 steps out to the shell, plus the
+          // planet's own shadow as a soft cylinder (a hard test bands the terminator)
+          "float odSun(vec3 p){",
+          "  float sc = -dot(p, uL), od = 0.0, f = sph(p, uL, uRa).y/5.0;",
+          "  float occ = sc > 0.0 ? smoothstep(0.985, 1.030, length(p + uL*sc)) : 1.0;",
+          "  for (int i=0;i<5;i++) od += dns(p + uL*(f*(float(i)+0.5)));",
+          "  return od*f + (1.0 - occ)*40.0;",
+          "}",
+          "void main(){",
+          "  vec3 ro = uCam, rd = normalize(vP - uCam);   vec2 a = sph(ro, rd, uRa);",
+          "  if (a.y <= a.x) discard;",
+          "  float t0 = max(a.x, 0.0), t1 = a.y;   vec2 s = sph(ro, rd, 1.0);",
+          "  if (s.y > 0.0 && s.x > t0) t1 = min(t1, s.x);",       // stop at the cloud deck
+          "  float mu = dot(rd, uL), ds = (t1-t0)/16.0, odV = 0.0;",
+          "  vec3 acc = vec3(0.0), beta = uBeta*normalize(uSky+0.35)*1.7;",
+          "  for (int i=0;i<16;i++){",
+          "    vec3 p = ro + rd*(t0 + ds*(float(i)+0.5));   float d = dns(p)*ds; odV += d;",
+          // chromatic extinction over solar path + view path: blue is scrubbed
+          // first, so the long grazing paths leave the warm reddened terminator band
+          "    acc += d*exp(-beta*(odSun(p) + odV));",
+          "  }",
+          "  outColor = vec4(acc*beta*(0.0596831*(1.0+mu*mu))*uSunI, 1.0);",   // 3/16pi phase
+          "}"].join("\n"),
+      });
+      var air = new T.Mesh(new T.SphereGeometry(RA, 72, 48), airMat);
+      air.renderOrder = 2; scene.add(air);
+
+      /* ---- rings: a flat annulus built directly in the equatorial plane ---- */
+      var SEG = 320, pos = [], idx = [];
+      for (var ri = 0; ri < 2; ri++) for (var si = 0; si <= SEG; si++) {
+        // distinct names: `ang`/`rr` are already var-declared in the cloud-texture
+        // block above, and var is function-scoped.
+        var rAng = si / SEG * Math.PI * 2, rRad = ri ? o.ringOuter : o.ringInner;
+        pos.push(Math.cos(rAng) * rRad, 0, Math.sin(rAng) * rRad);
+      }
+      for (var s2 = 0; s2 < SEG; s2++) idx.push(s2, SEG + 1 + s2, s2 + 1, s2 + 1, SEG + 1 + s2, SEG + 2 + s2);
+      var rg = new T.BufferGeometry();
+      rg.setAttribute("position", new T.Float32BufferAttribute(pos, 3));
+      rg.setIndex(idx);
+      var ru = { uL: uL, uCam: uCam, uRi: uRi, uRo: uRo, uTauK: uTauK, uIce: uIce, uSun: uSun, uWarm: { value: P(0) } };
+      var ringMat = new T.ShaderMaterial({
+        glslVersion: T.GLSL3, uniforms: ru, transparent: true, side: T.DoubleSide,
+        depthWrite: false, vertexShader: VERT,
+        fragmentShader: ["precision highp float;",
+          "uniform vec3 uL,uCam,uIce,uWarm; uniform float uSun;",
+          "in vec3 vP; out vec4 outColor;", RINGD,
+          "void main(){",
+          "  float tau = ringTau(length(vP.xz));   if (tau <= 0.0005) discard;",
+          "  vec3 rd = normalize(vP - uCam);",
+          /* SHADOW #2 — THE PLANET ONTO THE RINGS.
+             The planet's shadow is a cylinder of radius 1 pointing down -uL. The
+             closest approach of the ray vP + s*uL to the planet centre is at
+             s = -dot(vP,uL); if that is sunward and the perpendicular miss distance
+             is under one radius, this ring point sits in the umbra. The smoothstep
+             is the penumbra the star's finite angular size would cast. */
+          "  float sc = -dot(vP, uL);   vec3 icy = mix(uIce, uWarm, 0.30);",
+          "  float shp = sc > 0.0 ? smoothstep(0.985, 1.075, length(vP + uL*sc)) : 1.0;",
+          "  float el = max(abs(uL.y), 0.02);",          // sin of the solar elevation
+          "  float alpha = 1.0 - exp(-tau/max(abs(rd.y), 0.42));",  // slant depth to the eye
+          "  float trans = exp(-tau/el);",               // sunlight surviving the sheet
+          "  float unlit = step(uL.y*(-rd.y), 0.0);",    // eye and sun on opposite faces
+          // diffuse off the lit face, plus the forward/diffracted light that reaches
+          // the shaded face — bright gaps, dark plateaus, the Cassini negative look
+          "  vec3 c = icy*shp*(0.10 + 0.85*el)*uSun*0.30*(1.0 - 0.78*unlit);",
+          "  c += icy*shp*trans*unlit*uSun*0.30 + icy*0.010;",
+          "  outColor = vec4(c, alpha);",
+          "}"].join("\n"),
+      });
+      var rings = new T.Mesh(rg, ringMat);
+      rings.renderOrder = 3; scene.add(rings);
+
+      /* ---- star field ----------------------------------------------------- */
+      var su = { uBg: { value: bg }, uCool: { value: P(3) } };
+      var skyMat = new T.ShaderMaterial({
+        glslVersion: T.GLSL3, uniforms: su, side: T.BackSide, depthWrite: false,
+        depthTest: false, vertexShader: VERT,
+        fragmentShader: ["precision highp float;", "uniform vec3 uBg,uCool;",
+          "in vec3 vP; out vec4 outColor;",
+          "float h31(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719)))*43758.5453); }",
+          "void main(){",
+          "  vec3 d = normalize(vP), c = uBg*(0.75+0.5*(d.y*0.5+0.5)) + uCool*0.004;",
+          "  for (int L=0;L<3;L++){",
+          "    float sc = L==0 ? 34.0 : (L==1 ? 58.0 : 92.0);",
+          "    vec3 g = d*sc, cel = floor(g), f = g - cel;   float br = h31(cel + float(L)*4.1);",
+          "    if (br > 0.70){",     // one jittered point per cell, so never a grid
+          "      vec3 of = clamp(vec3(h31(cel+11.7), h31(cel+23.3), h31(cel+31.9)), 0.12, 0.88);",
+          "      float dd = length(f - of);",
+          "      c += exp(-dd*dd*300.0)*(br-0.70)*3.4*mix(vec3(0.65,0.76,1.0), vec3(1.0,0.87,0.7), h31(cel+7.3));",
+          "    } }",
+          "  outColor = vec4(c, 1.0);",
+          "}"].join("\n"),
+      });
+      var sky = new T.Mesh(new T.SphereGeometry(150, 32, 24), skyMat);
+      sky.renderOrder = -1; scene.add(sky);
+
+      /* ---- half-float target, one tonemap at the end ---------------------- */
+      var rt = new T.WebGLRenderTarget(Math.max(2, h.width * h.dpr), Math.max(2, h.height * h.dpr), {
+        type: T.HalfFloatType, minFilter: T.LinearFilter, magFilter: T.LinearFilter, depthBuffer: true,
+      });
+      var qu = { uTex: { value: rt.texture }, uExp: { value: o.exposure } };
+      var quadMat = new T.ShaderMaterial({
+        glslVersion: T.GLSL3, uniforms: qu, depthTest: false, depthWrite: false,
+        vertexShader: "out vec2 vU; void main(){ vU=uv; gl_Position=vec4(position.xy,0.0,1.0); }",
+        fragmentShader: ["precision highp float;", "uniform sampler2D uTex; uniform float uExp;",
+          "in vec2 vU; out vec4 outColor;",
+          "void main(){",
+          "  vec3 c = texture(uTex, vU).rgb * uExp * (1.0 - 0.30*dot(vU-0.5, vU-0.5));",
+          "  c = (c*(2.30*c+0.05))/(c*(2.30*c+0.95)+0.16);",    // filmic, then sRGB
+          "  outColor = vec4(pow(max(c, 0.0), vec3(1.0/2.2)), 1.0);",
+          "}"].join("\n"),
+      });
+      var quadScene = new T.Scene();
+      quadScene.add(new T.Mesh(new T.PlaneGeometry(2, 2), quadMat));
+      var quadCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+      /* ---- animation ------------------------------------------------------ */
+      var az = 0.9, el = -0.245, origin = new T.Vector3();
+      function place(t) {
+        var my = h.mouse.active ? h.mouse.y / Math.max(1, h.height) : 0.52;
+        // The eye rides just BELOW the ring plane while the sun is above it, so we
+        // face the shadowed hemisphere and look at the rings' unlit side.
+        el += (-0.055 - (1 - my) * 0.40 - el) * 0.05;        // mouse -> inclination
+        var A = az + t * 0.048, d = o.distance;              // slow orbital drift
+        cam.position.set(Math.cos(A) * Math.cos(el) * d, Math.sin(el) * d, Math.sin(A) * Math.cos(el) * d);
+        cam.lookAt(origin);
+        uCam.value.copy(cam.position);
+        // The star holds a moderate phase angle to the eye so the lit hemisphere
+        // stays presented; librating both angles walks the ring shadow across the
+        // disk instead of parking it on the far side.
+        var se = o.sunElev * Math.PI / 180 + 0.085 * Math.sin(t * 0.085);
+        var sa = A + 0.86 + 0.22 * Math.sin(t * 0.062);
+        uL.value.set(Math.cos(sa) * Math.cos(se), Math.sin(se), Math.sin(sa) * Math.cos(se)).normalize();
+        uSpin.value = t * o.spin;
+      }
+      place(0);
+
+      return {
+        resize: function (w, hh) {
+          renderer.setPixelRatio(h.dpr); renderer.setSize(w, hh, false);
+          rt.setSize(Math.max(2, w * h.dpr), Math.max(2, hh * h.dpr));
+          cam.aspect = w / Math.max(1, hh); cam.updateProjectionMatrix();
+        },
+        update: function (n) {
+          if (n.exposure != null) qu.uExp.value = n.exposure;
+          if (n.ringTau != null) uTauK.value = n.ringTau;
+          if (n.sun != null) uSun.value = n.sun;
+          if (n.haze != null) pu.uHaze.value = n.haze;
+          if (n.sunElev != null) o.sunElev = n.sunElev;
+          if (n.distance != null) o.distance = n.distance;
+          if (n.spin != null) o.spin = n.spin;
+        },
+        draw: function (t) {
+          place(h.reduced ? 0 : t);
+          renderer.setRenderTarget(rt); renderer.render(scene, cam);
+          renderer.setRenderTarget(null); renderer.render(quadScene, quadCam);
+        },
+        destroy: function () {
+          threeDispose(quadScene, []);
+          threeDispose(scene, [map, planetMat, airMat, ringMat, skyMat, quadMat, rt, renderer]);
+        },
+      };
+    },
+  });
+
+  /* gravitySim — a real GPGPU gravitational integrator, not a fragment trick.
+   * Particle state (position + velocity) lives in floating-point render targets;
+   * once the initial conditions are seeded the CPU never touches a particle again.
+   * Two Plummer-softened masses ride a genuine *eccentric* Kepler orbit (Newton
+   * iteration on M = E - e sin E each step), so the pair plunges through pericentre
+   * once a period and raises fresh tidal bridges and tails; a diffuse Plummer halo
+   * at the barycentre keeps stripped material weakly bound; the pointer is a
+   * movable third mass. Integration is SYMPLECTIC — kick then drift (v += a(x)dt
+   * in one pass, then x += v dt in the next, reading the freshly written velocity).
+   * That ordering is the whole ballgame: explicit Euler with the same step pumps in
+   * energy every revolution and the disks unwind into numerical junk within
+   * seconds, while the symplectic map conserves a shadow Hamiltonian and the orbits
+   * stay closed for as long as the tab is open. dt is clamped so a stalled frame
+   * cannot blow the integrator up. Light accumulates in a half-float buffer and is
+   * tone-mapped in a resolve pass — that is what keeps a huge density range legible
+   * instead of clipping every core to a white blob. */
+  var GS_QV = "varying vec2 vUv;\nvoid main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
+  // Plummer softening: |a| = GM r / (r^2+eps^2)^1.5, bounded as r -> 0, so a
+  // particle threading a centre is slung out instead of reaching infinity.
+  var GS_FORCE =
+    "uniform sampler2D tPos;uniform sampler2D tVel;uniform vec4 uAtt[3];" +
+    "uniform float uEps2,uDt,uHalo,uHaloEps2;varying vec2 vUv;void main(){" +
+    "vec3 x=texture2D(tPos,vUv).xyz;vec3 v=texture2D(tVel,vUv).xyz;vec3 a=vec3(0.0);" +
+    "for(int i=0;i<3;i++){vec3 d=uAtt[i].xyz-x;float rr=dot(d,d)+uEps2;" +
+    "a+=d*(uAtt[i].w/(rr*sqrt(rr)));}float hr=dot(x,x)+uHaloEps2;" +
+    "a-=x*(uHalo/(hr*sqrt(hr)));gl_FragColor=vec4(v+a*uDt,1.0);}";
+  var GS_DRIFT =
+    "uniform sampler2D tPos;\nuniform sampler2D tVel;\nuniform float uDt;\nvarying vec2 vUv;\n" +
+    "void main(){ gl_FragColor = vec4(texture2D(tPos, vUv).xyz + texture2D(tVel, vUv).xyz * uDt, 1.0); }";
+  // Each vertex reads its own texel of the current position/velocity textures.
+  // Fast particles are the crowded ones, so shrinking them keeps cores from
+  // flattening into featureless discs and lets the faint outer streams read.
+  var GS_PTV =
+    "uniform sampler2D tPos;uniform sampler2D tVel;uniform float uSize,uVMax,uUseTex,uDpr;" +
+    "attribute vec2 aRef;attribute float aSpd;varying float vS;void main(){" +
+    "vec3 p=position;float sp=aSpd;" +
+    "if(uUseTex>0.5){p=texture2D(tPos,aRef).xyz;sp=length(texture2D(tVel,aRef).xyz);}" +
+    "vS=clamp(sp/uVMax,0.0,1.0);vec4 mv=modelViewMatrix*vec4(p,1.0);gl_Position=projectionMatrix*mv;" +
+    "gl_PointSize=clamp(uSize*uDpr*(190.0/max(1.0,-mv.z))*(1.2-0.35*vS),1.0,4.5);}";
+  var GS_PTF =
+    "uniform vec3 uC0,uC1,uC2,uC3;uniform float uGlow,uEnc;varying float vS;void main(){" +
+    "vec2 q=gl_PointCoord-0.5;float d=dot(q,q);if(d>0.25)discard;" +
+    "float m=exp(-d*13.0)*(1.0-d*4.0);vec3 c=mix(uC0,uC1,smoothstep(0.0,0.34,vS));" +
+    "c=mix(c,uC2,smoothstep(0.3,0.68,vS));c=mix(c,uC3,smoothstep(0.62,1.0,vS));" +
+    "c*=(0.02+2.4*vS*vS*vS)*uGlow*m;" +
+    "if(uEnc>0.5)c=pow(max(c,0.0),vec3(0.4545));gl_FragColor=vec4(c,1.0);}";
+  var GS_BG =
+    "uniform vec3 uBg,uHalo;uniform float uAsp,uEnc;varying vec2 vUv;void main(){" +
+    "vec2 p=vUv-0.5;p.x*=uAsp;float r=length(p);" +
+    "vec3 c=uBg+uHalo*(0.0030*exp(-r*r*2.2)+0.0022*exp(-r*4.5));" +
+    "if(uEnc>0.5)c=pow(max(c,0.0),vec3(0.4545));gl_FragColor=vec4(c,1.0);}";
+  // Quarter-res 25-tap gather: the downsample does most of the blurring, so one
+  // pass buys a convincing core glow for almost nothing on software GL.
+  var GS_BLOOM =
+    "uniform sampler2D tSrc;uniform vec2 uTexel;varying vec2 vUv;void main(){" +
+    "vec3 s=vec3(0.0);float wsum=0.0;for(int y=-2;y<=2;y++)for(int x=-2;x<=2;x++){" +
+    "vec2 d=vec2(float(x),float(y));float w=exp(-dot(d,d)*0.32);" +
+    "s+=max(texture2D(tSrc,vUv+d*uTexel).rgb,0.0)*w;wsum+=w;}gl_FragColor=vec4(s/wsum,1.0);}";
+  // Luminance-weighted Reinhard: compresses the range without bleaching a bright
+  // core to pure white the way per-channel clipping does, then encodes sRGB.
+  var GS_RESOLVE =
+    "uniform sampler2D tSrc;uniform sampler2D tBloom;uniform float uExp,uBloom;varying vec2 vUv;" +
+    "void main(){vec3 c=(max(texture2D(tSrc,vUv).rgb,0.0)+texture2D(tBloom,vUv).rgb*uBloom)*uExp;" +
+    "float L=dot(c,vec3(0.2126,0.7152,0.0722));c*=(L/(1.0+L))/max(L,1e-5);" +
+    "gl_FragColor=vec4(pow(min(c,vec3(1.0)),vec3(0.4545)),1.0);}";
+  var GS_STARV = "varying vec3 vN;void main(){vN=normalize(normalMatrix*normal);" +
+    "gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}";
+  var GS_STARF = "uniform vec3 uC;uniform float uEnc;varying vec3 vN;void main(){" +
+    "vec3 c=uC*(0.3+2.2*pow(max(0.0,vN.z),1.5));" +
+    "if(uEnc>0.5)c=pow(c,vec3(0.4545));gl_FragColor=vec4(c,1.0);}";
+
+  registerThree("gravitySim", {
+    defaults: {
+      grid: 160, speed: 1, mass: 9000, separation: 40, eccentricity: 0.45,
+      softening: 2.2, pointSize: 1.0, glow: 1, exposure: 1.6, bloom: 0.45, interactive: true,
+      colors: ["#2f4bff", "#22d3ee", "#ffd08a", "#fff3df"], background: "#03040a",
+    },
+    scene: function (T, h) {
+      var renderer = threeRenderer(T, h);
+      var gl = renderer.getContext();
+      // Float colour attachments are not universal. Probe before committing to the
+      // GPGPU path — without them every FBO reads back black and the scene dies.
+      var gpu = !!(gl.getExtension("EXT_color_buffer_float") || gl.getExtension("WEBGL_color_buffer_float"));
+      var o = h.opts, pal = paletteOf(o, ["#2f4bff", "#22d3ee", "#ffd08a", "#fff3df"]);
+      var N = gpu ? Math.max(32, Math.min(160, Math.round(o.grid || 160))) : 44, COUNT = N * N;
+      // sRGB hex -> linear light, or a #03040a background becomes a blue wash
+      function lin(i) {
+        var c = pal[Math.round((i / 3) * (pal.length - 1))];
+        return new T.Vector3(Math.pow(c.r / 255, 2.2), Math.pow(c.g / 255, 2.2), Math.pow(c.b / 255, 2.2));
+      }
+      var bc = hexToRgb(o.background || "#03040a");
+      var bgv = new T.Vector3(Math.pow(bc.r / 255, 2.2), Math.pow(bc.g / 255, 2.2), Math.pow(bc.b / 255, 2.2));
+      var MASS = o.mass || 9000, A = o.separation || 40, EPS = o.softening || 2.2;
+      var ECC = Math.max(0, Math.min(0.7, o.eccentricity === undefined ? 0.45 : o.eccentricity));
+      var OM = Math.sqrt(2 * MASS / (A * A * A));          // Kepler mean motion
+      var HALO = 1.1 * MASS, HEPS = 30, VMAX = Math.sqrt(MASS / (EPS * 1.2)) + 10;
+      var RMIN = 1.5, RMAX = A * 0.30, TILT = 0.22, enc = gpu ? 0 : 1;
+
+      // ---- the binary: true Kepler two-body solution, phased to start at apo ----
+      var hp = new T.Vector3(), hv = new T.Vector3(), t2 = new T.Vector3();
+      function hostAt(tt, out) {
+        var Ma = Math.PI + tt * OM, E = Ma, q;
+        for (q = 0; q < 5; q++) E -= (E - ECC * Math.sin(E) - Ma) / (1 - ECC * Math.cos(E));
+        var r = A * (1 - ECC * Math.cos(E)) * 0.5;
+        var nu = Math.atan2(Math.sqrt(1 - ECC * ECC) * Math.sin(E), Math.cos(E) - ECC);
+        return out.set(Math.cos(nu) * r, 0, Math.sin(nu) * r);
+      }
+      hostAt(0, hp); hostAt(0.02, hv); hostAt(-0.02, t2);
+      hv.sub(t2).multiplyScalar(25);   // central difference -> host velocity
+
+      // ---- initial conditions: two inclined, near-circular co-moving disks -----
+      var P = new Float32Array(COUNT * 4), V = new Float32Array(COUNT * 4);
+      var i, k, ct, st;
+      for (i = 0; i < COUNT; i++) {
+        var sg = (i % 2) === 0 ? 1 : -1;
+        var r = RMIN + (RMAX - RMIN) * Math.pow(Math.random(), 0.75);
+        var an = Math.random() * Math.PI * 2, zz = (Math.random() + Math.random() - 1) * 0.06 * r;
+        // exact circular speed for the softened potential, +-3% scatter
+        var vc = Math.sqrt(MASS * r * r / Math.pow(r * r + EPS * EPS, 1.5)) * (0.97 + Math.random() * 0.06);
+        var lx = r * Math.cos(an), lz = r * Math.sin(an);
+        var wx = -Math.sin(an) * vc, wz = Math.cos(an) * vc;
+        ct = Math.cos(TILT * sg); st = Math.sin(TILT * sg); k = i * 4;
+        P[k] = lx + sg * hp.x; P[k + 1] = zz * ct - lz * st; P[k + 2] = zz * st + lz * ct + sg * hp.z;
+        V[k] = wx + sg * hv.x; V[k + 1] = -wz * st; V[k + 2] = wz * ct + sg * hv.z;
+      }
+
+      // ---- GPGPU plumbing -----------------------------------------------------
+      var fsScene = new T.Scene(), fsCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      var quadGeo = new T.PlaneGeometry(2, 2), quad = new T.Mesh(quadGeo);
+      quad.frustumCulled = false; fsScene.add(quad);
+      function mkrt(w, hh, ty) {
+        return new T.WebGLRenderTarget(w, hh, { minFilter: T.NearestFilter, magFilter: T.NearestFilter,
+          format: T.RGBAFormat, type: ty, depthBuffer: false, stencilBuffer: false, generateMipmaps: false });
+      }
+      function pass(frag, u) {
+        return new T.ShaderMaterial({ vertexShader: GS_QV, fragmentShader: frag,
+          depthTest: false, depthWrite: false, uniforms: u });
+      }
+      function dtex(a) {
+        var t = new T.DataTexture(a, N, N, T.RGBAFormat, T.FloatType);
+        t.minFilter = t.magFilter = T.NearestFilter; t.needsUpdate = true; return t;
+      }
+      function soft(t) { t.texture.minFilter = t.texture.magFilter = T.LinearFilter; return t; }
+      var rtP = null, rtV = null, texP = null, texV = null, forceMat = null, driftMat = null;
+      var rtHDR = null, rtBloom = null, resMat = null, bloomMat = null, curP = null, curV = null, wi = 0;
+      var att = [new T.Vector4(), new T.Vector4(), new T.Vector4(0, 0, 0, 0)];
+      if (gpu) {
+        rtP = [mkrt(N, N, T.FloatType), mkrt(N, N, T.FloatType)];
+        rtV = [mkrt(N, N, T.FloatType), mkrt(N, N, T.FloatType)];
+        texP = dtex(P); texV = dtex(V); curP = texP; curV = texV;
+        rtHDR = soft(mkrt(2, 2, T.HalfFloatType)); rtBloom = soft(mkrt(2, 2, T.HalfFloatType));
+        forceMat = pass(GS_FORCE, { tPos: { value: null }, tVel: { value: null }, uAtt: { value: att },
+          uEps2: { value: EPS * EPS }, uDt: { value: 0 }, uHalo: { value: HALO }, uHaloEps2: { value: HEPS * HEPS } });
+        driftMat = pass(GS_DRIFT, { tPos: { value: null }, tVel: { value: null }, uDt: { value: 0 } });
+        bloomMat = pass(GS_BLOOM, { tSrc: { value: rtHDR.texture }, uTexel: { value: new T.Vector2(0.01, 0.01) } });
+        resMat = pass(GS_RESOLVE, { tSrc: { value: rtHDR.texture }, tBloom: { value: rtBloom.texture },
+          uExp: { value: o.exposure || 1.6 }, uBloom: { value: o.bloom === undefined ? 0.45 : o.bloom } });
+      }
+      var bgMat = pass(GS_BG, { uBg: { value: bgv }, uAsp: { value: 1 },
+        uEnc: { value: enc }, uHalo: { value: lin(1).lerp(lin(0), 0.55) } });
+
+      // ---- the visible scene graph -------------------------------------------
+      var scene = new T.Scene(), geo = new T.BufferGeometry();
+      var cam = new T.PerspectiveCamera(45, 1.7, 1, 900);
+      var ref = new Float32Array(COUNT * 2), spd = new Float32Array(COUNT), pos = new Float32Array(COUNT * 3);
+      for (i = 0; i < COUNT; i++) {
+        ref[i * 2] = ((i % N) + 0.5) / N; ref[i * 2 + 1] = (Math.floor(i / N) + 0.5) / N;
+        pos[i * 3] = P[i * 4]; pos[i * 3 + 1] = P[i * 4 + 1]; pos[i * 3 + 2] = P[i * 4 + 2];
+      }
+      geo.setAttribute("position", new T.BufferAttribute(pos, 3));
+      geo.setAttribute("aRef", new T.BufferAttribute(ref, 2));
+      geo.setAttribute("aSpd", new T.BufferAttribute(spd, 1));
+      var ptMat = new T.ShaderMaterial({
+        vertexShader: GS_PTV, fragmentShader: GS_PTF, transparent: true,
+        blending: T.AdditiveBlending, depthTest: false, depthWrite: false,
+        uniforms: { tPos: { value: null }, tVel: { value: null }, uUseTex: { value: gpu ? 1 : 0 },
+          uSize: { value: o.pointSize || 1 }, uVMax: { value: VMAX }, uDpr: { value: h.dpr },
+          uGlow: { value: o.glow === undefined ? 1 : o.glow }, uEnc: { value: enc },
+          uC0: { value: lin(0) }, uC1: { value: lin(1) }, uC2: { value: lin(2) }, uC3: { value: lin(3) } },
+      });
+      var pts = new T.Points(geo, ptMat);
+      pts.frustumCulled = false; scene.add(pts);
+      var starGeo = new T.SphereGeometry(0.8, 14, 10);
+      var starMat = new T.ShaderMaterial({ vertexShader: GS_STARV, fragmentShader: GS_STARF,
+        blending: T.AdditiveBlending, transparent: true, depthWrite: false,
+        uniforms: { uC: { value: lin(3) }, uEnc: { value: enc } } });
+      var stars = [new T.Mesh(starGeo, starMat), new T.Mesh(starGeo, starMat)];
+      scene.add(stars[0], stars[1]);
+
+      // ---- stepping -----------------------------------------------------------
+      var simT = 0, mm = 0, mp = new T.Vector3(), ray = new T.Vector3();
+      function attractors() {
+        hostAt(simT, hp); att[0].set(hp.x, 0, hp.z, MASS); att[1].set(-hp.x, 0, -hp.z, MASS);
+        att[2].set(mp.x, mp.y, mp.z, mm * MASS * 0.85);
+        stars[0].position.set(hp.x, 0, hp.z); stars[1].position.set(-hp.x, 0, -hp.z);
+      }
+      function step(dt) {
+        simT += dt; attractors();
+        if (!gpu) { cpuStep(dt); return; }
+        forceMat.uniforms.tPos.value = curP; forceMat.uniforms.tVel.value = curV;
+        forceMat.uniforms.uDt.value = dt; quad.material = forceMat;
+        renderer.setRenderTarget(rtV[wi]); renderer.render(fsScene, fsCam);
+        driftMat.uniforms.tPos.value = curP; driftMat.uniforms.tVel.value = rtV[wi].texture;
+        driftMat.uniforms.uDt.value = dt; quad.material = driftMat;
+        renderer.setRenderTarget(rtP[wi]); renderer.render(fsScene, fsCam);
+        curV = rtV[wi].texture; curP = rtP[wi].texture; wi = 1 - wi;
+        renderer.setRenderTarget(null);
+      }
+      function cpuStep(dt) {          // identical symplectic map, fallback only
+        for (var j = 0; j < COUNT; j++) {
+          var q = j * 4, ax = 0, ay = 0, az = 0, m, rr, f, in3;
+          for (m = 0; m < 4; m++) {           // 3 masses plus the halo at the origin
+            in3 = m < 3;
+            var dx = (in3 ? att[m].x : 0) - P[q], dy = (in3 ? att[m].y : 0) - P[q + 1];
+            var dz = (in3 ? att[m].z : 0) - P[q + 2];
+            rr = dx * dx + dy * dy + dz * dz + (in3 ? EPS * EPS : HEPS * HEPS);
+            f = (in3 ? att[m].w : HALO) / (rr * Math.sqrt(rr));
+            ax += dx * f; ay += dy * f; az += dz * f;
+          }
+          V[q] += ax * dt; V[q + 1] += ay * dt; V[q + 2] += az * dt;
+          P[q] += V[q] * dt; P[q + 1] += V[q + 1] * dt; P[q + 2] += V[q + 2] * dt;
+          pos[j * 3] = P[q]; pos[j * 3 + 1] = P[q + 1]; pos[j * 3 + 2] = P[q + 2];
+          spd[j] = Math.sqrt(V[q] * V[q] + V[q + 1] * V[q + 1] + V[q + 2] * V[q + 2]);
+        }
+        geo.attributes.position.needsUpdate = true; geo.attributes.aSpd.needsUpdate = true;
+      }
+      // Warm-up runs here, not in draw: reduced motion gets exactly one frame and
+      // it has to already show a post-pericentre bridge, not two pristine disks.
+      var warm = gpu ? 580 : 110;
+      for (i = 0; i < warm; i++) step(1 / 68);
+
+      function aim(t) {
+        var a = 1.12 + t * 0.05;
+        cam.position.set(Math.sin(a) * 76, 33 + Math.sin(t * 0.09) * 6, Math.cos(a) * 76);
+        cam.lookAt(0, 0, 0);
+      }
+      aim(0);
+      return {
+        resize: function (w, hh) {
+          renderer.setPixelRatio(h.dpr); renderer.setSize(w, hh, false);
+          cam.aspect = w / Math.max(1, hh); cam.updateProjectionMatrix();
+          bgMat.uniforms.uAsp.value = cam.aspect; ptMat.uniforms.uDpr.value = h.dpr;
+          if (rtHDR) {
+            var pw = Math.max(2, Math.round(w * h.dpr)), ph = Math.max(2, Math.round(hh * h.dpr));
+            var bw = Math.max(2, pw >> 2), bh = Math.max(2, ph >> 2);
+            rtHDR.setSize(pw, ph); rtBloom.setSize(bw, bh);
+            bloomMat.uniforms.uTexel.value.set(1 / bw, 1 / bh);
+          }
+        },
+        update: function (n) {
+          if (n.glow !== undefined) ptMat.uniforms.uGlow.value = n.glow;
+          if (n.pointSize !== undefined) ptMat.uniforms.uSize.value = n.pointSize;
+          if (resMat && n.exposure !== undefined) resMat.uniforms.uExp.value = n.exposure;
+          if (resMat && n.bloom !== undefined) resMat.uniforms.uBloom.value = n.bloom;
+        },
+        draw: function (t, dt) {
+          var sdt = Math.min(dt || 1 / 60, 1 / 30) * (o.speed === undefined ? 1 : o.speed);
+          // the pointer becomes a third mass; ramping it keeps streams from snapping
+          var want = (o.interactive !== false && h.mouse && h.mouse.active) ? 1 : 0;
+          if (want) {
+            ray.set((h.mouse.x / Math.max(1, h.width)) * 2 - 1, 1 - (h.mouse.y / Math.max(1, h.height)) * 2, 0.5);
+            ray.unproject(cam).sub(cam.position).normalize();
+            var kk = ray.y < -0.03 ? -cam.position.y / ray.y : 90;
+            mp.copy(cam.position).addScaledVector(ray, Math.max(6, Math.min(240, kk)));
+          }
+          mm += (want - mm) * 0.06;
+          if (!h.reduced) { step(sdt * 0.5); step(sdt * 0.5); } else attractors();
+          aim(t);
+          ptMat.uniforms.tPos.value = curP; ptMat.uniforms.tVel.value = curV;
+          renderer.setRenderTarget(gpu ? rtHDR : null);
+          quad.material = bgMat; renderer.autoClear = true; renderer.render(fsScene, fsCam);
+          renderer.autoClear = false; renderer.render(scene, cam); renderer.autoClear = true;
+          if (gpu) {
+            quad.material = bloomMat; renderer.setRenderTarget(rtBloom); renderer.render(fsScene, fsCam);
+            renderer.setRenderTarget(null);
+            quad.material = resMat; renderer.render(fsScene, fsCam);
+          }
+        },
+        destroy: function () {
+          var ex = [bgMat, ptMat, starMat, starGeo, quadGeo, renderer];
+          if (gpu) ex = ex.concat([rtP[0], rtP[1], rtV[0], rtV[1], rtHDR, rtBloom, texP, texV,
+            forceMat, driftMat, bloomMat, resMat]);
+          threeDispose(scene, ex);
+        },
+      };
+    },
+  });
+
+  /* starGlare — a hand-rolled HDR post chain (no EffectComposer, no addons).
+   * 13 render targets, 22 fullscreen passes + 1 scene render per frame:
+   *   HDR scene -> bright-pass -> 4x (13-tap downsample + separable Gaussian)
+   *   -> 4 tent upsamples, each added into the level below -> 2 anamorphic
+   *   streak passes -> composite (ghosts, radial chromatic aberration, ACES).
+   * The pyramid matters: one blur radius gives you a tight core or a wide halo,
+   * never both, and reads as a cheap glow. Summing every mip is a lens' falloff.
+   */
+  registerThree("starGlare", {
+    defaults: {
+      speed: 1,
+      bloomStrength: 1.0,
+      bloomRadius: 1.15,
+      threshold: 1.0,
+      streak: 0.7,
+      aberration: 1.0,
+      exposure: 0.9,
+      colors: ["#fff4d6", "#ffcf8a", "#a8c8ff", "#7d8dff"],
+      background: "#03040a",
+    },
+    scene: function (T, h) {
+      var renderer = threeRenderer(T, h);
+      renderer.toneMapping = T.NoToneMapping; // we tonemap in the composite
+      renderer.setClearColor(0x000000, 1);
+
+      var pal = paletteOf(h.opts, ["#fff4d6", "#ffcf8a", "#a8c8ff", "#7d8dff"]);
+      // Palette hex is sRGB; the whole chain is linear light, so linearise.
+      function lin(c) { return new T.Vector3(Math.pow(c.r / 255, 2.2), Math.pow(c.g / 255, 2.2), Math.pow(c.b / 255, 2.2)); }
+      var cStar = lin(pal[0]), cWarm = lin(pal[1 % pal.length]);
+      var cCool = lin(pal[2 % pal.length]), cDust = lin(pal[3 % pal.length]);
+      var bg = lin(hexToRgb(h.opts.background || "#03040a"));
+
+      var scene = new T.Scene();
+      var cam = new T.PerspectiveCamera(42, h.width / Math.max(1, h.height), 0.1, 400);
+      cam.position.set(0, 0, 15);
+
+      /* ---- subject: a close binary behind a dark occluding body ---- */
+      var VERT_Q = "varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.0,1.0); }";
+      var GLOW = new T.ShaderMaterial({
+        uniforms: { uC: { value: cStar }, uI: { value: 52.0 } },
+        vertexShader: "varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
+        fragmentShader:
+          "varying vec2 vUv; uniform vec3 uC; uniform float uI;" +
+          "void main(){ vec2 p=vUv*2.0-1.0; float r=length(p); if(r>1.0) discard;" +
+          " float k=max(0.0,1.0-r); float core=k*k*k*k*k*k*k*k;" +   // pow() on a clamped base
+          " float halo=exp(-r*3.4)-exp(-3.4);" +
+          " gl_FragColor=vec4(uC*uI*(core+halo*0.055),1.0); }",
+        transparent: true, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide,
+      });
+      var starGrp = new T.Group();
+      scene.add(starGrp);
+      var glowA = new T.Mesh(new T.PlaneGeometry(3.6, 3.6), GLOW), coreA = new T.Mesh(new T.SphereGeometry(0.16, 20, 14), GLOW);
+      var glowB = new T.Mesh(new T.PlaneGeometry(1.7, 1.7), GLOW.clone());
+      glowB.material.uniforms.uC.value = cWarm; glowB.material.uniforms.uI.value = 15.0;
+      var coreB = new T.Mesh(new T.SphereGeometry(0.07, 14, 10), glowB.material);
+      starGrp.add(glowA); starGrp.add(coreA); starGrp.add(glowB); starGrp.add(coreB);
+
+      // Real PBR on the occluder, lit by a point light sitting inside the star,
+      // so its limb genuinely brightens as the star swings behind it.
+      var lightC = new T.Color(pal[0].r / 255, pal[0].g / 255, pal[0].b / 255);
+      var pl = new T.PointLight(lightC, 420, 0, 2);
+      scene.add(pl);
+      scene.add(new T.AmbientLight(0x14213a, 0.35));
+      var occMat = new T.MeshStandardMaterial({ color: 0x0c1018, roughness: 0.92, metalness: 0.05 });
+      var occ = new T.Mesh(new T.SphereGeometry(2.6, 96, 64), occMat);
+      occ.position.z = 3.4;
+      scene.add(occ);
+      // Back-facing shell: the opaque body draws first and hides all of it but
+      // the sliver outside its silhouette — an atmospheric limb. Density falls
+      // off with the ray's impact parameter, not with fresnel; fresnel peaks at
+      // the OUTER edge and gives a hard-edged grey donut instead of air.
+      var atmMat = new T.ShaderMaterial({
+        uniforms: {
+          uC: { value: cCool }, uSun: { value: new T.Vector3(0, 0, -1) }, uI: { value: 2.6 },
+          uEcl: { value: 0 }, uCen: { value: new T.Vector3() }, uRb: { value: 2.6 }, uRa: { value: 3.5 },
+        },
+        vertexShader:
+          "varying vec3 vR; varying vec3 vV;" +
+          "uniform vec3 uCen;" +
+          "void main(){ vec4 wp=modelMatrix*vec4(position,1.0); vR=wp.xyz-uCen;" +
+          " vV=normalize(cameraPosition-wp.xyz); gl_Position=projectionMatrix*viewMatrix*wp; }",
+        fragmentShader:
+          "varying vec3 vR; varying vec3 vV; uniform vec3 uC; uniform vec3 uSun;" +
+          "uniform float uI; uniform float uEcl; uniform float uRb; uniform float uRa;" +
+          "void main(){ vec3 V=-vV;" +
+          " vec3 pr=vR-V*dot(vR,V); float b=length(pr);" +   // ray impact parameter
+          " float alt=clamp((b-uRb)/max(0.001,uRa-uRb),0.0,1.0);" +
+          " float dens=exp(-alt*4.5)*(1.0-alt);" +
+          // star direction projected into the screen plane: a raw dot(N,sun)
+          // has the sun's z lighting the entire ring evenly, which reads neon
+          " vec3 sd=uSun-V*dot(uSun,V); float ls=length(sd);" +
+          " float sn=(ls>1e-4&&b>1e-4)?max(0.0,dot(pr/b,sd/ls)):0.0;" +
+          " gl_FragColor=vec4(uC*uI*dens*(0.03+4.0*sn*sn*sn+0.9*uEcl),1.0); }",
+        transparent: true, blending: T.AdditiveBlending, depthWrite: false, side: T.BackSide,
+      });
+      var atm = new T.Mesh(new T.SphereGeometry(3.5, 48, 32), atmMat);
+      scene.add(atm);
+
+      /* ---- background stars + thin dust (Points, HDR colours) ---- */
+      function cloud(n, spread, sz, col, gain) {
+        var pos = new Float32Array(n * 3), sc = new Float32Array(n), sd = new Float32Array(n), cl = new Float32Array(n * 3);
+        for (var i = 0; i < n; i++) {
+          // random point inside a shell — never floor(dir*k), that paints cubes
+          var u = Math.random() * 2 - 1, a = Math.random() * TAU(), rr = spread * (0.55 + 0.45 * Math.random()), s = Math.sqrt(Math.max(0, 1 - u * u));
+          pos[i * 3] = Math.cos(a) * s * rr; pos[i * 3 + 1] = u * rr * 0.6; pos[i * 3 + 2] = Math.sin(a) * s * rr - spread * 0.35;
+          sc[i] = sz * (0.85 + Math.random() * Math.random() * 2.2); sd[i] = Math.random() * 10;
+          var mixc = Math.random() < 0.5 ? col : cCool, g = gain * (0.25 + Math.random() * Math.random() * 3.0);
+          cl[i * 3] = mixc.x * g; cl[i * 3 + 1] = mixc.y * g; cl[i * 3 + 2] = mixc.z * g;
+        }
+        var g2 = new T.BufferGeometry();
+        g2.setAttribute("position", new T.BufferAttribute(pos, 3)); g2.setAttribute("aSize", new T.BufferAttribute(sc, 1));
+        g2.setAttribute("aSeed", new T.BufferAttribute(sd, 1)); g2.setAttribute("aColor", new T.BufferAttribute(cl, 3));
+        return g2;
+      }
+      var pMat = new T.ShaderMaterial({
+        uniforms: { uScale: { value: 400 }, uTime: { value: 0 }, uSoft: { value: 3.4 } },
+        vertexShader:
+          "attribute float aSize; attribute float aSeed; attribute vec3 aColor;" +
+          "uniform float uScale; uniform float uTime; varying vec3 vC;" +
+          "void main(){ float tw=0.72+0.28*sin(uTime*1.7+aSeed*6.283); vC=aColor*tw;" +
+          " vec4 mv=modelViewMatrix*vec4(position,1.0); gl_Position=projectionMatrix*mv;" +
+          " gl_PointSize=aSize*uScale/max(0.5,-mv.z); }",
+        fragmentShader:
+          "varying vec3 vC; uniform float uSoft;" +
+          "void main(){ vec2 p=gl_PointCoord*2.0-1.0; float r2=dot(p,p); if(r2>1.0) discard;" +
+          " gl_FragColor=vec4(vC*exp(-r2*uSoft),1.0); }",
+        transparent: true, blending: T.AdditiveBlending, depthWrite: false,
+      });
+      var stars = new T.Points(cloud(950, 90, 0.5, cStar, 1.3), pMat);
+      scene.add(stars);
+      var dustMat = pMat.clone();
+      dustMat.uniforms.uSoft.value = 3.4;
+      var dust = new T.Points(cloud(80, 24, 2.6, cDust, 0.03), dustMat);
+      scene.add(dust);
+
+      /* ---------------- post chain ---------------- */
+      var LV = 4; // downsample levels past the half-res bright pass
+      function mkRT(depth) {
+        return new T.WebGLRenderTarget(2, 2, {
+          type: T.HalfFloatType, minFilter: T.LinearFilter, magFilter: T.LinearFilter,
+          wrapS: T.ClampToEdgeWrapping, wrapT: T.ClampToEdgeWrapping, depthBuffer: !!depth,
+        });
+      }
+      var rtScene = mkRT(true); // needs depth so the occluder actually occludes
+      var rtBright = mkRT(), rtBloom = mkRT(), rtSk1 = mkRT(), rtSk2 = mkRT();
+      var down = [], up = [], i;
+      for (i = 0; i < LV; i++) { down.push(mkRT()); up.push(mkRT()); }
+      var allRT = [rtScene, rtBright, rtBloom, rtSk1, rtSk2].concat(down, up);
+
+      function sm(frag, uni) {
+        return new T.ShaderMaterial({ uniforms: uni, vertexShader: VERT_Q, fragmentShader: frag, depthTest: false, depthWrite: false });
+      }
+      var TAP = "vec3 tap(sampler2D s, vec2 uv, vec2 o){ return texture2D(s, uv+o).rgb; }\n";
+      var mBright = sm(
+        "varying vec2 vUv; uniform sampler2D tS; uniform float uT;" +
+        "void main(){ vec3 c=texture2D(tS,vUv).rgb; float l=max(max(c.r,c.g),c.b);" +
+        " float kn=0.55; float s=clamp(l-uT+kn,0.0,2.0*kn); s=s*s/(4.0*kn);" +
+        " float w=max(s,l-uT)/max(l,1e-4); gl_FragColor=vec4(c*w,1.0); }",
+        { tS: { value: null }, uT: { value: 1.0 } });
+      // 13-tap dual filter (the COD downsample), one pass per level.
+      var mDown = sm(
+        "varying vec2 vUv; uniform sampler2D tS; uniform vec2 uTx;\n" + TAP +
+        "void main(){ vec2 t=uTx;" +
+        " vec3 o=tap(tS,vUv,vec2(0.0))*0.125" +
+        " +(tap(tS,vUv,vec2(-2,2)*t)+tap(tS,vUv,vec2(2,2)*t)+tap(tS,vUv,vec2(-2,-2)*t)+tap(tS,vUv,vec2(2,-2)*t))*0.03125" +
+        " +(tap(tS,vUv,vec2(0,2)*t)+tap(tS,vUv,vec2(-2,0)*t)+tap(tS,vUv,vec2(2,0)*t)+tap(tS,vUv,vec2(0,-2)*t))*0.0625" +
+        " +(tap(tS,vUv,vec2(-1,1)*t)+tap(tS,vUv,vec2(1,1)*t)+tap(tS,vUv,vec2(-1,-1)*t)+tap(tS,vUv,vec2(1,-1)*t))*0.125;" +
+        " gl_FragColor=vec4(o,1.0); }",
+        { tS: { value: null }, uTx: { value: new T.Vector2() } });
+      // Separable Gaussian on every mip. Without it the pyramid is a stack of
+      // box filters and a point source blooms into a visible SQUARE.
+      var mBlur = sm(
+        "varying vec2 vUv; uniform sampler2D tS; uniform vec2 uDir;\n" + TAP +
+        "void main(){ vec3 s=tap(tS,vUv,vec2(0.0))*0.227027;" +
+        " s+=(tap(tS,vUv,uDir*1.384615)+tap(tS,vUv,-uDir*1.384615))*0.316216;" +
+        " s+=(tap(tS,vUv,uDir*3.230769)+tap(tS,vUv,-uDir*3.230769))*0.070270;" +
+        " gl_FragColor=vec4(s,1.0); }",
+        { tS: { value: null }, uDir: { value: new T.Vector2() } });
+      var mUp = sm(
+        "varying vec2 vUv; uniform sampler2D tS; uniform sampler2D tAdd; uniform vec2 uTx; uniform float uR;\n" + TAP +
+        "void main(){ vec2 t=uTx*uR;" +
+        " vec3 s=tap(tS,vUv,vec2(-1,1)*t)+tap(tS,vUv,vec2(0,1)*t)*2.0+tap(tS,vUv,vec2(1,1)*t)" +
+        " +tap(tS,vUv,vec2(-1,0)*t)*2.0+tap(tS,vUv,vec2(0.0))*4.0+tap(tS,vUv,vec2(1,0)*t)*2.0" +
+        " +tap(tS,vUv,vec2(-1,-1)*t)+tap(tS,vUv,vec2(0,-1)*t)*2.0+tap(tS,vUv,vec2(1,-1)*t);" +
+        " gl_FragColor=vec4(s*0.0625+texture2D(tAdd,vUv).rgb,1.0); }",
+        { tS: { value: null }, tAdd: { value: null }, uTx: { value: new T.Vector2() }, uR: { value: 1.15 } });
+      // Anamorphic streak: long horizontal kernel, run twice at growing stride,
+      // tinted cool so it reads as coated glass rather than a smear.
+      var mStreak = sm(
+        "varying vec2 vUv; uniform sampler2D tS; uniform float uStep; uniform vec3 uTint; uniform float uAtt;" +
+        "void main(){ vec3 s=texture2D(tS,vUv).rgb; float wsum=1.0;" +
+        " for(int i=1;i<=14;i++){ float fi=float(i); float w=pow(uAtt,fi);" +
+        "  s+=(texture2D(tS,vUv+vec2(uStep*fi,0.0)).rgb+texture2D(tS,vUv-vec2(uStep*fi,0.0)).rgb)*w; wsum+=2.0*w; }" +
+        " gl_FragColor=vec4(s/wsum*uTint,1.0); }",
+        { tS: { value: null }, uStep: { value: 0.002 }, uAtt: { value: 0.8 }, uTint: { value: new T.Vector3(1, 1, 1) } });
+      var mComp = sm(
+        "varying vec2 vUv; uniform sampler2D tS; uniform sampler2D tB; uniform sampler2D tK; uniform sampler2D tG;" +
+        "uniform float uBloom; uniform float uStreak; uniform float uAb; uniform float uExp; uniform vec3 uBg;" +
+        // lens ghosts: an internal reflection is the image inverted through the
+        // optical axis, so each ghost is the bloom sampled at a negative scale
+        "vec3 ghost(vec2 d){ return texture2D(tG,0.5-d*0.45).rgb*vec3(0.09,0.05,0.03)" +
+        " + texture2D(tG,0.5-d*0.82).rgb*vec3(0.03,0.06,0.10)" +
+        " + texture2D(tG,0.5+d*1.55).rgb*vec3(0.05,0.03,0.08); }" +
+        "vec3 grab(vec2 uv){ vec2 d=uv-0.5; return texture2D(tS,uv).rgb + texture2D(tB,uv).rgb*uBloom" +
+        " + texture2D(tK,uv).rgb*uStreak + ghost(d)*uBloom; }" +
+        "vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14),0.0,1.0); }" +
+        "void main(){ vec2 d=vUv-0.5; float r2=dot(d,d);" +
+        " float ca=uAb*0.007*r2;" +         // lateral CA: zero on axis, grows outward
+        " vec3 c; c.r=grab(0.5+d*(1.0-ca)).r; c.g=grab(vUv).g; c.b=grab(0.5+d*(1.0+ca)).b;" +
+        " c+=uBg*(1.2+16.0*exp(-2.4*r2));" +
+        " c=aces(c*uExp)*(1.0-0.55*r2);" +
+        " gl_FragColor=vec4(pow(max(c,vec3(0.0)),vec3(1.0/2.2)),1.0); }",
+        { tS: { value: null }, tB: { value: null }, tK: { value: null }, tG: { value: null }, uBg: { value: bg },
+          uBloom: { value: 1.0 }, uStreak: { value: 0.7 }, uAb: { value: 1.0 }, uExp: { value: 0.9 } });
+
+      var quadGeo = new T.PlaneGeometry(2, 2), quad = new T.Mesh(quadGeo, mBright);
+      var qScene = new T.Scene(); qScene.add(quad);
+      var qCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      function pass(mat, target) {
+        quad.material = mat; renderer.setRenderTarget(target || null); renderer.render(qScene, qCam);
+      }
+      // two-pass separable Gaussian, in place, using `tmp` as the H scratch
+      function gauss(rt, tmp) {
+        mBlur.uniforms.tS.value = rt.texture; mBlur.uniforms.uDir.value.set(1 / rt.width, 0); pass(mBlur, tmp);
+        mBlur.uniforms.tS.value = tmp.texture; mBlur.uniforms.uDir.value.set(0, 1 / rt.height); pass(mBlur, rt);
+      }
+
+      function sizeAll(w, hh) {
+        var W = Math.max(2, Math.floor(w * h.dpr)), H = Math.max(2, Math.floor(hh * h.dpr));
+        rtScene.setSize(W, H);
+        var bw = Math.max(2, W >> 1), bh = Math.max(2, H >> 1);
+        rtBright.setSize(bw, bh); rtBloom.setSize(bw, bh); rtSk1.setSize(bw, bh); rtSk2.setSize(bw, bh);
+        for (var k = 0; k < LV; k++) {
+          bw = Math.max(2, bw >> 1); bh = Math.max(2, bh >> 1);
+          down[k].setSize(bw, bh); up[k].setSize(bw, bh);
+        }
+        pMat.uniforms.uScale.value = H * 0.55; dustMat.uniforms.uScale.value = H * 0.55;
+      }
+      sizeAll(h.width, h.height);
+
+      var opt = h.opts, ox = 0, oy = 0;
+      function readOpts() {
+        mBright.uniforms.uT.value = opt.threshold; mUp.uniforms.uR.value = opt.bloomRadius;
+        mComp.uniforms.uBloom.value = opt.bloomStrength * 0.30; mComp.uniforms.uStreak.value = opt.streak * 0.6;
+        mComp.uniforms.uAb.value = opt.aberration; mComp.uniforms.uExp.value = opt.exposure;
+        mStreak.uniforms.uTint.value.set(0.70, 0.83, 1.22);
+      }
+      readOpts();
+
+      return {
+        resize: function (w, hh) {
+          renderer.setPixelRatio(h.dpr); renderer.setSize(w, hh, false);
+          cam.aspect = w / Math.max(1, hh); cam.updateProjectionMatrix(); sizeAll(w, hh);
+        },
+        update: function (o) { opt = o; readOpts(); },
+        draw: function (t) {
+          var s = t * (opt.speed || 1) * 0.6;
+          // one base frequency + integer harmonics => the whole thing loops
+          var bx = 4.3 * Math.sin(s), by = 1.5 * Math.cos(2 * s) + 0.62;
+          if (h.mouse && h.mouse.active) { // drag the body across the star yourself
+            var mx = (h.mouse.x / Math.max(1, h.width)) * 2 - 1, my = -((h.mouse.y / Math.max(1, h.height)) * 2 - 1);
+            ox += (mx * 4.6 - bx - ox) * 0.12; oy += (my * 2.8 - by - oy) * 0.12;
+          } else { ox += (0 - ox) * 0.05; oy += (0 - oy) * 0.05; }
+          occ.position.x = bx + ox; occ.position.y = by + oy;
+          occ.rotation.y = s * 0.35; occ.rotation.x = 0.2;
+          atm.position.copy(occ.position); atmMat.uniforms.uCen.value.copy(occ.position);
+          atmMat.uniforms.uSun.value.copy(occ.position).multiplyScalar(-1).normalize();
+          // a dead-centre occultation lights the whole limb: ring of fire
+          var lat = Math.sqrt(occ.position.x * occ.position.x + occ.position.y * occ.position.y) / 2.6;
+          var ecl = clamp(1 - lat, 0, 1); atmMat.uniforms.uEcl.value = ecl * ecl * 1.4;
+          // binary: the companion swings round the primary at 3x the base rate
+          var ang = s * 3.0;
+          glowB.position.set(Math.cos(ang) * 0.62, Math.sin(ang) * 0.2, Math.sin(ang) * 0.62);
+          coreB.position.copy(glowB.position);
+          glowA.quaternion.copy(cam.quaternion); glowB.quaternion.copy(cam.quaternion);
+          pMat.uniforms.uTime.value = t; dustMat.uniforms.uTime.value = t;
+          dust.rotation.z = s * 0.06; stars.rotation.y = s * 0.012;
+          cam.position.set(Math.sin(s * 0.5) * 1.15, Math.sin(s) * 0.5 + 0.25, 15); cam.lookAt(0, 0, 0);
+          renderer.setRenderTarget(rtScene); renderer.render(scene, cam);
+
+          mBright.uniforms.tS.value = rtScene.texture; pass(mBright, rtBright);
+          // streaks come off the *unblurred* bright pass; blur first and the
+          // flare fattens into a bar
+          mStreak.uniforms.tS.value = rtBright.texture; mStreak.uniforms.uAtt.value = 0.90;
+          mStreak.uniforms.uStep.value = 1.5 / rtBright.width; pass(mStreak, rtSk1);
+          mStreak.uniforms.tS.value = rtSk1.texture; mStreak.uniforms.uAtt.value = 0.80;
+          mStreak.uniforms.uStep.value = 5.0 / rtSk1.width; pass(mStreak, rtSk2);
+          // level 0 blur; rtSk1 is free again now the streak has been captured
+          gauss(rtBright, rtSk1);
+          var src = rtBright, k;
+          for (k = 0; k < LV; k++) {
+            mDown.uniforms.tS.value = src.texture; mDown.uniforms.uTx.value.set(1 / src.width, 1 / src.height);
+            pass(mDown, down[k]);
+            gauss(down[k], up[k]); src = down[k]; // up[k] is free until upsampling
+          }
+          // upsample, adding each coarse level into the finer one below it
+          var cur = down[LV - 1];
+          for (k = LV - 2; k >= 0; k--) {
+            mUp.uniforms.tS.value = cur.texture; mUp.uniforms.tAdd.value = down[k].texture;
+            mUp.uniforms.uTx.value.set(1 / cur.width, 1 / cur.height); pass(mUp, up[k]); cur = up[k];
+          }
+          mUp.uniforms.tS.value = cur.texture; mUp.uniforms.tAdd.value = rtBright.texture;
+          mUp.uniforms.uTx.value.set(1 / cur.width, 1 / cur.height); pass(mUp, rtBloom);
+
+          mComp.uniforms.tS.value = rtScene.texture; mComp.uniforms.tB.value = rtBloom.texture;
+          mComp.uniforms.tK.value = rtSk2.texture; mComp.uniforms.tG.value = down[1].texture;
+          pass(mComp, null);
+        },
+        destroy: function () {
+          threeDispose(scene, [quadGeo, mBright, mDown, mBlur, mUp, atmMat, mStreak, mComp, pMat, dustMat, GLOW, glowB.material, occMat].concat(allRT, [renderer]));
+        },
+      };
+    },
+  });
+
+  /* ============================================================
    * UI Components
    * ========================================================== */
   function el(tag, cls, html) {
@@ -6628,6 +8497,10 @@
     register: function (name, def) { registerAnimation(name, def); return Galaxy; },
     list: function () { return Object.keys(animations); },
     defaults: function (name) { return animations[name] ? Object.assign({}, animations[name].defaults) : null; },
+    /* Which tier draws this one: "2d" | "webgl2" | "three". */
+    rendererOf: function (name) { return animations[name] ? animations[name].renderer : null; },
+    /* Hand in your own three.js so the optional scenes never touch the network. */
+    useThree: function (T) { threeMod = T; return Galaxy; },
     autoInit: autoInit,
     // components
     toast: toast,

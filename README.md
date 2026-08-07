@@ -2,20 +2,78 @@
 
 **The universe, one line of code.**
 
-A zero-dependency cosmic **animation** + **UI component** library. Beautiful
-canvas backdrops, a themeable UI kit, and a single unified API — no build step,
-no framework, ~20&nbsp;kB gzipped.
+A cosmic **animation** + **UI component** library with **zero required
+dependencies**. Beautiful canvas backdrops, a themeable UI kit, and a single
+unified API — no build step, no framework, ~20&nbsp;kB gzipped.
+
+Six of the 86 animations are three.js scenes. three.js is **optional and lazily
+loaded**: nothing is requested unless you mount one of those six, and if it
+cannot load they paint a still poster instead of an empty box.
 
 [![CI](https://github.com/Edwson/GalaxyJS/actions/workflows/ci.yml/badge.svg)](https://github.com/Edwson/GalaxyJS/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-![Zero dependencies](https://img.shields.io/badge/dependencies-0-7c5cff)
-![Version](https://img.shields.io/badge/version-3.3-22d3ee)
+![Required dependencies](https://img.shields.io/badge/required%20dependencies-0-7c5cff)
+![Optional](https://img.shields.io/badge/optional-three.js-22d3ee)
+![Version](https://img.shields.io/badge/version-3.4-22d3ee)
 
 > Live demo: https://edwson.github.io/GalaxyJS/ (mirror: https://edwson.com/GalaxyJS/) · Open [`index.html`](index.html) locally for the interactive playground.
 
 ---
 
-## ✨ What's new in v3.3 "Deep Field"
+## ✨ What's new in v3.4 "Optics"
+
+**Six new animations (80 → 86) and an optional three.js tier.**
+
+These six needed something the canvas and fragment-shader tiers genuinely cannot give: a scene
+graph, a real 3D volume, GPU-resident simulation state, or a multi-pass post-processing chain.
+So they declare `renderer: "three"`, and the library loads three.js **on demand, by dynamic
+import, the first time one of them mounts** — once per page, shared across all six. A page that
+never uses one downloads nothing extra.
+
+- **`eventHorizon`** — a Schwarzschild black hole *solved*, not painted. Every pixel's photon is
+  integrated through curved spacetime (`d²u/dφ² = -u + 3/2·rs·u²`), so the photon ring, the
+  Einstein ring of the background stars, and the far side of the disk bent up over the top all
+  fall out of the geodesics. The disk carries relativistic Doppler shift and beaming (I ∝ δ⁴) —
+  the bright/dim asymmetry is physics, not a gradient.
+- **`molecularCloud`** — a genuine 128³ `Data3DTexture` raymarched in the volume's own local
+  space, lit from within by an embedded protostar with Beer–Lambert extinction along a secondary
+  shadow ray and a Henyey–Greenstein phase function. Rotating it gives real parallax and
+  self-occlusion, which is exactly what a 2D noise field cannot do.
+- **`spiralForge`** — 340,000 stars in one draw call. Each orbit is integrated *in the vertex
+  shader* against a flat rotation curve, so there is no per-frame CPU work at all; because ω
+  varies with radius the density-wave arms shear over time. Colour comes from a blackbody locus
+  driven by a mass–temperature relation, so rare hot O/B stars burn blue in the arms.
+- **`ringedWorld`** — a gas giant with Rayleigh single scattering (blue limb, warm reddened
+  terminator) and **mutual shadowing**: the rings cast a real shadow onto the planet, carrying
+  their own Cassini-division gaps as bright lines across the disk, and the planet casts a real
+  shadow back onto the rings.
+- **`gravitySim`** — true GPGPU. Particle state lives in float render targets and never returns
+  to the CPU; a kick–drift (symplectic leapfrog) integrator keeps the disks stable instead of
+  unwinding. Two attractors on an eccentric Kepler orbit raise real tidal bridges and tails at
+  every pericentre. The pointer becomes a third mass.
+- **`starGlare`** — a hand-rolled HDR chain (no addons): bright pass → progressive
+  downsample/upsample bloom → anamorphic streak → lateral chromatic aberration → filmic tonemap.
+  A star's glare blooms and flares as an occluder slides across it.
+
+```html
+<div id="hole" style="height:70vh"></div>
+<script>Galaxy.create('eventHorizon', '#hole', { tilt: 0.42 });</script>
+```
+
+Bring your own copy to skip the network entirely:
+
+```js
+import * as THREE from "three";
+Galaxy.useThree(THREE);            // now nothing is fetched
+Galaxy.create("spiralForge", "#hero", { stars: 400000 });
+```
+
+`Galaxy.rendererOf(name)` reports `"2d"`, `"webgl2"` or `"three"` if you want to
+check before mounting.
+
+---
+
+## v3.3 "Deep Field"
 
 **Twenty new animations (60 → 80) and a WebGL2 tier — with no new dependencies.**
 
@@ -50,7 +108,7 @@ to leak. **If WebGL2 is unavailable the surface renders a 2D poster instead of a
 ## ✨ What's new in v3 "Nova"
 
 - **One unified API** — `Galaxy.create(type, target, options)` for every animation.
-- **80 canvas & WebGL2 animations** — starfield, warp, black hole, nebula, spiral galaxy, meteors, constellation, particle field, aurora, wormhole, orbits, pulsar, mesh gradient, fireflies, matrix rain, plasma, fireworks, snow, waves, DNA helix, lightning, ripples, comets, confetti, bubbles, fog, synthwave grid, rain, vortex, sparkle, neon tunnel, swarm, ribbons, flow field, dotted globe, heartbeat, equalizer, clock, light rays, radar, embers, typewriter, spirograph, **and 17 new in v3.1** — supernova, quasar, star cluster, cosmic web, eclipse, solar corona, galaxy merge, crystal lattice, moiré, starburst, nebula pillars, ion storm, stardust, orrery, oscilloscope, bokeh, magnetosphere, **and 20 new in v3.3** — lensing, accretion disk, n-body, tidal stream, inspiral, volumetric nebula, star surface, atmosphere, dust lanes, protoplanetary disk, spectrograph, transit curve, radio waterfall, H-R diagram, pulsar timing, gravity well, nebula paint, solar wind, star forge, relativistic jets.
+- **86 animations** — starfield, warp, black hole, nebula, spiral galaxy, meteors, constellation, particle field, aurora, wormhole, orbits, pulsar, mesh gradient, fireflies, matrix rain, plasma, fireworks, snow, waves, DNA helix, lightning, ripples, comets, confetti, bubbles, fog, synthwave grid, rain, vortex, sparkle, neon tunnel, swarm, ribbons, flow field, dotted globe, heartbeat, equalizer, clock, light rays, radar, embers, typewriter, spirograph, **and 17 new in v3.1** — supernova, quasar, star cluster, cosmic web, eclipse, solar corona, galaxy merge, crystal lattice, moiré, starburst, nebula pillars, ion storm, stardust, orrery, oscilloscope, bokeh, magnetosphere, **and 20 new in v3.3** — lensing, accretion disk, n-body, tidal stream, inspiral, volumetric nebula, star surface, atmosphere, dust lanes, protoplanetary disk, spectrograph, transit curve, radio waterfall, H-R diagram, pulsar timing, gravity well, nebula paint, solar wind, star forge, relativistic jets, **and 6 new in v3.4 on the optional three.js tier** — event horizon, molecular cloud, spiral forge, ringed world, gravity sim, star glare.
 - **A real UI kit** — buttons, cards, modals, toasts, tooltips, tabs, accordions, dropdowns, inputs, switches, progress, spinners — all driven by design tokens.
 - **Theming** — light/dark out of the box, fully tokenized via CSS variables and `Galaxy.theme()`.
 - **Accessible & efficient** — respects `prefers-reduced-motion`, one shared rAF loop for the whole page, auto-pause off-screen, HiDPI-aware.

@@ -1,8 +1,14 @@
 # GalaxyJS
 
-> Zero-dependency cosmic animation & UI component library with one unified API.
-> 80 canvas & WebGL2 animations + a themeable UI kit. No build step, ~works from a single
-> <script> tag. Source of truth: /galaxy.manifest.json.
+> Cosmic animation & UI component library with one unified API and zero required
+> dependencies. 86 canvas & WebGL2 animations + a themeable UI kit. No build step, ~works
+> from a single <script> tag. Source of truth: /galaxy.manifest.json.
+>
+> Six animations (eventHorizon, molecularCloud, spiralForge, ringedWorld, gravitySim,
+> starGlare) are three.js scenes. three.js is OPTIONAL: it is fetched by dynamic import
+> only when one of those six is mounted, shared across the page, and if it cannot load the
+> scene paints a still poster. Call Galaxy.useThree(THREE) to supply your own copy, or pass
+> { threeUrl } to point elsewhere. Galaxy.rendererOf(name) -> "2d" | "webgl2" | "three".
 
 ## Install
 ```

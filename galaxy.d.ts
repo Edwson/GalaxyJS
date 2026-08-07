@@ -85,6 +85,13 @@ export type AnimationType =
   | "solarWind"
   | "starForge"
   | "relativisticJets"
+  /* three.js tier — optional dependency, loaded on demand */
+  | "eventHorizon"
+  | "molecularCloud"
+  | "spiralForge"
+  | "ringedWorld"
+  | "gravitySim"
+  | "starGlare"
   | "magnetosphere";
 
 /** A CSS selector string or an existing element. */
@@ -104,6 +111,11 @@ export interface AnimationOptions {
   interactive?: boolean;
   /** Start automatically on create. Default: true. */
   autoplay?: boolean;
+  /**
+   * Where to load three.js from, for `"three"`-tier scenes only. Defaults to a
+   * pinned jsDelivr build. Ignored once `Galaxy.useThree()` has been called.
+   */
+  threeUrl?: string;
   /** Any animation-specific numeric parameter (count, stars, rings, etc.). */
   [key: string]: unknown;
 }
@@ -150,6 +162,9 @@ export interface AnimationDefinition {
   setup(host: AnimationHost): AnimationDriver;
   defaults?: AnimationOptions;
 }
+
+/** Which renderer draws an animation. */
+export type AnimationRenderer = "2d" | "webgl2" | "three";
 
 export type ToastType = "success" | "warning" | "danger" | "info";
 export type ToastPosition =
@@ -239,6 +254,13 @@ export interface GalaxyStatic {
   list(): string[];
   /** Get a copy of an animation's default options. */
   defaults(name: string): AnimationOptions | null;
+  /** Which tier draws this animation. `"three"` scenes need the optional three.js. */
+  rendererOf(name: string): AnimationRenderer | null;
+  /**
+   * Supply your own three.js namespace so the optional scenes never touch the
+   * network. Call before mounting any `"three"` animation.
+   */
+  useThree(three: unknown): GalaxyStatic;
   /** Scan a DOM scope and wire all declarative components/animations. */
   autoInit(scope?: Document | HTMLElement): void;
 

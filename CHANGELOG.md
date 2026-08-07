@@ -3,6 +3,45 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com/);
 versioning: [SemVer](https://semver.org/).
 
+## [3.4.0] "Optics" — 2026-08-07
+### Added
+- **An optional three.js tier — the library still has zero *required* dependencies.**
+  `registerAnimation` accepts `renderer: "three"`, and a new
+  `registerThree(name, { defaults, scene })` helper hands a scene the same lifecycle every other
+  animation gets. three.js is loaded **on demand, by dynamic `import()`, the first time such a
+  scene mounts** — once per page, shared by all of them. A page that never mounts one requests
+  nothing. If the load fails the surface paints a still poster, exactly as the WebGL2 tier
+  degrades when WebGL2 is missing. Bring your own copy with `Galaxy.useThree(THREE)`, or point one
+  scene elsewhere with `{ threeUrl }`.
+- **Six scenes (80 → 86)**, each doing something the 2D and fragment-shader tiers cannot:
+  - **`eventHorizon`** — photons integrated through the Schwarzschild metric
+    (`d²u/dφ² = -u + 3/2·rs·u²`), so the photon ring, the Einstein ring of the background
+    starfield and the lensed far side of the disk emerge from the geodesics rather than being
+    drawn on. Relativistic Doppler shift and beaming (I ∝ δ⁴) give the disk its real asymmetry.
+  - **`molecularCloud`** — a 128³ `Data3DTexture` raymarched in the volume's local space, lit from
+    within by an embedded protostar via a secondary shadow ray (Beer–Lambert) and a
+    Henyey–Greenstein phase function. Rotation gives true parallax and self-occlusion.
+  - **`spiralForge`** — 340,000 stars, one draw call, orbits integrated entirely in the vertex
+    shader against a flat rotation curve; the density-wave arms shear because ω varies with
+    radius. Blackbody colour from a mass–temperature relation.
+  - **`ringedWorld`** — Rayleigh single scattering for a blue limb and a reddened terminator, plus
+    **mutual shadowing**: ring shadow on the planet (carrying its own gaps) and planet shadow on
+    the rings, both solved analytically from one shared density function.
+  - **`gravitySim`** — GPGPU. State lives in float render targets and never returns to the CPU; a
+    kick–drift symplectic leapfrog keeps orbits stable, and two attractors on an eccentric Kepler
+    orbit raise tidal bridges and tails at each pericentre. The pointer is a third mass.
+  - **`starGlare`** — a hand-rolled HDR chain with no addons: bright pass, progressive
+    downsample/upsample bloom, anamorphic streak, lateral chromatic aberration, filmic tonemap.
+- `Galaxy.rendererOf(name)` reports `"2d" | "webgl2" | "three"`; the manifest now records each
+  animation's tier plus an `optionalDependency` block naming the six scenes that use three.js.
+
+### Fixed
+- **A shader whose program failed to build crashed instead of falling back.** `glPosterFallback`
+  reached for the 2D context unconditionally, but a canvas that already has a live WebGL2 context
+  can never hand one back — so the "graceful" path threw `Cannot set properties of null`. The
+  poster now paints the host element with the equivalent CSS gradient when there is no 2D context.
+  This affected the WebGL2 tier as shipped in 3.3.0, not just the new one.
+
 ## [3.3.0] "Deep Field" — 2026-07-28
 ### Added
 - **A WebGL2 tier — still zero dependencies.** `registerAnimation` accepts

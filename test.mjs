@@ -43,6 +43,36 @@ ok(/glPosterFallback/.test(src), 'shader surfaces fall back to a 2D poster when 
 // any later mount on that canvas. This bit us on ReactOmega; keep it locked here.
 ok(!/loseContext/.test(src), 'the library never force-loses a WebGL context');
 
+console.log('three.js tier (optional, must stay optional)');
+ok(/function registerThree\(/.test(src), 'registerThree (three.js sugar) is present');
+ok(/function threeRenderer\(/.test(src) && /function threeDispose\(/.test(src), 'the three helpers are present');
+ok(typeof Galaxy.rendererOf === 'function' && typeof Galaxy.useThree === 'function', 'rendererOf / useThree are on the public API');
+const threeNames = runtimeNames.filter((n) => Galaxy.rendererOf(n) === 'three');
+ok(threeNames.length >= 6, 'the three.js scenes are registered (>= 6, got ' + threeNames.length + ')');
+ok(manifest.animations.every((a) => ['2d', 'webgl2', 'three'].includes(a.renderer)), 'every manifest animation declares a known renderer tier');
+ok(
+  threeNames.every((n) => manifest.optionalDependency.usedBy.includes(n)),
+  'the manifest lists every three scene under optionalDependency.usedBy'
+);
+// The whole promise of the tier: `three` must never become a real dependency.
+ok(!(pkg.dependencies && pkg.dependencies.three), 'three is NOT a package dependency');
+// "Zero dependencies" has always meant the *browser runtime*: galaxy.js pulls in
+// nothing at load time. (The package's own deps belong to the optional MCP
+// server, which never runs in a browser.) Assert the real claim, not a broader
+// one that was never true.
+ok(!/\brequire\s*\(/.test(src), 'the browser runtime requires nothing at load time');
+ok(!/^\s*import\s+[^(]/m.test(src), 'the browser runtime has no static imports');
+// It must load lazily, not at parse time: a static import would cost every page.
+ok(!/^\s*import\s+.*['"]three/m.test(src), 'three is not statically imported');
+ok(/import\(/.test(src), 'three is loaded by dynamic import');
+// Terser drops unreachable code. When nothing referenced the tier it vanished
+// from the bundle entirely and Galaxy.useThree silently became a no-op, so the
+// shipped artifact is checked, not just the source.
+const min = read('galaxy.min.js');
+ok(/import\(/.test(min), 'the minified bundle keeps the dynamic import');
+ok(/cdn\.jsdelivr\.net\/npm\/three/.test(min), 'the minified bundle keeps the three.js URL');
+ok(threeNames.every((n) => min.includes(n)), 'the minified bundle keeps every three scene name');
+
 console.log('version agreement');
 ok(Galaxy.version === manifest.version, 'manifest version matches runtime');
 ok(pkg.version === manifest.version, 'package.json version matches manifest (' + pkg.version + ')');
