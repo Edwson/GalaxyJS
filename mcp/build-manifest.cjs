@@ -96,6 +96,13 @@ const ANIM_DESC = {
   solarWind: "Solar wind deflected around a magnetosphere, with bow shock and polar cusps",
   starForge: "Seed star systems that condense out of collapsing clouds",
   relativisticJets: "Twin relativistic jets from a spinning black hole and its torus",
+  // three.js tier (optional dependency, lazily loaded)
+  eventHorizon: "Schwarzschild black hole ray-traced in curved spacetime, with Doppler beaming",
+  molecularCloud: "Raymarched 3D volume lit from within by an embedded protostar",
+  spiralForge: "340,000 GPU-instanced stars on differential-rotation orbits",
+  ringedWorld: "Gas giant with Rayleigh atmosphere and mutual ring/planet shadowing",
+  gravitySim: "GPGPU leapfrog N-body: two interacting disks with tidal tails",
+  starGlare: "Hand-rolled HDR bloom, anamorphic streak and lens aberration chain",
 };
 
 const COMPONENTS = [
@@ -125,14 +132,27 @@ const CSS_CLASSES = [
 ];
 
 const animations = Galaxy.list().map(function (name) {
-  return { name: name, desc: ANIM_DESC[name] || "", options: Galaxy.defaults(name) };
+  /* `renderer` records which tier draws it: "2d" | "webgl2" | "three". Consumers
+   * (and the test suite) can then tell the optional-dependency scenes apart from
+   * the ones that need nothing at all. */
+  return {
+    name: name,
+    desc: ANIM_DESC[name] || "",
+    renderer: Galaxy.rendererOf(name),
+    options: Galaxy.defaults(name),
+  };
 });
+
+const tierCount = animations.reduce(function (acc, a) {
+  acc[a.renderer] = (acc[a.renderer] || 0) + 1;
+  return acc;
+}, {});
 
 const manifest = {
   name: "galaxyjs",
   version: Galaxy.version,
   title: "GalaxyJS",
-  description: "Zero-dependency cosmic animation & UI component library with one unified API.",
+  description: "Cosmic animation & UI component library with one unified API. Zero required dependencies; six optional three.js scenes.",
   homepage: "https://github.com/Edwson/GalaxyJS",
   author: { name: "Ed Chen", url: "https://www.edwson.com" },
   license: "MIT",
@@ -148,6 +168,8 @@ const manifest = {
     create: "Galaxy.create(type, target, options) -> instance{ start, stop, pause, resume, update, destroy }",
     scrollScene: "Galaxy.scrollScene(stickyStage, { scenes:[type|{type,options}], track?, onProgress?, reducedScene? }) -> { progress, layers, destroy } — bind scroll progress to a crossfading cinematic sequence of scenes; runs only the visible pair (battery-friendly), reduced-motion shows one static frame",
     register: "Galaxy.register(name, { defaults, setup })",
+    rendererOf: 'Galaxy.rendererOf(name) -> "2d" | "webgl2" | "three"',
+    useThree: "Galaxy.useThree(THREE) — supply your own three.js so the optional scenes never touch the network",
     theme: 'Galaxy.theme("dark"|"light"|{ accent, bg, ... })',
     toggleTheme: "Galaxy.toggleTheme()",
     autoInit: "Galaxy.autoInit(scope?) — runs automatically; also wires data-* components",
@@ -160,10 +182,17 @@ const manifest = {
     "Respects prefers-reduced-motion (renders one static frame). One shared rAF loop; auto-pauses off-screen.",
   ],
   cssClasses: CSS_CLASSES,
+  tiers: tierCount,
+  optionalDependency: {
+    name: "three",
+    version: "0.185.1",
+    usedBy: animations.filter(function (a) { return a.renderer === "three"; }).map(function (a) { return a.name; }),
+    how: "Loaded on demand by dynamic import the first time one of these scenes mounts; nothing is requested otherwise. Pass { threeUrl } to point elsewhere, or call Galaxy.useThree(THREE) to skip the network. If it cannot load, the scene paints a still poster instead of an empty box.",
+  },
   animations: animations,
   components: COMPONENTS,
 };
 
 const out = path.join(__dirname, "..", "galaxy.manifest.json");
 fs.writeFileSync(out, JSON.stringify(manifest, null, 2) + "\n");
-console.log("Wrote " + out + " (" + animations.length + " animations, " + COMPONENTS.length + " components)");
+console.log("Wrote " + out + " (" + animations.length + " animations " + JSON.stringify(tierCount) + ", " + COMPONENTS.length + " components)");
