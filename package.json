@@ -103,7 +103,7 @@
     "globals": "^17.6.0",
     "live-server": "^1.2.2",
     "prettier": "^2.8.0",
-    "terser": "^5.48.0",
+    "terser": "^5.49.1",
     "typescript": "^5.4.0"
   },
   "engines": {
