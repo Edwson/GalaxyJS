@@ -194,7 +194,68 @@ Galaxy.create("rain", "#sky");
 ```
 
 The `host` object exposes `ctx`, `width`, `height`, `dpr`, `opts`, `mouse`
-(`{x, y, active}`) and `t`. Return `{ draw, resize?, update?, destroy? }`.
+(`{x, y, active}`), `reduced` and `t`. Return `{ draw, resize?, update?, destroy? }`.
+
+---
+
+## Renderer tiers
+
+Every animation is drawn by one of three tiers. `Galaxy.rendererOf(name)` tells you
+which: `"2d"`, `"webgl2"` or `"three"`.
+
+| Tier | Count | Needs | If unavailable |
+|---|---|---|---|
+| `2d` | 72 | nothing | — |
+| `webgl2` | 8 | a WebGL2 context | paints a still 2D poster |
+| `three` | 6 | three.js, **loaded on demand** | paints a still poster |
+
+Canvas 2D is the default and the fallback. **The library has zero *required*
+dependencies** — nothing is fetched unless you mount one of the six three.js scenes.
+
+### The optional three.js tier
+
+`eventHorizon`, `molecularCloud`, `spiralForge`, `ringedWorld`, `gravitySim` and
+`starGlare` need a scene graph, a real 3D volume, GPU-resident simulation state or a
+multi-pass post-processing chain. They declare `renderer: "three"`, and three.js is
+fetched by dynamic `import()` the first time one of them mounts — **once per page,
+shared by all six**. If it cannot load, the surface paints a still poster instead of
+an empty box, exactly as the WebGL2 tier degrades.
+
+```js
+Galaxy.create("eventHorizon", "#hero", { tilt: 0.42 });   // fetches three.js now
+```
+
+Three ways to control where it comes from:
+
+```js
+// 1. Bring your own — nothing is ever fetched.
+import * as THREE from "three";
+Galaxy.useThree(THREE);
+
+// 2. Self-host or pin a different build, per scene.
+Galaxy.create("spiralForge", "#hero", { threeUrl: "/vendor/three.module.js" });
+
+// 3. Check before mounting, e.g. to avoid the download on a metered connection.
+if (Galaxy.rendererOf(name) !== "three") Galaxy.create(name, "#hero");
+```
+
+Writing your own three scene works the same way as any other animation, except that
+`scene(THREE, host)` runs once three.js has arrived and gets the namespace:
+
+```js
+Galaxy.register("myScene", {
+  renderer: "three",
+  defaults: { spin: 1 },
+  scene(T, host) {
+    const renderer = new T.WebGLRenderer({ canvas: host.canvas, context: host.gl });
+    /* ... */
+    return { draw(t, dt) { /* ... */ }, resize(w, h) { /* ... */ }, destroy() { /* ... */ } };
+  },
+});
+```
+
+Never call `forceContextLoss()` in `destroy()`: a canvas hands back the same context
+object forever, so losing it poisons every later mount on that canvas.
 
 ---
 
